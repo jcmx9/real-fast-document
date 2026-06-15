@@ -6,6 +6,8 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.2] - 2026-06-15
+
 ### Changed
 - The logo is now **optional**: if no `logo.svg`/`.png`/`.jpg` is found, the
   build continues with a notice instead of aborting, and the header is rendered
