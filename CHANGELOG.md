@@ -6,6 +6,12 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+### Changed
+- Require Typst >= 0.15 and switch from bundled static OTFs to **variable fonts**
+  (6 files instead of 40). The semibold heading weight now comes from the `wght`
+  axis. `fetch-fonts.sh` and `install.ps1` download the variable fonts from
+  Google Fonts; `build.sh` enforces the Typst version.
+
 ## [26.6.0] - 2026-06-15
 
 ### Added

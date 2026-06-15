@@ -7,7 +7,7 @@ Dateiname und Seitenzählung.
 ## Voraussetzungen
 
 - [pandoc](https://pandoc.org) ≥ 3.x (Typst-Writer)
-- [typst](https://typst.app) ≥ 0.14 (PDF/A-Export)
+- [typst](https://typst.app) ≥ 0.15 (PDF/A-Export + Variable Fonts)
 
 ### Installation der Werkzeuge
 
@@ -31,7 +31,7 @@ winget install --id Typst.Typst -e
 ## Schnellstart
 
 ```bash
-# Fonts einmalig ins Projekt bündeln (statische Source-OTFs)
+# Fonts einmalig ins Projekt bündeln (Variable Source-Fonts)
 bash scripts/fetch-fonts.sh
 
 # Beispiel bauen

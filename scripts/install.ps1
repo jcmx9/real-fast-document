@@ -38,43 +38,28 @@ $FontDir       = Join-Path $ProjectRoot 'fonts'
 $ConvertScript = Join-Path $PSScriptRoot 'convert.ps1'
 $ShortcutName  = 'Nach PDF-A (real-fast-document).lnk'
 
-# Statische Source-Fonts von den offiziellen Adobe-Releases (keine Variable Fonts).
-$FontZips = @(
-  'https://github.com/adobe-fonts/source-serif/releases/download/4.005R/source-serif-4.005_Desktop.zip'
-  'https://github.com/adobe-fonts/source-sans/releases/download/3.052R/OTF-source-sans-3.052R.zip'
-  'https://github.com/adobe-fonts/source-code-pro/releases/download/2.042R-u/1.062R-i/1.026R-vf/OTF-source-code-pro-2.042R-u_1.062R-i.zip'
+# Variable Fonts (Source Serif 4 / Sans 3 / Code Pro, je Roman + Italic) von
+# Google Fonts. Typst >= 0.15 unterstuetzt Variable Fonts. Lizenz: SIL OFL 1.1.
+$FontUrls = @(
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/SourceSerif4%5Bopsz,wght%5D.ttf'
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/SourceSerif4-Italic%5Bopsz,wght%5D.ttf'
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourcesans3/SourceSans3%5Bwght%5D.ttf'
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourcesans3/SourceSans3-Italic%5Bwght%5D.ttf'
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourcecodepro/SourceCodePro%5Bwght%5D.ttf'
+  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourcecodepro/SourceCodePro-Italic%5Bwght%5D.ttf'
 )
-# Nur die Basis-Familien (kein Caption/Display/SmText/Subhead).
-$FontPatterns = 'SourceSerif4-*.otf', 'SourceSans3-*.otf', 'SourceCodePro-*.otf'
 
 function Install-Fonts {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
   New-Item -ItemType Directory -Force -Path $FontDir | Out-Null
 
-  $tmp = Join-Path $env:TEMP ('rfd-fonts-' + [Guid]::NewGuid().ToString('N'))
-  New-Item -ItemType Directory -Force -Path $tmp | Out-Null
-  try {
-    $i = 0
-    foreach ($url in $FontZips) {
-      $i++
-      $zip = Join-Path $tmp "$i.zip"
-      Write-Host "-> lade $(Split-Path -Leaf $url)"
-      Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
-      Expand-Archive -Path $zip -DestinationPath (Join-Path $tmp "x$i") -Force
-    }
-    $count = 0
-    foreach ($pat in $FontPatterns) {
-      Get-ChildItem -Path $tmp -Recurse -Filter $pat -File | ForEach-Object {
-        Copy-Item -LiteralPath $_.FullName -Destination $FontDir -Force
-        $count++
-      }
-    }
-    if ($count -eq 0) { throw 'Keine passenden Font-Dateien in den Archiven gefunden.' }
-    Write-Host "OK  $count Font-Dateien -> $FontDir" -ForegroundColor Green
+  foreach ($url in $FontUrls) {
+    $name = [Uri]::UnescapeDataString((Split-Path -Leaf $url))
+    $dest = Join-Path $FontDir $name
+    Write-Host "-> $name"
+    Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
   }
-  finally {
-    Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
-  }
+  Write-Host "OK  Variable Fonts -> $FontDir" -ForegroundColor Green
 }
 
 function Get-SendToDir {

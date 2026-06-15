@@ -7,6 +7,18 @@ set -euo pipefail
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${root_dir}"
 
+# Typst-Binary überschreibbar (z. B. zum Testen einer bestimmten Version).
+typst_bin="${TYPST:-typst}"
+
+# Variable Fonts brauchen Typst >= 0.15.
+ver="$("${typst_bin}" --version | awk '{print $2}')"
+ver_major="${ver%%.*}"
+ver_minor="${ver#*.}"; ver_minor="${ver_minor%%.*}"
+if (( ver_major == 0 && ver_minor < 15 )); then
+  echo "Error: Typst >= 0.15 nötig (Variable Fonts), gefunden ${ver}" >&2
+  exit 1
+fi
+
 src="${1:-example.md}"
 base="$(basename "${src%.*}")"
 out="${2:-${base}.pdf}"
@@ -40,7 +52,7 @@ pandoc "${src}" \
   --output "${typ}"
 
 # 2) Typst -> PDF/A-3b (Dateiname & Logo als Laufzeit-Inputs)
-typst compile "${typ}" "${out}" \
+"${typst_bin}" compile "${typ}" "${out}" \
   "${font_arg[@]}" \
   --pdf-standard "${standard}" \
   --input "filename=$(basename "${out}")" \

@@ -1,45 +1,35 @@
 #!/usr/bin/env bash
-# Bündelt die benötigten *statischen* Source-Fonts (Adobe OTF) nach ./fonts.
-# Typst 0.14 unterstützt KEINE Variable Fonts – daher statische Schnitte.
+# Lädt die benötigten Variable Fonts nach ./fonts (Source Serif 4 / Sans 3 /
+# Code Pro, je Roman + Italic) von Google Fonts.
 #
-# Strategie: zuerst aus den systemweit installierten Fonts kopieren
-# (~/Library/Fonts, /Library/Fonts). Sind sie dort nicht vorhanden, von den
-# offiziellen Adobe-Releases laden:
-#   https://github.com/adobe-fonts/source-serif/releases
-#   https://github.com/adobe-fonts/source-sans/releases
-#   https://github.com/adobe-fonts/source-code-pro/releases
+# Typst >= 0.15 unterstützt Variable Fonts; die wght-Achse liefert u. a. den
+# Semibold-Schnitt der Überschriften. Lizenz: SIL Open Font License 1.1.
 set -euo pipefail
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 font_dir="${root_dir}/fonts"
+base="https://raw.githubusercontent.com/google/fonts/main/ofl"
+
 mkdir -p "${font_dir}"
 
-# Nur die Basis-Familien (kein Caption/Display/SmText/Subhead), nur statische OTF.
-# Pattern matcht z. B. SourceSerif4-Semibold.otf, SourceSans3-It.otf, ...
-patterns=(
-  'SourceSerif4-*.otf'
-  'SourceSans3-*.otf'
-  'SourceCodePro-*.otf'
+fonts=(
+  "sourceserif4/SourceSerif4[opsz,wght].ttf"
+  "sourceserif4/SourceSerif4-Italic[opsz,wght].ttf"
+  "sourcesans3/SourceSans3[wght].ttf"
+  "sourcesans3/SourceSans3-Italic[wght].ttf"
+  "sourcecodepro/SourceCodePro[wght].ttf"
+  "sourcecodepro/SourceCodePro-Italic[wght].ttf"
 )
 
-search_dirs=("${HOME}/Library/Fonts" "/Library/Fonts")
-copied=0
+url_encode() {
+  printf '%s' "$1" | sed 's/\[/%5B/g; s/\]/%5D/g'
+}
 
-for pat in "${patterns[@]}"; do
-  for dir in "${search_dirs[@]}"; do
-    [[ -d "${dir}" ]] || continue
-    while IFS= read -r -d '' f; do
-      cp -f "${f}" "${font_dir}/"
-      copied=$((copied + 1))
-    done < <(find "${dir}" -maxdepth 1 -name "${pat}" -print0 2>/dev/null)
-  done
+for rel in "${fonts[@]}"; do
+  out="${font_dir}/$(basename "${rel}")"
+  url="${base}/$(url_encode "${rel}")"
+  echo "→ ${out##*/}"
+  curl -fsSL "${url}" -o "${out}"
 done
 
-if [[ "${copied}" -eq 0 ]]; then
-  echo "✗ Keine statischen Source-Fonts im System gefunden." >&2
-  echo "  Bitte von den Adobe-Releases (siehe Script-Header) laden und nach" >&2
-  echo "  ${font_dir} entpacken (Basis-Familien, statische OTF)." >&2
-  exit 1
-fi
-
-echo "✓ ${copied} Font-Dateien nach ${font_dir} kopiert"
+echo "✓ Variable Fonts in ${font_dir}"

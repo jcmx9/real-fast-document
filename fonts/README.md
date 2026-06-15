@@ -1,18 +1,18 @@
 # Gebündelte Fonts
 
-Statische OTF-Schnitte der Adobe-Source-Familien, von `scripts/fetch-fonts.sh`
-aus den systemweit installierten Fonts kopiert (bzw. von den Adobe-Releases).
+**Variable Fonts** der Source-Familien (je Roman + Italic), von
+`scripts/fetch-fonts.sh` bzw. `scripts/install.ps1` von Google Fonts geladen.
 
 | Familie          | Quelle |
 |------------------|--------|
-| Source Serif 4   | https://github.com/adobe-fonts/source-serif |
-| Source Sans 3    | https://github.com/adobe-fonts/source-sans |
-| Source Code Pro  | https://github.com/adobe-fonts/source-code-pro |
+| Source Serif 4   | https://github.com/google/fonts/tree/main/ofl/sourceserif4 |
+| Source Sans 3    | https://github.com/google/fonts/tree/main/ofl/sourcesans3 |
+| Source Code Pro  | https://github.com/google/fonts/tree/main/ofl/sourcecodepro |
 
 **Lizenz:** SIL Open Font License 1.1 (OFL) — siehe
 <https://openfontlicense.org>. Die Fonts dürfen frei gebündelt und
 weitergegeben werden; sie unterliegen der OFL, nicht der MIT-Lizenz des
 Projekts.
 
-> Hinweis: Typst 0.14 unterstützt keine Variable Fonts — daher die statischen
-> Schnitte und nicht die variablen Google-Fonts-Dateien.
+> Voraussetzung: **Typst ≥ 0.15** (Variable-Font-Unterstützung). Der
+> Semibold-Schnitt der Überschriften kommt über die `wght`-Achse.
