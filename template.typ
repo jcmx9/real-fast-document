@@ -131,6 +131,9 @@ $endif$
 #show heading.where(level: 1): set text(size: 20pt)
 #show heading.where(level: 2): set text(size: 16pt)
 #show heading.where(level: 3): set text(size: 13pt)
+#show heading.where(level: 4): set text(size: 11.5pt)
+#show heading.where(level: 5): set text(size: 11pt)
+#show heading.where(level: 6): set text(size: 10pt)
 #show heading: it => block(above: 1.2em, below: 0.6em, it)
 
 #show raw: set text(font: "Source Code Pro", size: 9.5pt)
