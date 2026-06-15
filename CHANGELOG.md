@@ -26,5 +26,9 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   `AFRelationship /Source`), made possible by PDF/A-3b.
 - Font bundling script (`scripts/fetch-fonts.sh`) collecting the static
   Source OTFs into `./fonts`.
+- Windows setup (`scripts/install.ps1`): downloads the static Source fonts into
+  the project and registers an Explorer "Send to" shortcut that converts a `.md`
+  to PDF/A next to the source. Conversion logic stays in the install path
+  (`scripts/convert.ps1`); only the shortcut is placed in the system.
 - Example documents `example.md`, `long-example.md` (multi-chapter header demo)
   and `showcase.md` (full Markdown/Pandoc feature kitchen sink).

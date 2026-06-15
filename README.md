@@ -42,6 +42,24 @@ bash scripts/build.sh meine-datei.md  # -> meine-datei.pdf
 bash scripts/build.sh in.md out.pdf   # explizite Ausgabe
 ```
 
+### Windows („Senden an")
+
+`install.ps1` richtet zwei Dinge ein. Die gesamte Logik bleibt im Installpfad;
+im System landet nur eine Verknüpfung im „Senden an"-Ordner.
+
+```powershell
+# Im Projektordner (= Installpfad):
+./scripts/install.ps1            # Fonts laden + "Senden an"-Verknüpfung
+./scripts/install.ps1 -Fonts     # nur Fonts ins Projekt laden (./fonts)
+./scripts/install.ps1 -SendTo    # nur die Verknüpfung anlegen
+./scripts/install.ps1 -Uninstall # Verknüpfung entfernen
+```
+
+Danach im Explorer eine (oder mehrere) `.md` markieren → Rechtsklick →
+**Senden an → „Nach PDF-A (real-fast-document)"**. Die PDF/A wird im selben
+Verzeichnis wie die Quelle abgelegt. Der Konverter `scripts/convert.ps1`
+verbleibt im Installpfad und wird über die Verknüpfung aufgerufen.
+
 ## Layout-Spezifikation
 
 | Aspekt | Wert |
@@ -64,8 +82,10 @@ bash scripts/build.sh in.md out.pdf   # explizite Ausgabe
 ```
 template.typ              Pandoc-Typst-Template: gesamtes Seitenlayout
 filters/meta-from-h1.lua  setzt Dokumenttitel (PDF/A) aus erstem H1
-scripts/build.sh          Pipeline Markdown -> PDF/A
+scripts/build.sh          Pipeline Markdown -> PDF/A (macOS/Linux)
 scripts/fetch-fonts.sh    bündelt statische Source-Fonts nach ./fonts
+scripts/install.ps1       Windows-Setup: Fonts + "Senden an"-Verknüpfung
+scripts/convert.ps1       Windows-Konverter (von "Senden an" aufgerufen)
 fonts/                    gebündelte Schriften (statische OTF)
 logo.svg                  Kopf-Logo
 example.md                kurzes Beispieldokument
