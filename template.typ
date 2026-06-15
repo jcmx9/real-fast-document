@@ -142,13 +142,17 @@ $endif$
   it,
 )
 
-// Fußnoten mit hängendem Einzug: Markierung hängt, Folgezeilen rücken ein.
-// (Default-Layout reicht `hanging-indent` nicht durch -> Eintrag selbst bauen.)
+// Fußnoten mit hängendem Einzug: Markierung in fester Spalte, Body als eigener
+// Block daneben -> alle Body-Zeilen fluchten unter dem Textanfang.
 #show footnote.entry: it => {
   let loc = it.note.location()
   let num = numbering(it.note.numbering, ..counter(footnote).at(loc))
-  set par(hanging-indent: 1.4em, first-line-indent: 0pt)
-  pad(left: 1em, [#super(num)#h(0.35em)#it.note.body])
+  block(inset: (left: 1em), grid(
+    columns: (1.5em, 1fr),
+    align: (left + top, left + top),
+    super(num),
+    it.note.body,
+  ))
 }
 
 $body$
