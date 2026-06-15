@@ -9,6 +9,25 @@ Dateiname und Seitenzählung.
 - [pandoc](https://pandoc.org) ≥ 3.x (Typst-Writer)
 - [typst](https://typst.app) ≥ 0.14 (PDF/A-Export)
 
+### Installation der Werkzeuge
+
+**macOS / Linux (Homebrew):**
+
+```bash
+brew install pandoc typst
+```
+
+**Windows (winget):**
+
+```powershell
+winget install --id JohnMacFarlane.Pandoc -e
+winget install --id Typst.Typst -e
+```
+
+> Hinweis: Unter Windows funktioniert die Pipeline über Git Bash / WSL
+> (die Build-Skripte sind Bash). Alternativ die beiden Befehle aus
+> `scripts/build.sh` direkt aufrufen.
+
 ## Schnellstart
 
 ```bash
