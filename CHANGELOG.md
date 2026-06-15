@@ -6,6 +6,11 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+### Added
+- `faust.md` — Goethe's *Faust I* as a large structured-mode example (158-page
+  PDF/A; verse via Pandoc line blocks, scenes as H2). Public domain, sourced
+  from Project Gutenberg (eBook #2229).
+
 ## [26.6.4] - 2026-06-15
 
 ### Changed
