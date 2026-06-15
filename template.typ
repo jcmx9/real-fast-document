@@ -24,7 +24,8 @@ $endif$
 // Laufzeit-Eingaben (via `typst compile --input ...`)
 // ---------------------------------------------------------------------------
 #let doc-filename = sys.inputs.at("filename", default: "document.md")
-#let logo-path = sys.inputs.at("logo", default: "logo.svg")
+// Leerer Pfad = kein Logo (Kopf läuft dann ohne Logo durch).
+#let logo-path = sys.inputs.at("logo", default: "")
 #let source-path = sys.inputs.at("source", default: none)
 
 // PDF/A-3b erlaubt eingebettete Dateien: Markdown-Quelle als Anhang beilegen.
@@ -85,7 +86,7 @@ $endif$
     column-gutter: 6mm,
     align: (left + bottom, right + bottom),
     text(font: "Source Serif 4", weight: "semibold", size: 11pt, fill: head-color)[#current],
-    image(logo-path, height: logo-height),
+    if logo-path != "" { image(logo-path, height: logo-height) } else { [] },
   )
   v(2pt)
   line(length: 100%, stroke: rule-stroke)

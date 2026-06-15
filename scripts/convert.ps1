@@ -38,13 +38,20 @@ function Convert-One {
   $typ    = Join-Path $srcDir ".rfd-$base.typ"
 
   # Logo: erstes vorhandenes svg/png/jpg im Installpfad, temporaer ins Quellverz.
+  # Optional: ohne Logo wird ohne Logo gebaut.
   $logoSrc = @('logo.svg', 'logo.png', 'logo.jpg') |
     ForEach-Object { Join-Path $InstallRoot $_ } |
     Where-Object   { Test-Path -LiteralPath $_ } |
     Select-Object  -First 1
-  if (-not $logoSrc) { throw "Kein Logo im Installpfad: $InstallRoot" }
-  $logoTmp = Join-Path $srcDir (".rfd-logo" + [IO.Path]::GetExtension($logoSrc))
-  Copy-Item -LiteralPath $logoSrc -Destination $logoTmp -Force
+  $logoTmp = ''
+  $logoArg = ''
+  if ($logoSrc) {
+    $logoTmp = Join-Path $srcDir (".rfd-logo" + [IO.Path]::GetExtension($logoSrc))
+    Copy-Item -LiteralPath $logoSrc -Destination $logoTmp -Force
+    $logoArg = Split-Path -Leaf $logoTmp
+  } else {
+    Write-Host "Hinweis: kein Logo im Installpfad – baue ohne Logo." -ForegroundColor Yellow
+  }
 
   try {
     & pandoc $Src --from markdown --to typst --standalone `
@@ -56,14 +63,15 @@ function Convert-One {
       --font-path $FontDir --ignore-system-fonts `
       --pdf-standard a-3b `
       --input "filename=$base.pdf" `
-      --input "logo=$(Split-Path -Leaf $logoTmp)" `
+      --input "logo=$logoArg" `
       --input "source=$mdLeaf"
     if ($LASTEXITCODE) { throw "typst-Fehler ($LASTEXITCODE)" }
 
     Write-Host "OK  $outPdf" -ForegroundColor Green
   }
   finally {
-    Remove-Item -LiteralPath $typ, $logoTmp -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $typ -ErrorAction SilentlyContinue
+    if ($logoTmp) { Remove-Item -LiteralPath $logoTmp -ErrorAction SilentlyContinue }
   }
 }
 

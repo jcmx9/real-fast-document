@@ -25,7 +25,8 @@ out="${2:-${base}.pdf}"
 typ="${base}.typ"
 standard="a-3b"
 
-# Logo: erstes vorhandenes in fester Reihenfolge svg -> png -> jpg
+# Logo: erstes vorhandenes in fester Reihenfolge svg -> png -> jpg.
+# Optional: ohne Logo wird ohne Logo gebaut (logo bleibt leer).
 logo=""
 for candidate in logo.svg logo.png logo.jpg; do
   if [[ -f "${candidate}" ]]; then
@@ -34,8 +35,7 @@ for candidate in logo.svg logo.png logo.jpg; do
   fi
 done
 if [[ -z "${logo}" ]]; then
-  echo "Error: kein Logo gefunden (logo.svg | logo.png | logo.jpg)" >&2
-  exit 1
+  echo "Hinweis: kein Logo gefunden (logo.svg | logo.png | logo.jpg) – baue ohne Logo." >&2
 fi
 
 font_arg=()
