@@ -68,7 +68,9 @@ scripts/build.sh          Pipeline Markdown -> PDF/A
 scripts/fetch-fonts.sh    bündelt statische Source-Fonts nach ./fonts
 fonts/                    gebündelte Schriften (statische OTF)
 logo.svg                  Kopf-Logo
-example.md                Beispieldokument
+example.md                kurzes Beispieldokument
+long-example.md           mehrseitiges Beispiel (Header-Wechsel je Kapitel)
+showcase.md               Markdown-Schaukasten (alle Elemente)
 ```
 
 ## Anpassen

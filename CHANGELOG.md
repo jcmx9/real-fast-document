@@ -25,4 +25,5 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   `AFRelationship /Source`), made possible by PDF/A-3b.
 - Font bundling script (`scripts/fetch-fonts.sh`) collecting the static
   Source OTFs into `./fonts`.
-- Example documents `example.md` and `long-example.md`.
+- Example documents `example.md`, `long-example.md` (multi-chapter header demo)
+  and `showcase.md` (full Markdown/Pandoc feature kitchen sink).
