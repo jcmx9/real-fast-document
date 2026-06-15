@@ -142,4 +142,10 @@ $endif$
   it,
 )
 
+// Fußnoten mit hängendem Einzug: Markierung hängt, Folgezeilen rücken ein.
+#show footnote.entry: it => {
+  set par(hanging-indent: 1.5em)
+  it
+}
+
 $body$

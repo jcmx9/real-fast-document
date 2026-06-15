@@ -17,6 +17,7 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   resolved as `logo.svg` → `logo.png` → `logo.jpg` (first match).
 - Footer with source filename (left) and `Seite x / y` (right);
   separator rules below the header text and above the footer text.
+- Footnotes rendered with a hanging indent (marker hangs, wrapped lines indent).
 - Fonts: headings in Source Serif 4 (semibold, 80 % black), body in
   Source Sans 3, code in Source Code Pro.
 - Lua filter (`filters/meta-from-h1.lua`) deriving the PDF/A document title
