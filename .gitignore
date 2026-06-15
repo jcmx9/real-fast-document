@@ -1,0 +1,8 @@
+# Generierte Artefakte
+*.pdf
+*.typ
+!template.typ
+preview-*.png
+
+# OS
+.DS_Store

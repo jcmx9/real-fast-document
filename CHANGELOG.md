@@ -1,0 +1,28 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
+
+## [Unreleased]
+
+## [26.6.0] - 2026-06-15
+
+### Added
+- Markdown → Pandoc → Typst → PDF/A-3b build pipeline (`scripts/build.sh`).
+- Typst layout template (`template.typ`): DIN A4 portrait, margins
+  top 40 mm / left 30 mm / right 20 mm / bottom 30 mm.
+- Dynamic running header showing the H1 chapter active at the top of the page,
+  with the logo (25 mm high) right-aligned to the right margin. The logo file is
+  resolved as `logo.svg` → `logo.png` → `logo.jpg` (first match).
+- Footer with source filename (left) and `Seite x / y` (right);
+  separator rules below the header text and above the footer text.
+- Fonts: headings in Source Serif 4 (semibold, 80 % black), body in
+  Source Sans 3, code in Source Code Pro.
+- Lua filter (`filters/meta-from-h1.lua`) deriving the PDF/A document title
+  from the first H1.
+- Source Markdown embedded as an attachment (`pdf.attach`,
+  `AFRelationship /Source`), made possible by PDF/A-3b.
+- Font bundling script (`scripts/fetch-fonts.sh`) collecting the static
+  Source OTFs into `./fonts`.
+- Example documents `example.md` and `long-example.md`.
