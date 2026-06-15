@@ -131,6 +131,7 @@ logo.svg                  Kopf-Logo
 example.md                kompaktes Beispiel (kein TOC, H2 inline)
 long-example.md           strukturiertes Beispiel (Titel + TOC + Kapitelseiten)
 showcase.md               Markdown-Schaukasten (alle Elemente, strukturiert)
+CLAUDE.md                 Architektur-/Befehls-Hinweise (für Claude Code & Mitwirkende)
 ```
 
 ## Anpassen

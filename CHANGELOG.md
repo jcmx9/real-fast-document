@@ -6,6 +6,12 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.3] - 2026-06-15
+
+### Added
+- `CLAUDE.md` — architecture, commands and Typst pitfalls for contributors and
+  Claude Code; referenced from the README structure list.
+
 ## [26.6.2] - 2026-06-15
 
 ### Changed
