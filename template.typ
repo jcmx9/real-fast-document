@@ -170,7 +170,7 @@ $endif$
 // Ebene wird neutralisiert.
 #let toc-entry(spacing, body) = block(above: spacing, below: 0pt, {
   show strong: s => s.body
-  set text(weight: 450)
+  set text(weight: 450, size: 14pt) // TOC-Schriftgrad
   body
 })
 #show outline.entry.where(level: 2): it => toc-entry(1.0em, it)

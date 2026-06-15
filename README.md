@@ -81,11 +81,41 @@ verbleibt im Installpfad und wird über die Verknüpfung aufgerufen.
 
 ### Dokumentstruktur
 
-- **H1 = Titel** (genau einmal). Liefert zugleich den PDF-Titel (Lua-Filter).
-- **H2 = Kapitel** (im Kopf), **H3+** = Unterabschnitte.
-- Ab **`#H2 + #H3 > 5`** schaltet das Template automatisch in den
-  „strukturierten" Modus: Inhaltsverzeichnis + Kapitel auf eigenen Seiten.
-  Darunter bleibt es kompakt (kein TOC, Kapitel fließen inline).
+Die Überschriftenebenen haben feste Rollen:
+
+- **H1 = Dokumenttitel.** Muss **genau einmal** vorkommen — bei mehreren H1
+  bricht der Build mit klarer Meldung ab (`filters/meta-from-h1.lua`). Das H1
+  liefert zugleich den PDF-Titel (PDF/A-Pflicht), wird **zentriert** gesetzt und
+  erscheint **nicht** im Kopf und **nicht** im Inhaltsverzeichnis.
+- **H2 = Kapitel.** Das jeweils aktive Kapitel läuft dynamisch im Seitenkopf
+  links mit.
+- **H3 und tiefer = Unterabschnitte.**
+
+**Bedingtes Inhaltsverzeichnis (TOC):** Sind mehr als fünf H2- und
+H3-Überschriften vorhanden (**`#H2 + #H3 > 5`**), schaltet das Template
+automatisch in den *strukturierten* Modus:
+
+- ein **Inhaltsverzeichnis** über H2/H3 (mit Seitenzahlen, klickbar) direkt
+  nach dem Titel, und
+- jedes **Kapitel (H2) beginnt auf einer neuen Seite**.
+
+Bei fünf oder weniger bleibt das Dokument *kompakt*: kein TOC, Kapitel fließen
+ohne Seitenumbruch. Der Schwellenwert ist eine einzige Stelle in
+`template.typ`.
+
+### Typografie (Schriftgrade)
+
+| Element | Schrift | Grad |
+|---------|---------|------|
+| Fließtext | Source Sans 3 | 11 pt |
+| Titel (H1) | Source Serif 4 semibold | 26 pt, zentriert |
+| Kapitel (H2) | Source Serif 4 semibold | 16 pt |
+| H3 / H4 / H5 / H6 | Source Serif 4 semibold | 13 / 11,5 / 11 / 10 pt |
+| TOC-Titel „Inhalt" | Source Serif 4 semibold | 15 pt |
+| TOC-Einträge | Source Sans 3 | 14 pt, Book (`wght` 450) |
+| Kopf (Kapitel) | Source Serif 4 semibold | 11 pt |
+| Code | Source Code Pro | 9,5 pt |
+| Fußzeile | Source Sans 3 | 9 pt |
 
 ## Aufbau
 
