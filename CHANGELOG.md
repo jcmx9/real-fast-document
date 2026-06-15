@@ -6,6 +6,18 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.1] - 2026-06-15
+
+### Changed
+- Heading model: **H1 = document title** (enforced to occur exactly once via the
+  Lua filter), **H2 = chapter** shown in the running header (previously H1),
+  H3+ = subsections.
+- Conditional **table of contents**: when `#H2 + #H3 > 5`, the template renders a
+  TOC (over H2/H3) and starts each chapter (H2) on a new page; below the
+  threshold it stays compact (no TOC, chapters inline).
+- Title centered with extra spacing; TOC rendered lighter — entries at 14 pt in
+  book weight (`wght` 450) instead of bold; differentiated H4–H6 sizes.
+
 ## [26.6.0] - 2026-06-15
 
 ### Added

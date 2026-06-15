@@ -1,44 +1,31 @@
-# Einleitung
+# Systemdokumentation
 
-Dieses Dokument demonstriert den **dynamischen Seitenkopf** über mehrere
-Kapitel hinweg. Jedes `#`-Kapitel ist ein eigenes H1. Sobald der Textfluss ein
-neues H1 erreicht, wechselt der Titel oben links — das Logo rechts bleibt
-konstant, die Fußzeile zählt durch.
+## Einleitung
 
-## Aufbau des Dokuments
+Dieses Dokument ist der **strukturierte** Demonstrationsfall: ein H1-Titel, fünf
+Kapitel (H2) mit Unterabschnitten. Da `#H2 + #H3 > 5` ist, wird automatisch ein
+**Inhaltsverzeichnis** eingeblendet und jedes Kapitel beginnt auf einer **neuen
+Seite**. Der laufende Kopf zeigt das jeweils aktive Kapitel (H2).
 
-Das Dokument gliedert sich in fünf Kapitel mit unterschiedlich viel Inhalt,
-sodass die Kapitelwechsel auf verschiedene Seiten fallen und der Header
-mehrfach umschlägt.
+### Aufbau des Dokuments
 
-- Einleitung (dieses Kapitel)
-- Architektur
-- Datenfluss
-- Fehlerbehandlung
-- Anhang
+Fünf Kapitel mit unterschiedlich viel Inhalt, sodass der Kopf mehrfach umschlägt.
 
-### Hinweis zur Lesart
+#### Hinweis zur Lesart
 
-Achte beim Durchblättern auf die obere linke Ecke: Dort steht stets das Kapitel,
-in dem sich der jeweilige Seitenanfang befindet. Beginnt ein neues Kapitel mitten
-auf einer Seite, zeigt der Kopf bereits das neue Kapitel.
+Achte oben links auf das Kapitel, in dem sich der Seitenanfang befindet.
 
 Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
 tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
-no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit
-amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut
-labore et dolore magna aliquyam erat, sed diam voluptua.
+vero eos et accusam et justo duo dolores et ea rebum.
 
-# Architektur
+## Architektur
 
-Die Architektur folgt einer klaren Pipeline. Jede Stufe hat genau eine Aufgabe
-und kommuniziert über ein wohldefiniertes Format mit der nächsten.
+Die Architektur folgt einer klaren Pipeline. Jede Stufe hat genau eine Aufgabe.
 
-## Komponenten
+### Komponenten
 
-Die drei zentralen Bausteine sind Parser, Transformer und Renderer. Sie lassen
-sich unabhängig voneinander testen und austauschen.
+Die drei zentralen Bausteine lassen sich unabhängig testen.
 
 | Komponente  | Eingabe   | Ausgabe   |
 |-------------|-----------|-----------|
@@ -46,87 +33,56 @@ sich unabhängig voneinander testen und austauschen.
 | Transformer | AST       | Typst     |
 | Renderer    | Typst     | PDF/A     |
 
-### Parser
+#### Parser
 
 Der Parser liest reines Markdown und erzeugt einen abstrakten Syntaxbaum.
-Er kennt keine Layout-Details — diese Trennung hält die Stufen entkoppelt.
 
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
-tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-vero eos et accusam et justo duo dolores et ea rebum.
+#### Transformer
 
-### Transformer
-
-Der Transformer bildet den AST auf Typst-Markup ab und reichert ihn mit dem
-Layout aus dem Template an. Hier entstehen Kopf, Fuß und Schriftregeln.
+Der Transformer bildet den AST auf Typst-Markup ab.
 
 ```python
 def transform(ast: Node) -> str:
     """Bildet einen Markdown-AST auf Typst-Markup ab."""
-    out: list[str] = []
-    for node in ast.walk():
-        out.append(render_node(node))
-    return "\n".join(out)
+    return "\n".join(render(n) for n in ast.walk())
 ```
 
-## Entwurfsprinzipien
+### Entwurfsprinzipien
 
-Kleine, klar umrissene Einheiten mit einer einzigen Verantwortung. Was man nicht
-von außen verstehen kann, gehört gekapselt.
-
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
-tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
-no sea takimata sanctus est Lorem ipsum dolor sit amet.
-
-# Datenfluss
-
-Der Datenfluss ist streng gerichtet: Markdown geht hinein, PDF/A kommt heraus.
-Zwischenformate sind beobachtbar und damit gut zu debuggen.
-
-## Von Markdown zu AST
-
-Pandoc übernimmt das Parsen. Der Lua-Filter greift in dieser Phase ein und
-setzt den Dokumenttitel aus dem ersten H1 — eine Anforderung von PDF/A.
-
-> Ein Zwischenformat, das man inspizieren kann, spart später Stunden bei der
-> Fehlersuche. Sichtbarkeit schlägt Cleverness.
-
-## Von AST zu Typst
-
-Das Template definiert die gesamte Geometrie. Variablen wie Dateiname und
-Logo-Pfad werden zur Compile-Zeit injiziert, nicht hart kodiert.
-
-- Ränder und Papierformat: `#set page`
-- Schriften: `#set text` und `#show heading`
-- Kopf/Fuß: Funktionen mit `context`
-
-### Seitenzählung
-
-Die Gesamtseitenzahl ermittelt Typst über den finalen Stand des Seitenzählers.
-So steht in der Fußzeile zuverlässig `Seite x / y`.
+Kleine, klar umrissene Einheiten mit einer einzigen Verantwortung.
 
 Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
 tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
 
-## Von Typst zu PDF/A
+## Datenfluss
 
-Typst exportiert direkt nach PDF/A-3b. Eingebettete Fonts und gesetzte
-Metadaten erfüllen die Kernanforderungen des Archivstandards.
+Der Datenfluss ist streng gerichtet: Markdown hinein, PDF/A heraus.
 
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
-tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.
+### Von Markdown zu AST
 
-# Fehlerbehandlung
+Pandoc übernimmt das Parsen; der Lua-Filter setzt den Titel aus dem H1.
 
-Erwartete Fehler werden früh abgefangen und verständlich gemeldet — keine
-Stacktraces für Anwenderfehler.
+> Ein Zwischenformat, das man inspizieren kann, spart später Stunden.
 
-## Eingabevalidierung
+### Von AST zu Typst
 
-Existiert die Quelldatei nicht, bricht der Build mit klarer Meldung ab. Pfade
-werden aufgelöst, um Path-Traversal auszuschließen.
+Das Template definiert die gesamte Geometrie.
+
+#### Seitenzählung
+
+Die Gesamtseitenzahl ermittelt Typst über den finalen Stand des Zählers.
+
+### Von Typst zu PDF/A
+
+Typst exportiert direkt nach PDF/A-3b inklusive eingebetteter Fonts.
+
+## Fehlerbehandlung
+
+Erwartete Fehler werden früh abgefangen und verständlich gemeldet.
+
+### Eingabevalidierung
+
+Existiert die Quelldatei nicht, bricht der Build mit klarer Meldung ab.
 
 ```bash
 if [[ ! -f "${src}" ]]; then
@@ -135,34 +91,26 @@ if [[ ! -f "${src}" ]]; then
 fi
 ```
 
-## Fehlende Fonts
+### Fehlende Fonts
 
-Fehlen die gebündelten Fonts, greift der Build auf Systemschriften zurück statt
-abzubrechen. Das hält die Pipeline robust.
+Fehlen die gebündelten Fonts, greift der Build auf Systemschriften zurück.
 
 Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
-tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-vero eos et accusam et justo duo dolores et ea rebum.
+tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
 
-# Anhang
+## Anhang
 
 Der Anhang sammelt ergänzende Tabellen und Verweise.
 
-## Glossar
+### Glossar
 
 | Begriff | Bedeutung |
 |---------|-----------|
 | AST     | Abstrakter Syntaxbaum |
 | PDF/A   | Archivierungs-Standard für PDF |
-| XMP     | Metadatenformat im PDF |
 
-## Weiterführendes
+### Weiterführendes
 
 - Typst-Dokumentation
 - Pandoc User's Guide
 - PDF/A-Spezifikation (ISO 19005)
-
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
-tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
-no sea takimata sanctus est Lorem ipsum dolor sit amet.

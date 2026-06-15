@@ -61,15 +61,16 @@ $if(title)$
 $endif$
 
 // ---------------------------------------------------------------------------
-// Laufender Seitenkopf: aktuelles H1 links, Logo rechts, Trennlinie darunter
+// Laufender Seitenkopf: aktuelles H2-Kapitel links, Logo rechts, Linie darunter
+// (H1 ist der Dokumenttitel und erscheint NICHT im Kopf.)
 // ---------------------------------------------------------------------------
 #let doc-header = context {
   let this-page = here().page()
-  let all = query(heading.where(level: 1))
-  // Kapitel, das OBEN auf dieser Seite aktiv ist:
-  //   1) ein H1, das direkt am Seitenanfang beginnt (Seitenumbruch davor), sonst
-  //   2) das zuletzt auf einer früheren Seite begonnene H1 (Fortsetzung), sonst
-  //   3) das allererste H1 des Dokuments.
+  let all = query(heading.where(level: 2))
+  // Kapitel (H2), das OBEN auf dieser Seite aktiv ist:
+  //   1) ein H2, das direkt am Seitenanfang beginnt (Seitenumbruch davor), sonst
+  //   2) das zuletzt auf einer früheren Seite begonnene H2 (Fortsetzung), sonst
+  //   3) nichts (Titel-/TOC-Seiten vor dem ersten Kapitel).
   let at-top = all.filter(h => (
     h.location().page() == this-page and h.location().position().y < margin-top + 8mm
   ))
@@ -78,8 +79,6 @@ $endif$
     at-top.first().body
   } else if prior.len() > 0 {
     prior.last().body
-  } else if all.len() > 0 {
-    all.first().body
   } else { [] }
   grid(
     columns: (1fr, auto),
@@ -127,14 +126,55 @@ $endif$
 #set text(font: "Source Sans 3", size: 11pt, lang: "$if(lang)$$lang$$else$de$endif$")
 #set par(justify: true, leading: 0.65em)
 
-#show heading: set text(font: "Source Serif 4", weight: "semibold", fill: head-color)
-#show heading.where(level: 1): set text(size: 20pt)
-#show heading.where(level: 2): set text(size: 16pt)
-#show heading.where(level: 3): set text(size: 13pt)
-#show heading.where(level: 4): set text(size: 11.5pt)
-#show heading.where(level: 5): set text(size: 11pt)
-#show heading.where(level: 6): set text(size: 10pt)
-#show heading: it => block(above: 1.2em, below: 0.6em, it)
+// H1 (Dokumenttitel) erscheint nicht im Inhaltsverzeichnis.
+#show heading.where(level: 1): set heading(outlined: false)
+
+// Schrift/Farbe für alle Überschriften.
+#let heading-text(size, body) = text(
+  font: "Source Serif 4", weight: "semibold", fill: head-color, size: size, body,
+)
+
+// "Strukturiert" = (#H2 + #H3) > 5 -> TOC + Umbruch vor jedem Kapitel.
+// Wichtig: `it` darf NICHT in einem context realisiert werden (sonst greift
+// Typsts Rekursionsschutz nicht). Daher nur Zählung/TOC/Umbruch im context.
+// H1 = Titel (+ bedingtes TOC), H2 = Kapitel, H3-H6 abgestuft.
+#show heading: it => {
+  if it.level == 1 {
+    // Titel zentriert, mit Luft nach unten.
+    block(width: 100%, above: 0.4em, below: 1.2em,
+      align(center, heading-text(26pt, it.body)))
+    context {
+      if query(heading).filter(h => h.level == 2 or h.level == 3).len() > 5 {
+        // "Inhalt" als Text (kein Heading -> sonst Rekursion der Show-Regel),
+        // mit deutlich Abstand nach oben und unten.
+        block(above: 2.0em, below: 1.2em, heading-text(15pt, [Inhalt]))
+        outline(title: none, depth: 3)
+        pagebreak(weak: true)
+      }
+    }
+  } else if it.level == 2 {
+    context {
+      if query(heading).filter(h => h.level == 2 or h.level == 3).len() > 5 {
+        pagebreak(weak: true)
+      }
+    }
+    block(above: 1.2em, below: 0.6em, heading-text(16pt, it))
+  } else {
+    let size = (13pt, 11.5pt, 11pt, 10pt).at(it.level - 3)
+    block(above: 1.2em, below: 0.6em, heading-text(size, it))
+  }
+}
+
+// Inhaltsverzeichnis lichter: mehr Luft zwischen den Einträgen und Inhalt
+// höchstens in "Book" (wght 450, nicht fett) – das Default-Bold der obersten
+// Ebene wird neutralisiert.
+#let toc-entry(spacing, body) = block(above: spacing, below: 0pt, {
+  show strong: s => s.body
+  set text(weight: 450, size: 14pt) // TOC-Schriftgrad
+  body
+})
+#show outline.entry.where(level: 2): it => toc-entry(1.0em, it)
+#show outline.entry.where(level: 3): it => toc-entry(0.5em, it)
 
 #show raw: set text(font: "Source Code Pro", size: 9.5pt)
 #show raw.where(block: true): it => block(

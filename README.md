@@ -67,7 +67,9 @@ verbleibt im Installpfad und wird über die Verknüpfung aufgerufen.
 | Format | DIN A4 Hochformat |
 | Ränder | oben 40 mm · links 30 mm · rechts 20 mm · unten 30 mm |
 | PDF-Standard | PDF/A-3b |
-| Kopf links | aktuelles H1 (dynamischer Running Header) |
+| **H1** | **Dokumenttitel** — genau einmal (mehrfaches H1 = Build-Fehler), eröffnet das Dokument |
+| **H2** | **Kapitel** — aktuelles Kapitel läuft dynamisch im Kopf links mit |
+| **TOC** | bedingt: ab `#H2 + #H3 > 5` → Inhaltsverzeichnis (über H2/H3) **und** jedes Kapitel beginnt auf neuer Seite |
 | Kopf rechts | Logo (`logo.svg` → `.png` → `.jpg`), Höhe 25 mm, am rechten Rand ausgerichtet |
 | Fuß links | Quell-Dateiname |
 | Fuß rechts | `Seite x / y` |
@@ -77,20 +79,58 @@ verbleibt im Installpfad und wird über die Verknüpfung aufgerufen.
 | Fließtext | Source Sans 3 |
 | Code | Source Code Pro |
 
+### Dokumentstruktur
+
+Die Überschriftenebenen haben feste Rollen:
+
+- **H1 = Dokumenttitel.** Muss **genau einmal** vorkommen — bei mehreren H1
+  bricht der Build mit klarer Meldung ab (`filters/meta-from-h1.lua`). Das H1
+  liefert zugleich den PDF-Titel (PDF/A-Pflicht), wird **zentriert** gesetzt und
+  erscheint **nicht** im Kopf und **nicht** im Inhaltsverzeichnis.
+- **H2 = Kapitel.** Das jeweils aktive Kapitel läuft dynamisch im Seitenkopf
+  links mit.
+- **H3 und tiefer = Unterabschnitte.**
+
+**Bedingtes Inhaltsverzeichnis (TOC):** Sind mehr als fünf H2- und
+H3-Überschriften vorhanden (**`#H2 + #H3 > 5`**), schaltet das Template
+automatisch in den *strukturierten* Modus:
+
+- ein **Inhaltsverzeichnis** über H2/H3 (mit Seitenzahlen, klickbar) direkt
+  nach dem Titel, und
+- jedes **Kapitel (H2) beginnt auf einer neuen Seite**.
+
+Bei fünf oder weniger bleibt das Dokument *kompakt*: kein TOC, Kapitel fließen
+ohne Seitenumbruch. Der Schwellenwert ist eine einzige Stelle in
+`template.typ`.
+
+### Typografie (Schriftgrade)
+
+| Element | Schrift | Grad |
+|---------|---------|------|
+| Fließtext | Source Sans 3 | 11 pt |
+| Titel (H1) | Source Serif 4 semibold | 26 pt, zentriert |
+| Kapitel (H2) | Source Serif 4 semibold | 16 pt |
+| H3 / H4 / H5 / H6 | Source Serif 4 semibold | 13 / 11,5 / 11 / 10 pt |
+| TOC-Titel „Inhalt" | Source Serif 4 semibold | 15 pt |
+| TOC-Einträge | Source Sans 3 | 14 pt, Book (`wght` 450) |
+| Kopf (Kapitel) | Source Serif 4 semibold | 11 pt |
+| Code | Source Code Pro | 9,5 pt |
+| Fußzeile | Source Sans 3 | 9 pt |
+
 ## Aufbau
 
 ```
 template.typ              Pandoc-Typst-Template: gesamtes Seitenlayout
-filters/meta-from-h1.lua  setzt Dokumenttitel (PDF/A) aus erstem H1
+filters/meta-from-h1.lua  Dokumenttitel (PDF/A) aus H1, erzwingt genau ein H1
 scripts/build.sh          Pipeline Markdown -> PDF/A (macOS/Linux)
 scripts/fetch-fonts.sh    bündelt Variable Source-Fonts nach ./fonts
 scripts/install.ps1       Windows-Setup: Fonts + "Senden an"-Verknüpfung
 scripts/convert.ps1       Windows-Konverter (von "Senden an" aufgerufen)
 fonts/                    gebündelte Schriften (Variable TTF)
 logo.svg                  Kopf-Logo
-example.md                kurzes Beispieldokument
-long-example.md           mehrseitiges Beispiel (Header-Wechsel je Kapitel)
-showcase.md               Markdown-Schaukasten (alle Elemente)
+example.md                kompaktes Beispiel (kein TOC, H2 inline)
+long-example.md           strukturiertes Beispiel (Titel + TOC + Kapitelseiten)
+showcase.md               Markdown-Schaukasten (alle Elemente, strukturiert)
 ```
 
 ## Anpassen
