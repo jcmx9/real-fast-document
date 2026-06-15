@@ -1,27 +1,24 @@
 # Schnellstart
 
-Dieses Dokument demonstriert die Pipeline **Markdown → Pandoc → Typst → PDF/A**.
-Der laufende Seitenkopf zeigt links das *aktuelle* H1, rechts das Logo; die
-Fußzeile trägt links den Dateinamen und rechts die Seitenzählung.
+Dieses Dokument demonstriert die Pipeline **Markdown → Pandoc → Typst → PDF/A**
+im **kompakten** Modus: ein H1-Titel, wenige Kapitel. Da `#H2 + #H3 ≤ 5` ist,
+gibt es **kein Inhaltsverzeichnis** und die Kapitel (H2) fließen ohne
+Seitenumbruch. Der laufende Kopf zeigt das aktive Kapitel (H2).
 
 ## Worum es geht
 
-Quelle ist reines Markdown. Ein kleiner Lua-Filter zieht das erste `#`-Element
-als Dokumenttitel in die PDF-Metadaten (von PDF/A gefordert). Das Layout — Ränder,
-Fonts, Kopf und Fuß — lebt vollständig im Typst-Template.
+Quelle ist reines Markdown. Ein Lua-Filter zieht das H1 als Dokumenttitel in die
+PDF-Metadaten (von PDF/A gefordert). Das Layout — Ränder, Fonts, Kopf und Fuß —
+lebt vollständig im Typst-Template.
 
 - DIN A4 Hochformat
 - Ränder: oben 40 mm, links 30 mm, rechts 20 mm, unten 30 mm
 - Überschriften in *Source Serif 4*, Fließtext in *Source Sans 3*
-- Code in *Source Code Pro*
 
 ### Inline-Elemente
 
 Inline-Code wie `pandoc --to typst` wird in der Monospace-Schrift gesetzt.
 Links funktionieren ebenfalls: [Typst](https://typst.app).
-
-> Ein Blockzitat zur Auflockerung. Typst setzt es mit hängendem Einzug,
-> der Fließtext bleibt im Blocksatz.
 
 ## Codebeispiel
 
@@ -36,20 +33,8 @@ def build(src: Path, out: Path) -> None:
 
 ## Tabelle
 
-| Bereich | Wert        |
-|---------|-------------|
-| Format  | DIN A4      |
-| Standard| PDF/A-3b    |
-| Engine  | Typst 0.14  |
-
-# Zweiter Abschnitt
-
-Dieses zweite H1 zeigt, dass der Seitenkopf **dynamisch** mitläuft: Sobald der
-Text diesen Abschnitt erreicht, wechselt die Kopfzeile auf „Zweiter Abschnitt".
-
-## Mehr Text
-
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
-tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
-no sea takimata sanctus est Lorem ipsum dolor sit amet.
+| Bereich  | Wert        |
+|----------|-------------|
+| Format   | DIN A4      |
+| Standard | PDF/A-3b    |
+| Engine   | Typst 0.15  |

@@ -67,7 +67,9 @@ verbleibt im Installpfad und wird über die Verknüpfung aufgerufen.
 | Format | DIN A4 Hochformat |
 | Ränder | oben 40 mm · links 30 mm · rechts 20 mm · unten 30 mm |
 | PDF-Standard | PDF/A-3b |
-| Kopf links | aktuelles H1 (dynamischer Running Header) |
+| **H1** | **Dokumenttitel** — genau einmal (mehrfaches H1 = Build-Fehler), eröffnet das Dokument |
+| **H2** | **Kapitel** — aktuelles Kapitel läuft dynamisch im Kopf links mit |
+| **TOC** | bedingt: ab `#H2 + #H3 > 5` → Inhaltsverzeichnis (über H2/H3) **und** jedes Kapitel beginnt auf neuer Seite |
 | Kopf rechts | Logo (`logo.svg` → `.png` → `.jpg`), Höhe 25 mm, am rechten Rand ausgerichtet |
 | Fuß links | Quell-Dateiname |
 | Fuß rechts | `Seite x / y` |
@@ -77,20 +79,28 @@ verbleibt im Installpfad und wird über die Verknüpfung aufgerufen.
 | Fließtext | Source Sans 3 |
 | Code | Source Code Pro |
 
+### Dokumentstruktur
+
+- **H1 = Titel** (genau einmal). Liefert zugleich den PDF-Titel (Lua-Filter).
+- **H2 = Kapitel** (im Kopf), **H3+** = Unterabschnitte.
+- Ab **`#H2 + #H3 > 5`** schaltet das Template automatisch in den
+  „strukturierten" Modus: Inhaltsverzeichnis + Kapitel auf eigenen Seiten.
+  Darunter bleibt es kompakt (kein TOC, Kapitel fließen inline).
+
 ## Aufbau
 
 ```
 template.typ              Pandoc-Typst-Template: gesamtes Seitenlayout
-filters/meta-from-h1.lua  setzt Dokumenttitel (PDF/A) aus erstem H1
+filters/meta-from-h1.lua  Dokumenttitel (PDF/A) aus H1, erzwingt genau ein H1
 scripts/build.sh          Pipeline Markdown -> PDF/A (macOS/Linux)
 scripts/fetch-fonts.sh    bündelt Variable Source-Fonts nach ./fonts
 scripts/install.ps1       Windows-Setup: Fonts + "Senden an"-Verknüpfung
 scripts/convert.ps1       Windows-Konverter (von "Senden an" aufgerufen)
 fonts/                    gebündelte Schriften (Variable TTF)
 logo.svg                  Kopf-Logo
-example.md                kurzes Beispieldokument
-long-example.md           mehrseitiges Beispiel (Header-Wechsel je Kapitel)
-showcase.md               Markdown-Schaukasten (alle Elemente)
+example.md                kompaktes Beispiel (kein TOC, H2 inline)
+long-example.md           strukturiertes Beispiel (Titel + TOC + Kapitelseiten)
+showcase.md               Markdown-Schaukasten (alle Elemente, strukturiert)
 ```
 
 ## Anpassen

@@ -1,9 +1,12 @@
 # Markdown-Schaukasten
 
-Dieses Dokument zeigt möglichst viele Markdown- und Pandoc-Elemente, um das
-Layout-Template zu prüfen. Es dient zugleich als visueller Regressionstest.
+Dieses Dokument zeigt möglichst viele Markdown- und Pandoc-Elemente und dient
+als visueller Regressionstest. Es ist **strukturiert** (mehr als fünf H2+H3),
+daher mit Inhaltsverzeichnis und Kapiteln auf eigenen Seiten.
 
-## Textauszeichnung
+## Textebene
+
+### Textauszeichnung
 
 Normaler Text mit *kursiv*, **fett**, ***fett-kursiv***, ~~durchgestrichen~~,
 `inline-code`, H~2~O (tiefgestellt) und E = mc^2^ (hochgestellt). Ein
@@ -15,19 +18,9 @@ Ein Link [zur Typst-Website](https://typst.app), ein automatischer Link
 
 [doku]: https://typst.app/docs "Typst-Dokumentation"
 
-## Überschriftenebenen
+### Listen
 
-### Ebene 3
-
-#### Ebene 4
-
-##### Ebene 5
-
-###### Ebene 6
-
-## Listen
-
-### Ungeordnet und verschachtelt
+Ungeordnet und verschachtelt:
 
 - Erster Punkt
 - Zweiter Punkt
@@ -36,7 +29,7 @@ Ein Link [zur Typst-Website](https://typst.app), ein automatischer Link
     - Noch tiefer
 - Dritter Punkt
 
-### Geordnet
+Geordnet:
 
 1. Schritt eins
 2. Schritt zwei
@@ -44,13 +37,13 @@ Ein Link [zur Typst-Website](https://typst.app), ein automatischer Link
    2. Teilschritt
 3. Schritt drei
 
-### Aufgabenliste
+Aufgabenliste:
 
 - [x] Template erstellt
 - [x] PDF/A-Export
 - [ ] Offener Punkt
 
-## Definitionsliste
+### Definitionsliste
 
 AST
 :   Abstrakter Syntaxbaum — die Baumdarstellung des geparsten Markdown.
@@ -59,7 +52,7 @@ PDF/A
 :   Archivierungs-Standard für PDF.
 :   Mehrere Definitionen pro Begriff sind möglich.
 
-## Zitate
+### Zitate
 
 > Ein einfaches Blockzitat.
 >
@@ -67,9 +60,11 @@ PDF/A
 >
 > Zurück auf der ersten Ebene.
 
-## Code
+## Blöcke
 
-Inline `print("hi")` und ein gehighlighteter Block:
+### Code
+
+Inline `print("hi")` und gehighlightete Blöcke:
 
 ```python
 from pathlib import Path
@@ -91,17 +86,17 @@ typst compile doc.typ doc.pdf --pdf-standard a-3b
 { "format": "DIN A4", "standard": "PDF/A-3b", "engine": "Typst" }
 ```
 
-## Tabellen
+### Tabellen
 
-### Pipe-Tabelle mit Ausrichtung
+Pipe-Tabelle mit Ausrichtung:
 
 | Links        |   Zentriert   |        Rechts |
 |:-------------|:-------------:|--------------:|
 | Format       |    DIN A4     |       210 mm  |
 | Standard     |   PDF/A-3b    |          ISO  |
-| Engine       |    Typst      |        0.14   |
+| Engine       |    Typst      |        0.15   |
 
-### Grid-Tabelle
+Grid-Tabelle:
 
 +---------------+---------------------------+
 | Komponente    | Aufgabe                   |
@@ -111,7 +106,7 @@ typst compile doc.typ doc.pdf --pdf-standard a-3b
 | Renderer      | Typst → PDF/A             |
 +---------------+---------------------------+
 
-## Mathematik
+### Mathematik
 
 Inline-Mathe: $E = mc^2$ sowie $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$.
 
@@ -119,11 +114,11 @@ Abgesetzte Formel:
 
 $$\int_0^\infty e^{-x}\,dx = 1 \qquad \text{und} \qquad a^2 + b^2 = c^2$$
 
-## Bild
+### Bild
 
 ![Das Projekt-Logo als eingebettete SVG-Grafik.](logo.svg){ width=60mm }
 
-## Fußnoten
+### Fußnoten
 
 Hier steht ein Satz mit einer Fußnote.[^1] Und noch eine weitere.[^lang]
 
@@ -132,20 +127,20 @@ Hier steht ein Satz mit einer Fußnote.[^1] Und noch eine weitere.[^lang]
 [^lang]: Eine längere Fußnote mit mehreren Sätzen. Fußnoten erscheinen am
     unteren Rand der Seite, oberhalb der Fußzeile.
 
-## Trennlinie
+## Überschriften und Trennlinien
+
+### Ebene 3
+
+#### Ebene 4
+
+##### Ebene 5
+
+###### Ebene 6
+
+### Trennlinie
 
 Über der Linie.
 
 ---
 
 Unter der Linie.
-
-# Zweites Kapitel
-
-Ein zweites H1, damit der laufende Seitenkopf den Kapitelwechsel zeigt. Der
-restliche Fließtext füllt die Seite.
-
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod
-tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
-vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
-no sea takimata sanctus est Lorem ipsum dolor sit amet.
