@@ -1,0 +1,21 @@
+# Standard: Textdateien normalisiert auf LF im Repo
+* text=auto eol=lf
+
+# Shell-Skripte zwingend LF (sonst bricht der Shebang/bash unter Unix)
+*.sh    text eol=lf
+
+# PowerShell-Skripte mit CRLF im Working Tree (Windows)
+*.ps1   text eol=crlf
+
+# Lua/Typst/Markdown als Text mit LF
+*.lua   text eol=lf
+*.typ   text eol=lf
+*.md    text eol=lf
+*.svg   text eol=lf
+
+# Binärdateien nicht anfassen
+*.ttf   binary
+*.otf   binary
+*.pdf   binary
+*.png   binary
+*.jpg   binary

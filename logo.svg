@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" role="img" aria-label="real-fast-document">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f6df0"/>
+      <stop offset="1" stop-color="#7b3ff0"/>
+    </linearGradient>
+  </defs>
+  <!-- Mark: document sheet with a fast/lightning notch -->
+  <g>
+    <rect x="6" y="10" width="44" height="60" rx="8" fill="url(#g)"/>
+    <path d="M30 22 L20 44 L29 44 L25 58 L40 36 L31 36 Z" fill="#ffffff"/>
+  </g>
+  <!-- Wordmark -->
+  <g font-family="'Source Serif 4','Source Serif Pro',Georgia,serif" fill="#333333">
+    <text x="64" y="40" font-size="22" font-weight="600">real·fast</text>
+    <text x="64" y="64" font-size="15" font-weight="400" fill="#666666" letter-spacing="3">DOCUMENT</text>
+  </g>
+</svg>
