@@ -4,7 +4,7 @@
   Windows-Einrichtung von real-fast-document.
 .DESCRIPTION
   Zwei Aufgaben:
-    * Fonts   - laedt die statischen Source-Fonts ins Projekt (./fonts).
+    * Fonts   - laedt die Variable Source-Fonts ins Projekt (./fonts).
     * SendTo  - legt eine "Senden an"-Verknuepfung an, die eine .md per
                 convert.ps1 nach PDF/A wandelt und im Quellverzeichnis ablegt.
 

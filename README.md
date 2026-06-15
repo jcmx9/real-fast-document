@@ -83,10 +83,10 @@ verbleibt im Installpfad und wird über die Verknüpfung aufgerufen.
 template.typ              Pandoc-Typst-Template: gesamtes Seitenlayout
 filters/meta-from-h1.lua  setzt Dokumenttitel (PDF/A) aus erstem H1
 scripts/build.sh          Pipeline Markdown -> PDF/A (macOS/Linux)
-scripts/fetch-fonts.sh    bündelt statische Source-Fonts nach ./fonts
+scripts/fetch-fonts.sh    bündelt Variable Source-Fonts nach ./fonts
 scripts/install.ps1       Windows-Setup: Fonts + "Senden an"-Verknüpfung
 scripts/convert.ps1       Windows-Konverter (von "Senden an" aufgerufen)
-fonts/                    gebündelte Schriften (statische OTF)
+fonts/                    gebündelte Schriften (Variable TTF)
 logo.svg                  Kopf-Logo
 example.md                kurzes Beispieldokument
 long-example.md           mehrseitiges Beispiel (Header-Wechsel je Kapitel)
