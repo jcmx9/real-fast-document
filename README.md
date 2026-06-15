@@ -131,6 +131,8 @@ logo.svg                  Kopf-Logo
 example.md                kompaktes Beispiel (kein TOC, H2 inline)
 long-example.md           strukturiertes Beispiel (Titel + TOC + Kapitelseiten)
 showcase.md               Markdown-Schaukasten (alle Elemente, strukturiert)
+faust.md                  Großbeispiel: Goethes Faust I, 158 Seiten (gemeinfrei,
+                          Project Gutenberg #2229) — Verse als Pandoc Line Blocks
 CLAUDE.md                 Architektur-/Befehls-Hinweise (für Claude Code & Mitwirkende)
 ```
 
