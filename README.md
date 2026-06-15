@@ -70,7 +70,7 @@ verbleibt im Installpfad und wird über die Verknüpfung aufgerufen.
 | **H1** | **Dokumenttitel** — genau einmal (mehrfaches H1 = Build-Fehler), eröffnet das Dokument |
 | **H2** | **Kapitel** — aktuelles Kapitel läuft dynamisch im Kopf links mit |
 | **TOC** | bedingt: ab `#H2 + #H3 > 5` → Inhaltsverzeichnis (über H2/H3) **und** jedes Kapitel beginnt auf neuer Seite |
-| Kopf rechts | Logo (`logo.svg` → `.png` → `.jpg`), Höhe 25 mm, am rechten Rand ausgerichtet |
+| Kopf rechts | Logo (`logo.svg` → `.png` → `.jpg`), Höhe 25 mm, rechtsbündig — **optional** (ohne Logo bleibt die rechte Kopfseite leer) |
 | Fuß links | Quell-Dateiname |
 | Fuß rechts | `Seite x / y` |
 | Trennlinien | unter dem Kopftext, über dem Fußtext |
@@ -138,7 +138,9 @@ showcase.md               Markdown-Schaukasten (alle Elemente, strukturiert)
 - **Logo / Dateiname** werden zur Compile-Zeit als Typst-`--input` übergeben
   (siehe `scripts/build.sh`); im Template über `sys.inputs` gelesen. Das Logo
   wird in der Reihenfolge `logo.svg` → `logo.png` → `logo.jpg` gewählt (erstes
-  vorhandenes). Höhe im Template über `logo-height` (Standard 25 mm).
+  vorhandenes). Höhe im Template über `logo-height` (Standard 25 mm). Das Logo
+  ist **optional**: fehlt es, baut die Pipeline mit einem Hinweis weiter und der
+  Kopf bleibt rechts leer.
 - **Ränder, Fonts, Farben** stehen gesammelt oben in `template.typ`
   (`#set page`, `#set text`, `head-color`).
 - **Anderer PDF/A-Grad**: `standard` in `scripts/build.sh` ändern

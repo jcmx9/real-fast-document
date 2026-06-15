@@ -6,6 +6,12 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+### Changed
+- The logo is now **optional**: if no `logo.svg`/`.png`/`.jpg` is found, the
+  build continues with a notice instead of aborting, and the header is rendered
+  without a logo (right side empty). Affects `build.sh`, `convert.ps1` and
+  `template.typ`.
+
 ## [26.6.1] - 2026-06-15
 
 ### Changed
