@@ -94,6 +94,15 @@ When scripting a merge+tag+release, **verify the merge landed in `main` before t
 mergeability; a `set -e`-less script will otherwise tag the wrong commit). Poll
 `gh pr view N --json mergeable` until `MERGEABLE` first.
 
+The README is dogfooded: `bash scripts/build.sh README.md README.pdf` renders it through
+the pipeline, and that PDF is attached to GitHub releases as an asset (it is not committed).
+
 Generated artifacts (`*.pdf`, generated `*.typ`, `_*.png`) are git-ignored;
 `template.typ` is the one tracked `.typ`. `.gitignore` globs `*.typ` are dangerous with
 `rm` — clean scratch with `find . -maxdepth 1 -name '*.typ' ! -name 'template.typ' -delete`.
+
+The user's **global** excludesfile (`~/.gitignore`) ignores `CLAUDE.md` (and possibly other
+names) across all repos: silently-ignored new files never appear in `git status`, so
+`git add` skips them without error. Use `git check-ignore -v <file>` to diagnose and
+`git add -f <file>` to track an intentionally-ignored file (`CLAUDE.md` is already tracked
+here, so further edits commit normally).

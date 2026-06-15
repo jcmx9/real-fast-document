@@ -6,6 +6,13 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.4] - 2026-06-15
+
+### Changed
+- `CLAUDE.md`: document the global `~/.gitignore` trap (silently-ignored files,
+  `git check-ignore -v` / `git add -f`) and the dogfooded README (rendered
+  through the pipeline and attached to releases).
+
 ## [26.6.3] - 2026-06-15
 
 ### Added
