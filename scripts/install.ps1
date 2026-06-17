@@ -38,28 +38,42 @@ $FontDir       = Join-Path $ProjectRoot 'fonts'
 $ConvertScript = Join-Path $PSScriptRoot 'convert.ps1'
 $ShortcutName  = 'Nach PDF-A (real-fast-document).lnk'
 
-# Variable Fonts (Source Serif 4 / Sans 3 / Code Pro, je Roman + Italic) von
-# Google Fonts. Typst >= 0.15 unterstuetzt Variable Fonts. Lizenz: SIL OFL 1.1.
-$FontUrls = @(
-  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/SourceSerif4%5Bopsz,wght%5D.ttf'
-  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourceserif4/SourceSerif4-Italic%5Bopsz,wght%5D.ttf'
-  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourcesans3/SourceSans3%5Bwght%5D.ttf'
-  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourcesans3/SourceSans3-Italic%5Bwght%5D.ttf'
-  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourcecodepro/SourceCodePro%5Bwght%5D.ttf'
-  'https://raw.githubusercontent.com/google/fonts/main/ofl/sourcecodepro/SourceCodePro-Italic%5Bwght%5D.ttf'
+# Variable OTF (CFF2) der Source-Familien (Source Serif 4 / Sans 3 / Code Pro,
+# je Roman/Upright + Italic) aus den Adobe-Upstream-Releases. Google Fonts
+# liefert diese Familien nur als TTF; variable OTF gibt es nur bei Adobe.
+# Typst >= 0.15 rendert variable OTF. Lizenz: SIL OFL 1.1.
+$FontZips = @(
+  @{ Url   = 'https://github.com/adobe-fonts/source-serif/releases/download/4.005R/source-serif-4.005_Desktop.zip'
+     Files = @('SourceSerif4Variable-Roman.otf', 'SourceSerif4Variable-Italic.otf') }
+  @{ Url   = 'https://github.com/adobe-fonts/source-sans/releases/download/3.052R/VF-source-sans-3.052R.zip'
+     Files = @('SourceSans3VF-Upright.otf', 'SourceSans3VF-Italic.otf') }
+  @{ Url   = 'https://github.com/adobe-fonts/source-code-pro/releases/download/2.042R-u/1.062R-i/1.026R-vf/VF-source-code-VF-1.026R.zip'
+     Files = @('SourceCodeVF-Upright.otf', 'SourceCodeVF-Italic.otf') }
 )
 
 function Install-Fonts {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
   New-Item -ItemType Directory -Force -Path $FontDir | Out-Null
 
-  foreach ($url in $FontUrls) {
-    $name = [Uri]::UnescapeDataString((Split-Path -Leaf $url))
-    $dest = Join-Path $FontDir $name
-    Write-Host "-> $name"
-    Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
+  $tmp = Join-Path ([IO.Path]::GetTempPath()) ('rfd-fonts-' + [Guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+  try {
+    foreach ($z in $FontZips) {
+      $zip = Join-Path $tmp ([IO.Path]::GetFileName($z.Url))
+      Invoke-WebRequest -Uri $z.Url -OutFile $zip -UseBasicParsing
+      $dest = Join-Path $tmp ([IO.Path]::GetFileNameWithoutExtension($zip))
+      Expand-Archive -LiteralPath $zip -DestinationPath $dest -Force
+      foreach ($file in $z.Files) {
+        $src = Get-ChildItem -LiteralPath $dest -Recurse -Filter $file | Select-Object -First 1
+        if (-not $src) { throw "Font nicht im Zip gefunden: $file" }
+        Write-Host "-> $file"
+        Copy-Item -LiteralPath $src.FullName -Destination (Join-Path $FontDir $file) -Force
+      }
+    }
+  } finally {
+    Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
   }
-  Write-Host "OK  Variable Fonts -> $FontDir" -ForegroundColor Green
+  Write-Host "OK  Variable OTF -> $FontDir" -ForegroundColor Green
 }
 
 function Get-SendToDir {

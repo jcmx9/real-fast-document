@@ -100,7 +100,7 @@ $endif$
   let total = counter(page).final().first()
   line(length: 100%, stroke: rule-stroke)
   v(2pt)
-  set text(font: "Source Sans 3", size: 9pt, fill: head-color)
+  set text(font: "SourceSans3VF", size: 9pt, fill: head-color)
   grid(
     columns: (1fr, auto),
     align: (left + top, right + top),
@@ -124,7 +124,7 @@ $endif$
 // ---------------------------------------------------------------------------
 // Fließtext, Überschriften, Code
 // ---------------------------------------------------------------------------
-#set text(font: "Source Sans 3", size: 11pt, lang: "$if(lang)$$lang$$else$de$endif$")
+#set text(font: "SourceSans3VF", size: 11pt, lang: "$if(lang)$$lang$$else$de$endif$")
 #set par(justify: true, leading: 0.65em)
 
 // H1 (Dokumenttitel) erscheint nicht im Inhaltsverzeichnis.
@@ -177,7 +177,7 @@ $endif$
 #show outline.entry.where(level: 2): it => toc-entry(1.0em, it)
 #show outline.entry.where(level: 3): it => toc-entry(0.5em, it)
 
-#show raw: set text(font: "Source Code Pro", size: 9.5pt)
+#show raw: set text(font: "SourceCodeVF", size: 9.5pt)
 #show raw.where(block: true): it => block(
   fill: luma(245),
   inset: 8pt,

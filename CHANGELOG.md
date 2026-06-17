@@ -11,6 +11,14 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   PDF/A; verse via Pandoc line blocks, scenes as H2). Public domain, sourced
   from Project Gutenberg (eBook #2229).
 
+### Changed
+- Bundled fonts switched from variable **TTF** (Google Fonts) to variable
+  **OTF/CFF2** (Adobe upstream releases): Source Serif 4 (4.005R), Source Sans 3
+  (3.052R), Source Code Pro (1.026vf), each Roman/Upright + Italic.
+  `fetch-fonts.sh` / `install.ps1` now download the Adobe release zips and
+  extract the variable OTF. `template.typ` references the OTF family names
+  (`SourceSans3VF`, `SourceCodeVF`; Serif stays `Source Serif 4`).
+
 ## [26.6.4] - 2026-06-15
 
 ### Changed

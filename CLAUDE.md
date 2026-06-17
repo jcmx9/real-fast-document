@@ -33,8 +33,9 @@ pandoc SRC.md -f markdown -t typst -s --template template.typ \
   --lua-filter filters/meta-from-h1.lua --syntax-highlighting pygments -o _tmp.typ
 typst compile _tmp.typ --font-path fonts --ignore-system-fonts \
   --input filename=OUT.pdf --input logo=logo.svg --input source=SRC.md \
-  --format png --ppi 120 _page-{p}.png
-# then open / Read the _page-*.png, then clean up scratch files
+  --format png --ppi 120 preview-{p}.png
+# then open / Read the preview-*.png, then clean up scratch files
+# (`preview-*.png` is the git-ignored scratch name — other PNG names show up in `git status`)
 ```
 
 `mutool extract FILE.pdf` (mupdf) pulls the embedded Markdown back out; check PDF/A
@@ -46,9 +47,16 @@ so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confir
 - **Typst ≥ 0.15 is mandatory** — the project uses variable fonts (the `wght` axis gives the
   semibold heading weight). `build.sh` hard-errors below 0.15. Homebrew may still ship 0.14;
   on this machine a 0.15 binary lives at `~/.local/bin/typst` (earlier in `PATH` than brew).
-- Fonts are **bundled variable TTFs** in `fonts/` and used via `--font-path fonts
-  --ignore-system-fonts` (reproducible). Typst's *embedded* math font still works under
-  `--ignore-system-fonts`, so math renders without bundling a math font.
+- Fonts are **bundled variable OTFs (CFF2)** in `fonts/` (Source Serif 4 / Sans 3 / Code Pro,
+  each Roman/Upright + Italic) and used via `--font-path fonts --ignore-system-fonts`
+  (reproducible). They come from the **Adobe** upstream releases, fetched by `fetch-fonts.sh`
+  (and `install.ps1`): `google/fonts` only ships these families as TTF — variable OTF exist
+  only at Adobe. Typst's *embedded* math font still works under `--ignore-system-fonts`, so
+  math renders without bundling a math font.
+- **Font-family names differ by family**: the variable OTF expose `Source Serif 4` but
+  `SourceSans3VF` and `SourceCodeVF` (internal VF names, *not* "Source Sans 3" / "Source Code
+  Pro"). `template.typ` must reference exactly those names. Verify what Typst sees with
+  `typst fonts --font-path fonts --ignore-system-fonts`.
 
 ## Architecture
 
@@ -97,7 +105,10 @@ mergeability; a `set -e`-less script will otherwise tag the wrong commit). Poll
 The README is dogfooded: `bash scripts/build.sh README.md README.pdf` renders it through
 the pipeline, and that PDF is attached to GitHub releases as an asset (it is not committed).
 
-Generated artifacts (`*.pdf`, generated `*.typ`, `_*.png`) are git-ignored;
+Generated artifacts (`*.pdf`, generated `*.typ`, `preview-*.png`) are git-ignored —
+note only `preview-*.png` matches, so scratch PNGs under any other name pollute
+`git status`. `build.sh` leaves the Pandoc intermediate as `<base>.typ` in the root
+(e.g. `example.typ`), itself git-ignored by `*.typ`.
 `template.typ` is the one tracked `.typ`. `.gitignore` globs `*.typ` are dangerous with
 `rm` — clean scratch with `find . -maxdepth 1 -name '*.typ' ! -name 'template.typ' -delete`.
 
