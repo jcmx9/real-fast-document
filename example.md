@@ -53,11 +53,11 @@ Verschachtelte und nummerierte Listen werden sauber gesetzt:
 
 Tabellen folgen der gewohnten Pipe-Syntax:
 
-| Element       | Schrift           | Beispiel        |
-|---------------|-------------------|-----------------|
-| Fließtext     | Source Sans 3     | dieser Absatz   |
-| Überschriften | Source Serif 4    | "Tabellen"      |
-| Code          | Source Code Pro   | `print("hi")`   |
+| Element       | Schrift         | Beispiel      |
+| ------------- | --------------- | ------------- |
+| Fließtext     | Source Sans 3   | dieser Absatz |
+| Überschriften | Source Serif 4  | "Tabellen"    |
+| Code          | Source Code Pro | `print("hi")` |
 
 ### Bilder
 
