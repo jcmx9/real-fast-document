@@ -21,9 +21,54 @@ fi
 
 src="${1:-example.md}"
 base="$(basename "${src%.*}")"
-out="${2:-${base}.pdf}"
 typ="${base}.typ"
 standard="a-3b"
+
+# Optionalen YAML-Frontmatter (führender ---...---) parsen: nur diese vier
+# Schlüssel, CRLF-tolerant. toc/h2-break/filename nur exakt true|false, sonst
+# bleibt der Default. (if-Blöcke statt `[[ ]] && x=`, sonst beendet set -e das
+# Skript, sobald eine Bedingung falsch ist.)
+fm_date=""
+fm_toc="auto"
+fm_break="auto"
+fm_showname="true"
+if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
+  block="$(awk 'NR==1 { next } /^---[[:space:]]*$/ { exit } { print }' "${src}" | tr -d '\r')"
+  while IFS= read -r line; do
+    case "${line}" in
+      date:*)
+        fm_date="$(printf '%s' "${line#date:}" \
+          | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+                -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'\$//")"
+        ;;
+      toc:*)
+        v="$(printf '%s' "${line#toc:}" | tr -d '[:space:]')"
+        if [[ "${v}" == "true" || "${v}" == "false" ]]; then fm_toc="${v}"; fi
+        ;;
+      h2-break:*)
+        v="$(printf '%s' "${line#h2-break:}" | tr -d '[:space:]')"
+        if [[ "${v}" == "true" || "${v}" == "false" ]]; then fm_break="${v}"; fi
+        ;;
+      filename:*)
+        v="$(printf '%s' "${line#filename:}" | tr -d '[:space:]')"
+        if [[ "${v}" == "true" || "${v}" == "false" ]]; then fm_showname="${v}"; fi
+        ;;
+    esac
+  done <<< "${block}"
+fi
+
+# Ausgabe: explizites zweites Argument gewinnt (relativ zum aktuellen Verzeichnis).
+# Sonst landet die PDF NEBEN der Quelle (nicht im Projekt-Root, in den build.sh
+# für template/fonts cd't); bei gesetztem Datum mit ISO-Präfix (sortierbar).
+src_dir="$(cd "$(dirname "${src}")" && pwd)"
+src_abs="${src_dir}/$(basename "${src}")"
+if [[ -n "${2:-}" ]]; then
+  out="${2}"
+elif [[ -n "${fm_date}" ]]; then
+  out="${src_dir}/${fm_date}_${base}.pdf"
+else
+  out="${src_dir}/${base}.pdf"
+fi
 
 # Logo: erstes vorhandenes in fester Reihenfolge svg -> png -> jpg.
 # Optional: ohne Logo wird ohne Logo gebaut (logo bleibt leer).
@@ -42,21 +87,37 @@ font_arg=()
 [[ -d fonts ]] && font_arg=(--font-path fonts --ignore-system-fonts)
 
 # 1) Markdown -> Typst (Layout aus template.typ, Titel aus erstem H1 via Lua)
+# Highlight-Flag je nach pandoc-Version: neuere kennen --syntax-highlighting,
+# ältere (z. B. Debian-stable, 3.1.x) nur das ältere --highlight-style. Eines
+# passt immer; so vermeiden wir sowohl Fehler als auch Deprecation-Warnungen.
+hl_flag=(--highlight-style pygments)
+if pandoc --help 2>&1 | grep -q -- '--syntax-highlighting'; then
+  hl_flag=(--syntax-highlighting pygments)
+fi
+
 pandoc "${src}" \
   --from markdown \
   --to typst \
   --standalone \
   --template template.typ \
   --lua-filter filters/meta-from-h1.lua \
-  --syntax-highlighting pygments \
+  "${hl_flag[@]}" \
   --output "${typ}"
 
 # 2) Typst -> PDF/A-3b (Dateiname & Logo als Laufzeit-Inputs)
+# --root / : Typst behandelt absolute Pfade projektwurzel-relativ und sperrt
+# Lesezugriffe außerhalb der Wurzel; für die eingebettete Quelle (die überall
+# liegen kann) muss die Wurzel den absoluten Quellpfad einschließen.
 "${typst_bin}" compile "${typ}" "${out}" \
   "${font_arg[@]}" \
+  --root / \
   --pdf-standard "${standard}" \
   --input "filename=$(basename "${out}")" \
   --input "logo=${logo}" \
-  --input "source=${src}"
+  --input "source=${src_abs}" \
+  --input "date=${fm_date}" \
+  --input "toc=${fm_toc}" \
+  --input "h2-break=${fm_break}" \
+  --input "showname=${fm_showname}"
 
 echo "✓ ${out} erzeugt (PDF/A-3b)"

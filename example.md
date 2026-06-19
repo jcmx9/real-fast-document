@@ -1,40 +1,127 @@
-# Schnellstart
+---
+date: 2026-06-19
+toc: true
+h2-break: true
+filename: true
+---
 
-Dieses Dokument demonstriert die Pipeline **Markdown → Pandoc → Typst → PDF/A**
-im **kompakten** Modus: ein H1-Titel, wenige Kapitel. Da `#H2 + #H3 ≤ 5` ist,
-gibt es **kein Inhaltsverzeichnis** und die Kapitel (H2) fließen ohne
-Seitenumbruch. Der laufende Kopf zeigt das aktive Kapitel (H2).
+# Markdown zu PDF/A — Leitfaden
 
-## Worum es geht
+Dieses Dokument zeigt, wie aus einer einzigen Markdown-Datei ein archivfähiges,
+einheitlich gestaltetes PDF entsteht — **ohne Textverarbeitung, ohne manuelles
+Layout**. Es ist selbst mit genau dieser Pipeline gesetzt und dient damit
+zugleich als Vorlage für das Ergebnis.[^pipeline]
 
-Quelle ist reines Markdown. Ein Lua-Filter zieht das H1 als Dokumenttitel in die
-PDF-Metadaten (von PDF/A gefordert). Das Layout — Ränder, Fonts, Kopf und Fuß —
-lebt vollständig im Typst-Template.
+[^pipeline]: Der Ablauf in einem Satz: Markdown → Pandoc → Typst → PDF/A-3b.
+    Die Quelle bleibt reiner Text; das Layout lebt vollständig im Template.
 
-- DIN A4 Hochformat
-- Ränder: oben 40 mm, links 30 mm, rechts 20 mm, unten 30 mm
-- Überschriften in *Source Serif 4*, Fließtext in *Source Sans 3*
+## Überblick
 
-### Inline-Elemente
+Wer Inhalt schreibt, soll sich nicht um Ränder, Schriften oder Kopfzeilen
+kümmern müssen. Die Pipeline verfolgt drei Ziele:
 
-Inline-Code wie `pandoc --to typst` wird in der Monospace-Schrift gesetzt.
-Links funktionieren ebenfalls: [Typst](https://typst.app).
+- **Reproduzierbare Gestaltung** — dieselbe Quelle ergibt immer dasselbe Layout.
+- **Langzeitarchivierung** — das Ergebnis ist *PDF/A-3b*, ein ISO-Standard.
+- **Minimale Quelldateien** — eine `.md`, sonst nichts.
 
-## Codebeispiel
+Zusätzlich trägt jedes erzeugte PDF seine eigene Markdown-Quelle als Anhang in
+sich und bleibt so jederzeit verlustfrei in Text rückführbar.
+
+### Trennung von Inhalt und Form
+
+Inhalt steht im Markdown, Form im Template. Dieselbe Quelle ergibt — über
+verschiedene Templates — unterschiedliche Erscheinungsbilder, ohne dass am Text
+etwas geändert werden muss.
+
+## Schreiben in Markdown
+
+Im Alltag deckt Markdown nahezu alles ab: *kursiv*, **fett**, `inline-code`
+sowie [Verweise](https://typst.app) funktionieren ohne Zusatzaufwand.
+
+### Listen
+
+Verschachtelte und nummerierte Listen werden sauber gesetzt:
+
+1. Quelle in Markdown schreiben.
+2. Optional einen Frontmatter ergänzen:
+   - `date` für ein Datum in der Fußzeile,
+   - `toc` für das Inhaltsverzeichnis,
+   - `h2-break` für den Kapitelumbruch.
+3. Bauen lassen — fertig.
+
+### Tabellen
+
+Tabellen folgen der gewohnten Pipe-Syntax:
+
+| Element       | Schrift         | Beispiel      |
+| ------------- | --------------- | ------------- |
+| Fließtext     | Source Sans 3   | dieser Absatz |
+| Überschriften | Source Serif 4  | "Tabellen"    |
+| Code          | Source Code Pro | `print("hi")` |
+
+### Bilder
+
+Bilder werden als *Abbildung* mit nummeriertem Untertitel gesetzt:
+
+![Der Ablauf der Pipeline in vier Schritten — vom reinen Text bis zum Archiv-PDF.](assets/pipeline.svg)
+
+### Definitionslisten
+
+PDF/A-3b
+: Archivformat mit erlaubten Dateianhängen — hier die Markdown-Quelle.
+
+Variable Schrift
+: Eine Schriftdatei, die über eine Achse (`wght`) beliebige Strichstärken liefert.
+
+## Technisches
+
+Codeblöcke erhalten Syntax-Hervorhebung. Ein kurzes Python-Beispiel:
 
 ```python
 from pathlib import Path
 
-
-def build(src: Path, out: Path) -> None:
-    """Konvertiert eine Markdown-Datei nach PDF/A."""
+def render(src: Path) -> Path:
+    """Markdown -> PDF/A; gibt den Ausgabepfad zurück."""
+    out = src.with_suffix(".pdf")
     print(f"{src} -> {out}")
+    return out
 ```
 
-## Tabelle
+Und der Aufruf der Pipeline selbst:
 
-| Bereich  | Wert        |
-|----------|-------------|
-| Format   | DIN A4      |
-| Standard | PDF/A-3b    |
-| Engine   | Typst 0.15  |
+```bash
+bash scripts/build.sh dokument.md      # -> dokument.pdf neben der Quelle
+```
+
+> **Hinweis:** Voraussetzung ist Typst ≥ 0.15. Erst diese Version rendert die
+> gebündelten variablen Schriften, aus deren `wght`-Achse der halbfette Schnitt
+> der Überschriften stammt.
+
+## Mathematik
+
+Auch Formeln werden ohne zusätzliche Schrift gesetzt — inline wie $E = mc^2$
+oder abgesetzt:
+
+$$
+\int_{a}^{b} f(x)\,\mathrm{d}x = F(b) - F(a)
+$$
+
+## Struktur & Layout
+
+Die Überschriftenebenen haben feste Rollen:
+
+- **H1** ist der **Dokumenttitel** — genau einmal pro Dokument, zentriert, in den
+  PDF-Metadaten und nicht im Inhaltsverzeichnis.
+- **H2** ist ein **Kapitel** und läuft links im Seitenkopf mit.
+- **H3** und tiefer sind Unterabschnitte.
+
+Ab mehr als fünf H2-/H3-Überschriften schaltet das Dokument automatisch in den
+strukturierten Modus (Inhaltsverzeichnis voran, jedes Kapitel auf neuer Seite) —
+hier zusätzlich per Frontmatter erzwungen. Ist im Frontmatter ein `date` gesetzt,
+erhält die Ausgabedatei einen ISO-Präfix (`2026-06-19_example.pdf`) und das Datum
+erscheint rechts in der Fußzeile.
+
+---
+
+Damit ist der Rundgang abgeschlossen: ein einziger Befehl, ein archivfähiges PDF,
+die Quelle inklusive.

@@ -6,10 +6,42 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.5] - 2026-06-19
+
 ### Added
+- Cross-platform install/setup: one-line bootstrap (`bootstrap.sh` via curl|bash,
+  `bootstrap.ps1` via irm|iex) clones into `~/.local/share/real-fast-document`
+  (Windows `%LOCALAPPDATA%`) and runs the installer. `install.sh` (macOS/Linux)
+  installs pandoc/typst via the system package manager — with an official typst
+  binary fallback into `./bin` when no package exists — fetches fonts, and sets
+  up a right-click action (Finder Quick Action / `.desktop` + xdg-mime).
+  `install.ps1` gains `-Tools` (pandoc/typst via winget). `rfd-convert.sh` is the
+  macOS/Linux right-click dispatcher (output next to source, desktop notification).
+- Optional YAML frontmatter (parsed by `build.sh`/`convert.ps1`): `date:` (ISO)
+  ISO-prefixes the output file (`2026-06-19_name.pdf`) and shows a `lang`-localized
+  date in the footer right; `toc:` and `h2-break:` (true|false) override the
+  `#H2 + #H3 > 5` automatism independently; `filename:` (true|false) toggles the
+  footer-left name. Footer is 2-column without a date, 3-column with one
+  (name · page centered · date).
 - `faust.md` — Goethe's *Faust I* as a large structured-mode example (158-page
   PDF/A; verse via Pandoc line blocks, scenes as H2). Public domain, sourced
   from Project Gutenberg (eBook #2229).
+
+### Changed
+- `build.sh` now writes the PDF **next to the source file** (not the repo root)
+  unless an explicit output path is given, matching the Windows converter.
+- Typography/layout overhaul: body 12 pt with looser leading and hyphenation,
+  softer body gray (`luma(13%)`), rescaled heading modular scale, margins now
+  left 30 mm / top·bottom·right 20 mm, header logo height 13 mm (fits the
+  narrower top margin).
+
+### Changed
+- Bundled fonts switched from variable **TTF** (Google Fonts) to variable
+  **OTF/CFF2** (Adobe upstream releases): Source Serif 4 (4.005R), Source Sans 3
+  (3.052R), Source Code Pro (1.026vf), each Roman/Upright + Italic.
+  `fetch-fonts.sh` / `install.ps1` now download the Adobe release zips and
+  extract the variable OTF. `template.typ` references the OTF family names
+  (`SourceSans3VF`, `SourceCodeVF`; Serif stays `Source Serif 4`).
 
 ## [26.6.4] - 2026-06-15
 
