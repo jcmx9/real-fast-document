@@ -11,6 +11,8 @@
   Die gesamte Logik (template.typ, filters/, fonts/, convert.ps1) bleibt im
   Installpfad. Im System landet ausschliesslich die Verknuepfung, die auf
   convert.ps1 im Installpfad zeigt.
+.PARAMETER Tools
+  Nur pandoc/typst pruefen und bei Bedarf via winget installieren.
 .PARAMETER Fonts
   Nur die Fonts ins Projekt laden.
 .PARAMETER SendTo
@@ -18,13 +20,15 @@
 .PARAMETER Uninstall
   Die "Senden an"-Verknuepfung wieder entfernen.
 .EXAMPLE
-  ./scripts/install.ps1                # Fonts + SendTo
+  ./scripts/install.ps1                # Tools + Fonts + SendTo
+  ./scripts/install.ps1 -Tools         # nur pandoc/typst via winget
   ./scripts/install.ps1 -Fonts         # nur Fonts laden
   ./scripts/install.ps1 -SendTo        # nur Verknuepfung anlegen
   ./scripts/install.ps1 -Uninstall     # Verknuepfung entfernen
 #>
 [CmdletBinding()]
 param(
+  [switch]$Tools,
   [switch]$Fonts,
   [switch]$SendTo,
   [switch]$Uninstall
@@ -76,6 +80,24 @@ function Install-Fonts {
   Write-Host "OK  Variable OTF -> $FontDir" -ForegroundColor Green
 }
 
+function Install-Tools {
+  if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Host "winget nicht gefunden - pandoc/typst bitte manuell installieren:" -ForegroundColor Yellow
+    Write-Host "  https://pandoc.org/installing.html  /  https://github.com/typst/typst/releases"
+    return
+  }
+  foreach ($t in @(
+      @{ Cmd = 'pandoc'; Id = 'JohnMacFarlane.Pandoc' },
+      @{ Cmd = 'typst';  Id = 'Typst.Typst' })) {
+    if (Get-Command $t.Cmd -ErrorAction SilentlyContinue) {
+      Write-Host "OK  $($t.Cmd) vorhanden" -ForegroundColor Green
+    } else {
+      Write-Host "->  Installiere $($t.Cmd) ($($t.Id))"
+      winget install --id $t.Id -e --accept-source-agreements --accept-package-agreements
+    }
+  }
+}
+
 function Get-SendToDir {
   $dir = [Environment]::GetFolderPath([Environment+SpecialFolder]::SendTo)
   if (-not $dir) { $dir = Join-Path $env:APPDATA 'Microsoft\Windows\SendTo' }
@@ -118,8 +140,11 @@ if ($Uninstall) {
   return
 }
 
-# Ohne Schalter: beides einrichten.
-if (-not $Fonts -and -not $SendTo) { $Fonts = $true; $SendTo = $true }
+# Ohne Schalter: alles einrichten.
+if (-not $Tools -and -not $Fonts -and -not $SendTo) {
+  $Tools = $true; $Fonts = $true; $SendTo = $true
+}
 
+if ($Tools)  { Install-Tools }
 if ($Fonts)  { Install-Fonts }
 if ($SendTo) { Install-SendTo }
