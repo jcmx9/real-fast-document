@@ -33,7 +33,24 @@ function Convert-One {
   $srcDir = Split-Path -Parent $Src
   $base   = [IO.Path]::GetFileNameWithoutExtension($Src)
   $mdLeaf = Split-Path -Leaf $Src
-  $outPdf = Join-Path $srcDir "$base.pdf"
+
+  # Optionalen YAML-Frontmatter (fuehrender ---...---) parsen: nur diese vier
+  # Schluessel; toc/h2-break/filename nur exakt true|false, sonst Default.
+  $fmDate = ''; $fmToc = 'auto'; $fmBreak = 'auto'; $fmShowname = 'true'
+  $lines = Get-Content -LiteralPath $Src
+  if ($lines.Count -gt 0 -and $lines[0].Trim() -eq '---') {
+    for ($i = 1; $i -lt $lines.Count; $i++) {
+      if ($lines[$i].Trim() -eq '---') { break }
+      if     ($lines[$i] -match '^date:\s*(.+?)\s*$')           { $fmDate     = $Matches[1].Trim('"',"'") }
+      elseif ($lines[$i] -match '^toc:\s*(true|false)\s*$')      { $fmToc      = $Matches[1] }
+      elseif ($lines[$i] -match '^h2-break:\s*(true|false)\s*$') { $fmBreak    = $Matches[1] }
+      elseif ($lines[$i] -match '^filename:\s*(true|false)\s*$') { $fmShowname = $Matches[1] }
+    }
+  }
+
+  # Ausgabename: bei gesetztem Datum ISO-Praefix (sortierbar), sonst Basename.
+  $outName = if ($fmDate) { "$($fmDate)_$base.pdf" } else { "$base.pdf" }
+  $outPdf  = Join-Path $srcDir $outName
   # Temporaere Dateien im Quellverzeichnis (= Typst-Root), dot-praefixiert.
   $typ    = Join-Path $srcDir ".rfd-$base.typ"
 
@@ -62,9 +79,13 @@ function Convert-One {
     & typst compile $typ $outPdf `
       --font-path $FontDir --ignore-system-fonts `
       --pdf-standard a-3b `
-      --input "filename=$base.pdf" `
+      --input "filename=$outName" `
       --input "logo=$logoArg" `
-      --input "source=$mdLeaf"
+      --input "source=$mdLeaf" `
+      --input "date=$fmDate" `
+      --input "toc=$fmToc" `
+      --input "h2-break=$fmBreak" `
+      --input "showname=$fmShowname"
     if ($LASTEXITCODE) { throw "typst-Fehler ($LASTEXITCODE)" }
 
     Write-Host "OK  $outPdf" -ForegroundColor Green
