@@ -1,120 +1,183 @@
 # real·fast·document
 
+> Aus einer Markdown-Datei ein archivfähiges, einheitlich gestaltetes **PDF/A-3b** —
+> ohne Textverarbeitung, ohne manuelles Layout.
+
 Markdown → **Pandoc** (+ Lua-Filter) → **Typst** → **PDF/A** mit festem Corporate-Layout:
-DIN A4 Hochformat, asymmetrische Ränder, laufender Kopf mit Logo, Fußzeile mit
-Dateiname und Seitenzählung.
+DIN A4 Hochformat, laufender Kopf mit Kapitel und Logo, Fußzeile mit Dateiname,
+Seitenzählung und optionalem Datum. Die Markdown-Quelle wird ins PDF eingebettet.
 
 ## Voraussetzungen
 
 - [pandoc](https://pandoc.org) ≥ 3.x (Typst-Writer)
-- [typst](https://typst.app) ≥ 0.15 (PDF/A-Export + Variable Fonts)
+- [typst](https://typst.app) ≥ 0.15 (PDF/A-Export + variable Fonts — die `wght`-Achse
+  liefert den halbfetten Schnitt der Überschriften; `build.sh` bricht unter 0.15 ab)
+- [git](https://git-scm.com) zum Klonen
 
-### Installation der Werkzeuge
+## Installation
 
-**macOS / Linux (Homebrew):**
+### Schnellinstallation (ein Befehl)
 
-```bash
-brew install pandoc typst
-```
+Einzige Vorbedingung ist **git**. Der Bootstrap klont das Projekt nach
+`~/.local/share/real-fast-document` (Windows: `%LOCALAPPDATA%\real-fast-document`),
+installiert pandoc und typst, lädt die Fonts und richtet die Rechtsklick-Integration ein.
 
-**Windows (winget):**
-
-```powershell
-winget install --id JohnMacFarlane.Pandoc -e
-winget install --id Typst.Typst -e
-```
-
-> Hinweis: Unter Windows funktioniert die Pipeline über Git Bash / WSL
-> (die Build-Skripte sind Bash). Alternativ die beiden Befehle aus
-> `scripts/build.sh` direkt aufrufen.
-
-## Schnellstart
+**macOS / Linux:**
 
 ```bash
-# Fonts einmalig ins Projekt bündeln (Variable Source-Fonts)
-bash scripts/fetch-fonts.sh
-
-# Beispiel bauen
-bash scripts/build.sh                 # -> example.pdf
-
-# Eigene Datei
-bash scripts/build.sh meine-datei.md  # -> meine-datei.pdf
-bash scripts/build.sh in.md out.pdf   # explizite Ausgabe
+curl -fsSL https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.sh | bash
 ```
 
-### Windows („Senden an")
-
-`install.ps1` richtet zwei Dinge ein. Die gesamte Logik bleibt im Installpfad;
-im System landet nur eine Verknüpfung im „Senden an"-Ordner.
+**Windows (PowerShell):**
 
 ```powershell
-# Im Projektordner (= Installpfad):
-./scripts/install.ps1            # Fonts laden + "Senden an"-Verknüpfung
+irm https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.ps1 | iex
+```
+
+Werkzeuge kommen über den System-Paketmanager (Homebrew / apt / dnf / pacman / winget).
+Fehlt typst dort oder ist es älter als 0.15 (häufig unter Linux), lädt der Installer das
+offizielle typst-Binary nach `./bin` und nutzt es automatisch.
+
+### Manuell
+
+```bash
+# 1. Werkzeuge (Homebrew; unter Linux alternativ apt/dnf/pacman für pandoc)
+brew install pandoc typst                      # Windows: winget install --id JohnMacFarlane.Pandoc -e; winget install --id Typst.Typst -e
+
+# 2. Repository klonen
+git clone https://github.com/jcmx9/real-fast-document.git
+cd real-fast-document
+
+# 3. macOS / Linux: Fonts + Rechtsklick-Integration
+bash scripts/install.sh
+#    (oder nur Fonts: bash scripts/fetch-fonts.sh)
+
+# 3. Windows: Fonts + "Senden an"-Verknüpfung
+./scripts/install.ps1
+```
+
+`install.sh` / `install.ps1` sind idempotent und lassen sich einzeln steuern:
+
+```bash
+bash scripts/install.sh             # Werkzeuge + Fonts + Rechtsklick-Integration
+bash scripts/install.sh --uninstall # nur die Rechtsklick-Integration entfernen
+```
+
+```powershell
+./scripts/install.ps1            # Tools + Fonts + "Senden an"-Verknüpfung
+./scripts/install.ps1 -Tools     # nur pandoc/typst via winget
 ./scripts/install.ps1 -Fonts     # nur Fonts ins Projekt laden (./fonts)
 ./scripts/install.ps1 -SendTo    # nur die Verknüpfung anlegen
 ./scripts/install.ps1 -Uninstall # Verknüpfung entfernen
 ```
 
-Danach im Explorer eine (oder mehrere) `.md` markieren → Rechtsklick →
-**Senden an → „Nach PDF-A (real-fast-document)"**. Die PDF/A wird im selben
-Verzeichnis wie die Quelle abgelegt. Der Konverter `scripts/convert.ps1`
-verbleibt im Installpfad und wird über die Verknüpfung aufgerufen.
+## Update
+
+```bash
+cd ~/.local/share/real-fast-document   # bzw. der gewählte Installpfad
+git pull                               # neueste Version holen
+bash scripts/install.sh                # Fonts/Integration bei Bedarf aktualisieren
+```
+
+Unter Windows nach `git pull` bei Bedarf `./scripts/install.ps1` erneut ausführen.
+
+## Verwendung
+
+### macOS / Linux
+
+```bash
+bash scripts/build.sh                 # example.md  -> example.pdf
+bash scripts/build.sh dokument.md     # dokument.md -> dokument.pdf
+bash scripts/build.sh in.md out.pdf   # explizite Ausgabe
+```
+
+Ohne zweites Argument landet die Ausgabe neben der Quelle. Ist im Frontmatter ein `date`
+gesetzt, bekommt die Datei automatisch einen ISO-Präfix (`2026-06-19_dokument.pdf`).
+
+### Ohne Terminal (Rechtsklick)
+
+Nach der Einrichtung steht auf allen drei Systemen ein Rechtsklick-Eintrag bereit; die
+PDF/A landet jeweils neben der Quelle:
+
+- **Windows:** `.md` markieren → Rechtsklick → **Senden an → „Nach PDF-A (real-fast-document)"**
+- **macOS:** `.md` rechtsklicken → **Dienste / Quick Actions → „Nach PDF-A (real-fast-document)"**
+- **Linux:** `.md` rechtsklicken → **Öffnen mit → „Nach PDF-A (real-fast-document)"**
+
+## Frontmatter (optional)
+
+Ein YAML-Block am Dateianfang steuert einzelne Dokumente. Alle Schlüssel sind optional:
+
+```yaml
+---
+date: 2026-06-19   # ISO-Datum: Präfix am Dateinamen + Datum unten rechts (nach Sprache)
+toc: true          # Inhaltsverzeichnis erzwingen (true) / unterdrücken (false)
+h2-break: false    # Kapitel-Seitenumbruch erzwingen (true) / unterdrücken (false)
+filename: false    # Dateiname unten links ausblenden (Default: true)
+---
+```
+
+| Schlüssel | Werte | Wirkung |
+|-----------|-------|---------|
+| `date` | ISO-Datum | Gesetzt → Ausgabedatei erhält den ISO-Präfix `JJJJ-MM-TT_name.pdf` **und** das Datum erscheint unten rechts, lokalisiert nach `lang` (de „19. Juni 2026", en „June 19, 2026"). Die Fußzeile wird dann 3-spaltig (Name · Seite mittig · Datum). |
+| `toc` | `true` / `false` | Übersteuert den TOC-Automatismus. Ohne Angabe entscheidet die Heuristik `#H2 + #H3 > 5`. |
+| `h2-break` | `true` / `false` | Übersteuert den Kapitel-Seitenumbruch, unabhängig von `toc`. |
+| `filename` | `true` / `false` | Dateiname unten links anzeigen. Default `true`. |
+
+`lang` (Standard-Pandoc-Schlüssel) steuert die Dokumentsprache und damit das Datumsformat.
+
+## Markdown — Kurzeinstieg
+
+Markdown deckt im Alltag fast alles ab: `*kursiv*`, `**fett**`, `` `inline-code` ``,
+Aufzählungen, nummerierte Listen, Tabellen, Zitate, Fußnoten und `[Links](https://typst.app)`
+funktionieren ohne Zusatzaufwand. Codeblöcke werden mit Syntax-Hervorhebung gesetzt.
+
+Eine einzige Regel ist Pflicht: **genau ein `# H1` pro Dokument** — es ist der Titel
+(zentriert, in die PDF-Metadaten gezogen, nicht im Kopf/TOC). Kapitel beginnen bei `## H2`
+und laufen links im Seitenkopf mit; `### H3` und tiefer sind Unterabschnitte.
+
+```markdown
+# Dokumenttitel
+
+## Erstes Kapitel
+
+Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
+
+### Unterabschnitt
+
+- Punkt eins
+- Punkt zwei
+
+[^1]: Die Fußnote erscheint am unteren Seitenrand.
+```
 
 ## Layout-Spezifikation
 
 | Aspekt | Wert |
 |--------|------|
 | Format | DIN A4 Hochformat |
-| Ränder | oben 40 mm · links 30 mm · rechts 20 mm · unten 30 mm |
-| PDF-Standard | PDF/A-3b |
-| **H1** | **Dokumenttitel** — genau einmal (mehrfaches H1 = Build-Fehler), eröffnet das Dokument |
+| Ränder | links 30 mm · oben/unten/rechts je 20 mm |
+| PDF-Standard | PDF/A-3b, Schriften eingebettet, Quelle als Anhang |
+| **H1** | **Dokumenttitel** — genau einmal (mehrfaches H1 = Build-Fehler), zentriert, eröffnet das Dokument |
 | **H2** | **Kapitel** — aktuelles Kapitel läuft dynamisch im Kopf links mit |
-| **TOC** | bedingt: ab `#H2 + #H3 > 5` → Inhaltsverzeichnis (über H2/H3) **und** jedes Kapitel beginnt auf neuer Seite |
-| Kopf rechts | Logo (`logo.svg` → `.png` → `.jpg`), Höhe 25 mm, rechtsbündig — **optional** (ohne Logo bleibt die rechte Kopfseite leer) |
-| Fuß links | Quell-Dateiname |
-| Fuß rechts | `Seite x / y` |
-| Trennlinien | unter dem Kopftext, über dem Fußtext |
-| Anhang | Quell-Markdown als eingebettete Datei (PDF/A-3b) |
-| Überschriften | Source Serif 4, Semibold, Farbe 80 % Schwarz (`luma(20%)`) |
-| Fließtext | Source Sans 3 |
-| Code | Source Code Pro |
-
-### Dokumentstruktur
-
-Die Überschriftenebenen haben feste Rollen:
-
-- **H1 = Dokumenttitel.** Muss **genau einmal** vorkommen — bei mehreren H1
-  bricht der Build mit klarer Meldung ab (`filters/meta-from-h1.lua`). Das H1
-  liefert zugleich den PDF-Titel (PDF/A-Pflicht), wird **zentriert** gesetzt und
-  erscheint **nicht** im Kopf und **nicht** im Inhaltsverzeichnis.
-- **H2 = Kapitel.** Das jeweils aktive Kapitel läuft dynamisch im Seitenkopf
-  links mit.
-- **H3 und tiefer = Unterabschnitte.**
-
-**Bedingtes Inhaltsverzeichnis (TOC):** Sind mehr als fünf H2- und
-H3-Überschriften vorhanden (**`#H2 + #H3 > 5`**), schaltet das Template
-automatisch in den *strukturierten* Modus:
-
-- ein **Inhaltsverzeichnis** über H2/H3 (mit Seitenzahlen, klickbar) direkt
-  nach dem Titel, und
-- jedes **Kapitel (H2) beginnt auf einer neuen Seite**.
-
-Bei fünf oder weniger bleibt das Dokument *kompakt*: kein TOC, Kapitel fließen
-ohne Seitenumbruch. Der Schwellenwert ist eine einzige Stelle in
-`template.typ`.
+| **TOC** | bedingt: ab `#H2 + #H3 > 5` → Inhaltsverzeichnis + Kapitel je neue Seite; per Frontmatter `toc`/`h2-break` übersteuerbar |
+| Kopf rechts | Logo (`logo.svg` → `.png` → `.jpg`), Höhe 13 mm — **optional** |
+| Fuß | ohne Datum: Name links · Seite rechts. Mit Datum: Name links · Seite mittig · Datum rechts |
+| Überschriften | Source Serif 4, halbfett, `luma(20%)` |
+| Fließtext | Source Sans 3, 12 pt, Blocksatz mit Silbentrennung, `luma(13%)` |
+| Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
 
 ### Typografie (Schriftgrade)
 
 | Element | Schrift | Grad |
 |---------|---------|------|
-| Fließtext | Source Sans 3 | 11 pt |
-| Titel (H1) | Source Serif 4 semibold | 26 pt, zentriert |
-| Kapitel (H2) | Source Serif 4 semibold | 16 pt |
-| H3 / H4 / H5 / H6 | Source Serif 4 semibold | 13 / 11,5 / 11 / 10 pt |
-| TOC-Titel „Inhalt" | Source Serif 4 semibold | 15 pt |
-| TOC-Einträge | Source Sans 3 | 14 pt, Book (`wght` 450) |
-| Kopf (Kapitel) | Source Serif 4 semibold | 11 pt |
-| Code | Source Code Pro | 9,5 pt |
+| Fließtext | Source Sans 3 | 12 pt |
+| Titel (H1) | Source Serif 4 halbfett | 28 pt, zentriert |
+| Kapitel (H2) | Source Serif 4 halbfett | 18 pt |
+| H3 / H4 / H5 / H6 | Source Serif 4 halbfett | 14,5 / 13 / 12 / 12 pt |
+| TOC-Titel „Inhalt" | Source Serif 4 halbfett | 16 pt |
+| TOC-Einträge | Source Sans 3 | 13 pt, Book (`wght` 450) |
+| Kopf (Kapitel) | Source Serif 4 halbfett | 11 pt |
+| Code | Source Code Pro | 10 pt |
 | Fußzeile | Source Sans 3 | 9 pt |
 
 ## Aufbau
@@ -122,35 +185,35 @@ ohne Seitenumbruch. Der Schwellenwert ist eine einzige Stelle in
 ```
 template.typ              Pandoc-Typst-Template: gesamtes Seitenlayout
 filters/meta-from-h1.lua  Dokumenttitel (PDF/A) aus H1, erzwingt genau ein H1
-scripts/build.sh          Pipeline Markdown -> PDF/A (macOS/Linux)
-scripts/fetch-fonts.sh    bündelt Variable Source-Fonts nach ./fonts
-scripts/install.ps1       Windows-Setup: Fonts + "Senden an"-Verknüpfung
+scripts/build.sh          Pipeline Markdown -> PDF/A (macOS/Linux), Frontmatter-Parser
+scripts/fetch-fonts.sh    bündelt variable Source-Fonts nach ./fonts
+scripts/bootstrap.sh      Ein-Zeiler-Installer (macOS/Linux): klont + ruft install.sh
+scripts/bootstrap.ps1     Ein-Zeiler-Installer (Windows): klont + ruft install.ps1
+scripts/install.sh        macOS/Linux-Setup: Werkzeuge + Fonts + Rechtsklick-Integration
+scripts/rfd-convert.sh    Konverter-Dispatcher der Rechtsklick-Integration (macOS/Linux)
+scripts/install.ps1       Windows-Setup: Werkzeuge + Fonts + "Senden an"-Verknüpfung
 scripts/convert.ps1       Windows-Konverter (von "Senden an" aufgerufen)
-fonts/                    gebündelte Schriften (Variable TTF)
-logo.svg                  Kopf-Logo
-example.md                kompaktes Beispiel (kein TOC, H2 inline)
+fonts/                    gebündelte variable OTF (Source Serif 4 / Sans 3 / Code Pro)
+logo.svg                  Kopf-Logo (optional)
+example.md                kompaktes Beispiel mit dokumentiertem Frontmatter
 long-example.md           strukturiertes Beispiel (Titel + TOC + Kapitelseiten)
-showcase.md               Markdown-Schaukasten (alle Elemente, strukturiert)
-faust.md                  Großbeispiel: Goethes Faust I, 158 Seiten (gemeinfrei,
-                          Project Gutenberg #2229) — Verse als Pandoc Line Blocks
-CLAUDE.md                 Architektur-/Befehls-Hinweise (für Claude Code & Mitwirkende)
+showcase.md               Markdown-Schaukasten (alle Elemente)
+faust.md                  Großbeispiel: Goethes Faust I (gemeinfrei, Gutenberg #2229)
 ```
 
 ## Anpassen
 
-- **Logo / Dateiname** werden zur Compile-Zeit als Typst-`--input` übergeben
-  (siehe `scripts/build.sh`); im Template über `sys.inputs` gelesen. Das Logo
-  wird in der Reihenfolge `logo.svg` → `logo.png` → `logo.jpg` gewählt (erstes
-  vorhandenes). Höhe im Template über `logo-height` (Standard 25 mm). Das Logo
-  ist **optional**: fehlt es, baut die Pipeline mit einem Hinweis weiter und der
-  Kopf bleibt rechts leer.
-- **Ränder, Fonts, Farben** stehen gesammelt oben in `template.typ`
-  (`#set page`, `#set text`, `head-color`).
-- **Anderer PDF/A-Grad**: `standard` in `scripts/build.sh` ändern
-  (`a-1b`, `a-2b`, `a-3b`). Das Einbetten der Quelle setzt `a-3b` voraus.
-- **Quelle als Anhang**: Die Markdown-Datei wird via `pdf.attach` in das PDF
-  eingebettet (`AFRelationship /Source`) und lässt sich z. B. mit
-  `mutool extract datei.pdf` wieder herauslösen.
+- **Frontmatter** steuert einzelne Dokumente (Datum, TOC, Umbruch, Dateiname) — siehe oben.
+- **Logo / Dateiname / Datum** werden zur Compile-Zeit als Typst-`--input` übergeben
+  (`scripts/build.sh`) und im Template über `sys.inputs` gelesen. Das Logo wird in der
+  Reihenfolge `logo.svg` → `logo.png` → `logo.jpg` gewählt; fehlt es, baut die Pipeline mit
+  Hinweis weiter. Logo-Höhe im Template über `logo-height`.
+- **Ränder, Fonts, Farben, Schriftgrade** stehen gesammelt oben in `template.typ`
+  (`#set page`, `#set text`, `head-color`, `heading-text`).
+- **Anderer PDF/A-Grad**: `standard` in `scripts/build.sh` ändern (`a-1b`, `a-2b`, `a-3b`).
+  Das Einbetten der Quelle setzt `a-3b` voraus.
+- **Quelle als Anhang**: Die Markdown-Datei wird via `pdf.attach` ins PDF eingebettet und
+  lässt sich z. B. mit `mutool extract datei.pdf` wieder herauslösen.
 
 ## Versionierung
 
@@ -159,5 +222,5 @@ CLAUDE.md                 Architektur-/Befehls-Hinweise (für Claude Code & Mitw
 
 ## Lizenz
 
-MIT — siehe [LICENSE](LICENSE). Die gebündelten Fonts unter `fonts/` stehen
-unter der SIL Open Font License 1.1 (siehe [fonts/README.md](fonts/README.md)).
+MIT — siehe [LICENSE](LICENSE). Die gebündelten Fonts unter `fonts/` stehen unter der
+SIL Open Font License 1.1 (siehe [fonts/README.md](fonts/README.md)).
