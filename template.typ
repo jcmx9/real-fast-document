@@ -12,7 +12,25 @@
   #block(inset: (left: 1.5em, top: -0.4em))[#it.description]
 ]
 
-#set table(inset: 6pt, stroke: none)
+#set table(inset: 7pt, stroke: none)
+// Tabellen über die volle Satzspiegelbreite; Kopf zentriert + fett, alle Inhalte
+// linksbündig (auch Zahlen/Währungen), Zeilen mit dezent wechselndem Hintergrund.
+#show table: it => {
+  // Guard gegen Rekursion: die umgebaute Tabelle hat ein fill (Funktion), die
+  // Pandoc-Originaltabelle nicht -> dann unverändert durchreichen.
+  if it.fill != none {
+    it
+  } else {
+    let n = if type(it.columns) == int { it.columns } else { it.columns.len() }
+    table(
+      columns: (1fr,) * n,
+      align: (_, y) => if y == 0 { center } else { left },
+      fill: (_, y) => if y > 0 and calc.even(y) { luma(95%) } else { none },
+      ..it.children,
+    )
+  }
+}
+#show table.cell.where(y: 0): strong
 #show figure.where(kind: table): set figure.caption(position: top)
 #show figure.where(kind: image): set figure.caption(position: bottom)
 
@@ -46,11 +64,12 @@ $endif$
 // ---------------------------------------------------------------------------
 // Farben
 // ---------------------------------------------------------------------------
-#let head-color = luma(20%) // 80 % Schwarz
-#let rule-stroke = 0.5pt + luma(55%)
+#let heading-color = luma(8%)  // Überschriften: dunkel, kontrastreich
+#let head-color = luma(20%)    // "Chrome" (Kopf/Fuß-Text): 80 % Grau
+#let rule-stroke = 0.5pt + luma(20%) // Trennlinien: 80 % Grau
 
 // Seitengeometrie (zentral, von Seite UND Header-Logik genutzt)
-#let margin-top = 20mm
+#let margin-top = 35mm
 #let margin-bottom = 20mm
 #let margin-left = 30mm
 #let margin-right = 20mm
@@ -185,7 +204,7 @@ $endif$
 
 // Schrift/Farbe für alle Überschriften.
 #let heading-text(size, body) = text(
-  font: "Source Serif 4", weight: "semibold", fill: head-color, size: size, body,
+  font: "Source Serif 4", weight: "semibold", fill: heading-color, size: size, body,
 )
 
 // Strukturmodus-Steuerung: Frontmatter (toc/h2-break) übersteuert den
