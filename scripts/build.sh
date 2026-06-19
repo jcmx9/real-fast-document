@@ -87,13 +87,21 @@ font_arg=()
 [[ -d fonts ]] && font_arg=(--font-path fonts --ignore-system-fonts)
 
 # 1) Markdown -> Typst (Layout aus template.typ, Titel aus erstem H1 via Lua)
+# Highlight-Flag je nach pandoc-Version: neuere kennen --syntax-highlighting,
+# ältere (z. B. Debian-stable, 3.1.x) nur das ältere --highlight-style. Eines
+# passt immer; so vermeiden wir sowohl Fehler als auch Deprecation-Warnungen.
+hl_flag=(--highlight-style pygments)
+if pandoc --help 2>&1 | grep -q -- '--syntax-highlighting'; then
+  hl_flag=(--syntax-highlighting pygments)
+fi
+
 pandoc "${src}" \
   --from markdown \
   --to typst \
   --standalone \
   --template template.typ \
   --lua-filter filters/meta-from-h1.lua \
-  --syntax-highlighting pygments \
+  "${hl_flag[@]}" \
   --output "${typ}"
 
 # 2) Typst -> PDF/A-3b (Dateiname & Logo als Laufzeit-Inputs)

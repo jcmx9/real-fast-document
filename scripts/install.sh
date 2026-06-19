@@ -31,15 +31,27 @@ detect_pm() {
   echo ""
 }
 
+# Privilegierter Aufruf: als root direkt, sonst via sudo (falls vorhanden).
+run_priv() {
+  if [[ "$(id -u)" -eq 0 ]]; then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    err "Root-Rechte nötig, aber kein sudo gefunden – bitte als root ausführen oder sudo installieren."
+    return 1
+  fi
+}
+
 pm_install() {
   local pkg="$1" pm
   pm="$(detect_pm)"
   case "${pm}" in
     brew)    brew install "${pkg}" ;;
-    apt-get) sudo apt-get update -qq && sudo apt-get install -y "${pkg}" ;;
-    dnf)     sudo dnf install -y "${pkg}" ;;
-    pacman)  sudo pacman -S --noconfirm "${pkg}" ;;
-    zypper)  sudo zypper install -y "${pkg}" ;;
+    apt-get) run_priv apt-get update -qq && run_priv apt-get install -y "${pkg}" ;;
+    dnf)     run_priv dnf install -y "${pkg}" ;;
+    pacman)  run_priv pacman -S --noconfirm "${pkg}" ;;
+    zypper)  run_priv zypper install -y "${pkg}" ;;
     *)       return 1 ;;
   esac
 }
@@ -77,14 +89,30 @@ install_typst_binary() {
   tarball="typst-${target}.tar.xz"
   url="https://github.com/typst/typst/releases/latest/download/${tarball}"
   tmp="$(mktemp -d)"
-  trap 'rm -rf "${tmp}"' RETURN
   log "Lade typst-Binary (${target})"
   curl -fsSL "${url}" -o "${tmp}/${tarball}"
   tar -xJf "${tmp}/${tarball}" -C "${tmp}"
   mkdir -p "${root_dir}/bin"
   cp "${tmp}/typst-${target}/typst" "${root_dir}/bin/typst"
   chmod +x "${root_dir}/bin/typst"
+  rm -rf "${tmp}"
   ok "typst-Binary -> ${root_dir}/bin/typst"
+}
+
+# Werkzeugpfade merken: GUI-gestartete Skripte (Finder Quick Action, .desktop)
+# erben den Shell-PATH NICHT. Daher beim Einrichten (PATH korrekt) die echten
+# Verzeichnisse von typst/pandoc in bin/rfd-tools.env festhalten; der Dispatcher
+# und der CLI-Wrapper ergänzen damit ihren PATH.
+write_tools_env() {
+  local tp pp tdir pdir
+  tp="$(command -v typst 2>/dev/null || true)"
+  if [[ -x "${root_dir}/bin/typst" ]]; then tp="${root_dir}/bin/typst"; fi
+  pp="$(command -v pandoc 2>/dev/null || true)"
+  tdir="$(cd "$(dirname "${tp:-/usr/bin/typst}")" 2>/dev/null && pwd || echo /usr/bin)"
+  pdir="$(cd "$(dirname "${pp:-/usr/bin/pandoc}")" 2>/dev/null && pwd || echo /usr/bin)"
+  mkdir -p "${root_dir}/bin"
+  printf 'RFD_TOOL_PATH="%s"\n' "${tdir}:${pdir}" > "${root_dir}/bin/rfd-tools.env"
+  ok "Werkzeugpfade gemerkt -> bin/rfd-tools.env (${tdir}:${pdir})"
 }
 
 ensure_typst() {
@@ -260,17 +288,55 @@ uninstall_integration() {
   if [[ "${os}" == "Darwin" ]]; then uninstall_macos; else uninstall_linux; fi
 }
 
+# --- Globaler Terminal-Befehl: rf-document ---------------------------------
+cli_dir="${XDG_BIN_HOME:-${HOME}/.local/bin}"
+cli_path="${cli_dir}/rf-document"
+
+install_cli() {
+  mkdir -p "${cli_dir}"
+  # Echter Wrapper mit fest eingebackenem Installpfad (ein Symlink würde die
+  # BASH_SOURCE-Pfadauflösung von build.sh brechen). Setzt das gebündelte
+  # typst-Binary, falls vorhanden.
+  cat > "${cli_path}" <<EOF
+#!/usr/bin/env bash
+# Auto-generiert von real-fast-document/scripts/install.sh — globaler Wrapper.
+if [[ -f "${root_dir}/bin/rfd-tools.env" ]]; then source "${root_dir}/bin/rfd-tools.env"; export PATH="\${RFD_TOOL_PATH}:\$PATH"; fi
+if [[ -x "${root_dir}/bin/typst" ]]; then export TYPST="\${TYPST:-${root_dir}/bin/typst}"; fi
+exec bash "${root_dir}/scripts/build.sh" "\$@"
+EOF
+  chmod +x "${cli_path}"
+  ok "Terminal-Befehl installiert -> ${cli_path}"
+  case ":${PATH}:" in
+    *":${cli_dir}:"*) log 'Aufruf: rf-document datei.md' ;;
+    *) warn "${cli_dir} ist nicht im PATH. Ergänze in deiner Shell-Konfiguration:"
+       warn "  export PATH=\"${cli_dir}:\$PATH\"" ;;
+  esac
+}
+
+uninstall_cli() {
+  if [[ -f "${cli_path}" ]]; then
+    rm -f "${cli_path}"
+    ok "Terminal-Befehl entfernt"
+  else
+    log "Kein Terminal-Befehl vorhanden"
+  fi
+}
+
 # --- Ablauf -----------------------------------------------------------------
 case "${1:-install}" in
   --uninstall|uninstall)
     uninstall_integration
+    uninstall_cli
+    rm -f "${root_dir}/bin/rfd-tools.env"
     ;;
   install)
     ensure_pandoc
     ensure_typst
     log "Lade Fonts"
     bash scripts/fetch-fonts.sh
+    write_tools_env
     install_integration
+    install_cli
     ok "Einrichtung abgeschlossen."
     ;;
   *)

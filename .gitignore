@@ -4,5 +4,8 @@
 !template.typ
 preview-*.png
 
+# Lokal installierte Werkzeuge / gemerkte Pfade (vom Installer)
+bin/
+
 # OS
 .DS_Store

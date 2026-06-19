@@ -17,20 +17,24 @@
   Nur die Fonts ins Projekt laden.
 .PARAMETER SendTo
   Nur die "Senden an"-Verknuepfung anlegen.
+.PARAMETER Cli
+  Nur den globalen Terminal-Befehl rf-document anlegen.
 .PARAMETER Uninstall
-  Die "Senden an"-Verknuepfung wieder entfernen.
+  Die "Senden an"-Verknuepfung und den Terminal-Befehl wieder entfernen.
 .EXAMPLE
-  ./scripts/install.ps1                # Tools + Fonts + SendTo
+  ./scripts/install.ps1                # Tools + Fonts + SendTo + CLI
   ./scripts/install.ps1 -Tools         # nur pandoc/typst via winget
   ./scripts/install.ps1 -Fonts         # nur Fonts laden
   ./scripts/install.ps1 -SendTo        # nur Verknuepfung anlegen
-  ./scripts/install.ps1 -Uninstall     # Verknuepfung entfernen
+  ./scripts/install.ps1 -Cli           # nur Terminal-Befehl rf-document
+  ./scripts/install.ps1 -Uninstall     # Verknuepfung + Terminal-Befehl entfernen
 #>
 [CmdletBinding()]
 param(
   [switch]$Tools,
   [switch]$Fonts,
   [switch]$SendTo,
+  [switch]$Cli,
   [switch]$Uninstall
 )
 
@@ -135,16 +139,44 @@ function Uninstall-SendTo {
   }
 }
 
+function Get-CliPath {
+  $dir = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'  # standardmaessig im PATH
+  return (Join-Path $dir 'rf-document.cmd')
+}
+
+function Install-Cli {
+  $cliPath = Get-CliPath
+  $cliDir = Split-Path -Parent $cliPath
+  if (-not (Test-Path -LiteralPath $cliDir)) {
+    New-Item -ItemType Directory -Force -Path $cliDir | Out-Null
+  }
+  # .cmd-Shim, das convert.ps1 im Installpfad mit den uebergebenen Dateien aufruft.
+  $cmd = "@echo off`r`npowershell -NoProfile -ExecutionPolicy Bypass -File `"$ConvertScript`" %*`r`n"
+  Set-Content -LiteralPath $cliPath -Value $cmd -Encoding ASCII
+  Write-Host "OK  Terminal-Befehl -> $cliPath" -ForegroundColor Green
+  Write-Host "    Aufruf: rf-document datei.md  (Ordner ist standardmaessig im PATH)"
+}
+
+function Uninstall-Cli {
+  $cliPath = Get-CliPath
+  if (Test-Path -LiteralPath $cliPath) {
+    Remove-Item -LiteralPath $cliPath -Force
+    Write-Host "OK  Terminal-Befehl entfernt: $cliPath" -ForegroundColor Green
+  }
+}
+
 if ($Uninstall) {
   Uninstall-SendTo
+  Uninstall-Cli
   return
 }
 
 # Ohne Schalter: alles einrichten.
-if (-not $Tools -and -not $Fonts -and -not $SendTo) {
-  $Tools = $true; $Fonts = $true; $SendTo = $true
+if (-not $Tools -and -not $Fonts -and -not $SendTo -and -not $Cli) {
+  $Tools = $true; $Fonts = $true; $SendTo = $true; $Cli = $true
 }
 
 if ($Tools)  { Install-Tools }
 if ($Fonts)  { Install-Fonts }
 if ($SendTo) { Install-SendTo }
+if ($Cli)    { Install-Cli }

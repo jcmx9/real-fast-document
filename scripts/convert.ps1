@@ -71,9 +71,16 @@ function Convert-One {
   }
 
   try {
+    # Highlight-Flag je nach pandoc-Version (neuere: --syntax-highlighting,
+    # aeltere: --highlight-style). Eines passt immer.
+    $hlFlag = if ((& pandoc --help 2>&1) -match '--syntax-highlighting') {
+      @('--syntax-highlighting', 'pygments')
+    } else {
+      @('--highlight-style', 'pygments')
+    }
     & pandoc $Src --from markdown --to typst --standalone `
       --template $Template --lua-filter $LuaFilter `
-      --syntax-highlighting pygments --output $typ
+      @hlFlag --output $typ
     if ($LASTEXITCODE) { throw "pandoc-Fehler ($LASTEXITCODE)" }
 
     & typst compile $typ $outPdf `
