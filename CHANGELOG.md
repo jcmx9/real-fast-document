@@ -6,6 +6,8 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.5] - 2026-06-19
+
 ### Added
 - Cross-platform install/setup: one-line bootstrap (`bootstrap.sh` via curl|bash,
   `bootstrap.ps1` via irm|iex) clones into `~/.local/share/real-fast-document`
