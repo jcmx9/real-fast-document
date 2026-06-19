@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 630 110" font-family="SourceSans3VF">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a8a8a"/>
+    </marker>
+  </defs>
+  <g>
+    <rect x="6"   y="32" width="130" height="46" rx="9" fill="#eef0fd" stroke="#5b54e0" stroke-width="1.5"/>
+    <text x="71"  y="60" text-anchor="middle" font-size="18" fill="#141414">Markdown</text>
+  </g>
+  <g>
+    <rect x="171" y="32" width="130" height="46" rx="9" fill="#eef0fd" stroke="#5b54e0" stroke-width="1.5"/>
+    <text x="236" y="60" text-anchor="middle" font-size="18" fill="#141414">Pandoc</text>
+  </g>
+  <g>
+    <rect x="336" y="32" width="130" height="46" rx="9" fill="#eef0fd" stroke="#5b54e0" stroke-width="1.5"/>
+    <text x="401" y="60" text-anchor="middle" font-size="18" fill="#141414">Typst</text>
+  </g>
+  <g>
+    <rect x="501" y="32" width="123" height="46" rx="9" fill="#5b54e0" stroke="#5b54e0" stroke-width="1.5"/>
+    <text x="562" y="60" text-anchor="middle" font-size="18" fill="#ffffff">PDF/A-3b</text>
+  </g>
+  <line x1="138" y1="55" x2="169" y2="55" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="303" y1="55" x2="334" y2="55" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <line x1="468" y1="55" x2="499" y2="55" stroke="#8a8a8a" stroke-width="1.5" marker-end="url(#arrow)"/>
+</svg>
