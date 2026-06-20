@@ -21,7 +21,8 @@ Markdown → Pandoc (-t typst, custom template, Lua filter) → .typ → Typst �
 bash scripts/build.sh                 # build example.md → example.pdf (next to source)
 bash scripts/build.sh SRC.md          # → SRC.pdf  (or DATE_SRC.pdf if frontmatter has date:)
 bash scripts/build.sh SRC.md OUT.pdf  # explicit output
-bash scripts/fetch-fonts.sh           # (re)download the bundled variable fonts into ./fonts
+RFD_NO_OPEN=1 bash scripts/build.sh SRC.md   # suppress the auto-open (build.sh opens the PDF by default)
+bash scripts/fetch-fonts.sh           # (re)download the bundled fonts into ./fonts (Source OTF + Noto fallbacks)
 bash scripts/install.sh               # set up tools + fonts + right-click + rf-document CLI (idempotent)
 bash scripts/install.sh --uninstall   # remove the right-click integration + rf-document
 rf-document SRC.md                    # global CLI after install (wrapper → build.sh)
@@ -32,8 +33,9 @@ shellcheck scripts/build.sh scripts/fetch-fonts.sh scripts/install.sh scripts/bo
 
 There is **no test suite**. Verification is **visual**: render pages to PNG and inspect them.
 Render fixtures live in the root: `example.md` (default build target), `showcase.md` and
-`long-example.md` (exercise the structured/TOC mode, `#H2 + #H3 > 5`), and `faust.md` (a
-large real-world document). Use these to eyeball layout changes; their `*.pdf` are git-ignored.
+`long-example.md` (exercise the structured/TOC mode, `#H2 + #H3 > 5`), `faust.md` (a
+large real-world document), and `example_special-characters.md` (exercises the emoji/symbol
+glyph fallback). Use these to eyeball layout changes; their `*.pdf` are git-ignored.
 
 ```bash
 pandoc SRC.md -f markdown -t typst -s --template template.typ \
@@ -66,6 +68,16 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   (and `install.ps1`): `google/fonts` only ships these families as TTF — variable OTF exist
   only at Adobe. Typst's *embedded* math font still works under `--ignore-system-fonts`, so
   math renders without bundling a math font.
+- **Glyph fallback for emoji/symbols** — `fonts/` also bundles two monochrome OFL fonts,
+  `Noto Emoji` (variable TTF) and `Noto Sans Symbols 2`, fetched from `google/fonts` (TTF is
+  fine — the OTF rule was Source-specific). `template.typ` appends them to every font list
+  (`("SourceSans3VF", "Noto Emoji", "Noto Sans Symbols 2")` via `body-font`/`heading-font`/
+  `code-font`), so Typst falls back **per glyph**: text stays fully Source, only characters
+  Source lacks render from Noto. **Why this matters:** `--ignore-system-fonts` blocks any
+  system fallback, and PDF/A-3b *aborts* on a missing glyph (`error: the text "🚀" could not
+  be displayed`). Color emoji fonts are not PDF/A-embeddable, so the fallbacks are monochrome
+  (which also matches the design). Coverage isn't 100 % — a glyph absent from all three (e.g.
+  `⁃` U+2043) still hard-errors; `example_special-characters.md` doubles as a coverage probe.
 - **Font-family names differ by family**: the variable OTF expose `Source Serif 4` but
   `SourceSans3VF` and `SourceCodeVF` (internal VF names, *not* "Source Sans 3" / "Source Code
   Pro"). `template.typ` must reference exactly those names. Verify what Typst sees with
@@ -85,6 +97,9 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   shows a `lang`-localized date in the footer right; `toc:`/`h2-break:` true|false override
   the `> 5` automatism; `filename:` true|false toggles the footer-left name. The footer is
   2-col without a date (name | page) and 3-col with one (name | page centered | date).
+  The three bool keys are parsed **YAML-1.1-tolerant** (case-insensitive
+  `true/false/yes/no/on/off`, quotes, inline comments via `yaml_bool`/`ConvertTo-YamlBool`);
+  an unrecognized value warns and keeps the default instead of failing silently.
   Typst does not localize month names (`[month repr:long]` is English only) → a manual
   `months-de` array lives in `template.typ`; `fmt-date` validates the ISO string defensively
   because an invalid `datetime`/`int()` *panics* and aborts the whole build.
@@ -92,7 +107,10 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   of Typst comments), so any literal `$` — even inside a `//` comment or a `regex("…$")` —
   must be written `$$`, or the Pandoc step fails. The date regex in `fmt-date` relies on this.
 - **`filters/meta-from-h1.lua`** sets the PDF/A title from the H1 and **enforces exactly one
-  H1** (errors otherwise) — H1 is the document title.
+  H1** (errors otherwise) — H1 is the document title. It also handles **task lists**: Pandoc
+  renders `- [ ]`/`- [x]` as a normal list whose items start with ☐/☒, which together with the
+  template's square bullet would show two markers; the filter wraps a pure task list in
+  `#[ #set list(marker: none) … ]` so only the checkbox remains.
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the
   conversion entry points. They resolve the logo (`logo.svg → .png → .jpg`, optional), run
   pandoc then typst, and emit PDF/A-3b with the source Markdown embedded (`pdf.attach`).
@@ -101,6 +119,11 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   **absolute** `source=` so the attach works for sources anywhere on disk (Typst sandboxes
   reads to its root and treats `/…` as root-relative). `convert.ps1` instead works in the
   source dir (intermediate `.typ` there, logo copied in, `source=` as leaf).
+  - **Relative paths:** because `build.sh` `cd`s into the project root, it records `orig_pwd`
+    **before** the `cd` and resolves a relative source/output argument against it (`resolve_from_pwd`).
+    Without this, `rf-document foo.md` from any other directory failed with "file not found".
+  - **Auto-open:** after a successful build both scripts open the PDF in the default viewer
+    (`open`/`xdg-open`/`Start-Process`); set `RFD_NO_OPEN=1` to suppress (batch/cron).
 - **Install / bootstrap** (separate from conversion):
   - `scripts/bootstrap.sh` / `scripts/bootstrap.ps1` are the curl|bash / irm|iex one-liners:
     require git, clone/pull into `~/.local/share/real-fast-document` (Windows
@@ -134,8 +157,16 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 ### Heading / document model (encoded in template.typ)
 
 - **H1 = document title** (exactly one, centered, excluded from header and TOC).
-- **H2 = chapter** — the active H2 is threaded into the running header (left).
+- **H2 = chapter** — the active H2 is threaded into the running header (left, plain text, no
+  graphic element).
 - **H3+** = subsections.
+- **Visual language** (all sans-serif now — `Source Sans 3`, *not* Source Serif): H1 and the
+  "Inhalt" label are semibold; H2/H3+ use the Book weight (`wght` 450). Headings are
+  left-aligned (ragged, `justify: false`); only H1 is centered. H2 gets a 1 pt frame + a 3 pt
+  left accent bar, H3+ only the 3 pt bar (both `luma(20%)`). Fonts come from `body-font`/
+  `heading-font`/`code-font` (Source + Noto fallbacks). Unordered lists use one small drawn
+  square marker at **all** levels (`#set list(marker: …)`); ordered lists keep numbers.
+  Blockquotes are indented both sides + italic (`#show quote.where(block: true)`).
 - **Conditional TOC**: by default, when `#H2 + #H3 > 5` the document switches to "structured"
   mode — a table of contents over H2/H3 is rendered after the title and each chapter (H2)
   starts on a new page. At or below the threshold it stays compact (no TOC, chapters inline).
