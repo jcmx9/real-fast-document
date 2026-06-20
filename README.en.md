@@ -125,9 +125,16 @@ filename: false    # hide the file name at the bottom left (default: true)
 | Key | Values | Effect |
 |-----|--------|--------|
 | `date` | ISO date | Set → output file gets the ISO prefix `YYYY-MM-DD_name.pdf` **and** the date appears bottom-right, localized by `lang` (de "19. Juni 2026", en "June 19, 2026"). The footer then becomes 3-column (name · page centered · date). |
-| `toc` | `true` / `false` | Overrides the TOC automatism. Without it, the heuristic `#H2 + #H3 > 5` decides. |
-| `h2-break` | `true` / `false` | Overrides the chapter page break, independently of `toc`. |
+| `toc` | `true` / `false` | Force / suppress the table of contents. Without it, the structure automatism applies (see below). |
+| `h2-break` | `true` / `false` | Force / suppress chapter page breaks. Without it, the same automatism applies, independently of `toc`. |
 | `filename` | `true` / `false` | Show the file name at the bottom left. Default `true`. |
+
+**Structure automatism:** without an explicit value the heuristic `#H2 + #H3 > 5` decides.
+With **more than five** chapter/subsection headings the document switches to *structured*
+mode: a table of contents appears after the title **and** each chapter (`## H2`) starts on a
+new page. At **five or fewer** it stays *compact* — no contents, chapters run inline. `toc`
+and `h2-break` toggle these two effects **individually and independently** (`true` forces,
+`false` suppresses), so e.g. a table of contents without chapter page breaks is possible.
 
 The boolean keys (`toc`, `h2-break`, `filename`) accept all YAML 1.1 spellings, regardless of
 case: `true`/`false`, `yes`/`no`, `on`/`off` (as well as `"true"` in quotes). An unrecognized

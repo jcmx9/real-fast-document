@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.14] - 2026-06-20
+
+### Docs
+- Both READMEs now explain the structure automatism in the frontmatter section: the
+  `#H2 + #H3 > 5` heuristic switches between structured mode (TOC + chapter page
+  breaks) and compact mode, and `toc`/`h2-break` override the two effects
+  individually (the `h2-break` default was previously left unexplained).
+- CLAUDE.md: documented the skipped-remote-image reporting (build.sh/convert.ps1
+  summary line + rfd-convert.sh notification), corrected the release flow (no `dev`
+  branch), and noted the README parity rule.
+
 ## [26.6.13] - 2026-06-20
 
 ### Docs

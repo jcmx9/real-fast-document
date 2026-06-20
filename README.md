@@ -125,9 +125,17 @@ filename: false    # Dateiname unten links ausblenden (Default: true)
 | Schlüssel | Werte | Wirkung |
 |-----------|-------|---------|
 | `date` | ISO-Datum | Gesetzt → Ausgabedatei erhält den ISO-Präfix `JJJJ-MM-TT_name.pdf` **und** das Datum erscheint unten rechts, lokalisiert nach `lang` (de „19. Juni 2026", en „June 19, 2026"). Die Fußzeile wird dann 3-spaltig (Name · Seite mittig · Datum). |
-| `toc` | `true` / `false` | Übersteuert den TOC-Automatismus. Ohne Angabe entscheidet die Heuristik `#H2 + #H3 > 5`. |
-| `h2-break` | `true` / `false` | Übersteuert den Kapitel-Seitenumbruch, unabhängig von `toc`. |
+| `toc` | `true` / `false` | Inhaltsverzeichnis erzwingen / unterdrücken. Ohne Angabe greift der Struktur-Automatismus (siehe unten). |
+| `h2-break` | `true` / `false` | Kapitel-Seitenumbruch erzwingen / unterdrücken. Ohne Angabe greift derselbe Automatismus, unabhängig von `toc`. |
 | `filename` | `true` / `false` | Dateiname unten links anzeigen. Default `true`. |
+
+**Struktur-Automatismus:** Ohne explizite Angabe entscheidet die Heuristik `#H2 + #H3 > 5`.
+Bei **mehr als fünf** Kapitel-/Unterüberschriften schaltet das Dokument in den *strukturierten
+Modus*: ein Inhaltsverzeichnis erscheint nach dem Titel **und** jedes Kapitel (`## H2`) beginnt
+auf einer neuen Seite. Bei **fünf oder weniger** bleibt es *kompakt* — kein Verzeichnis, die
+Kapitel laufen im Fluss. `toc` und `h2-break` schalten diese beiden Effekte **einzeln und
+unabhängig** (`true` erzwingt, `false` unterdrückt), sodass z. B. ein Inhaltsverzeichnis ohne
+Kapitel-Seitenumbruch möglich ist.
 
 Die Boolean-Schlüssel (`toc`, `h2-break`, `filename`) akzeptieren alle YAML-1.1-Schreibweisen,
 unabhängig von Groß-/Kleinschreibung: `true`/`false`, `yes`/`no`, `on`/`off` (sowie `"true"` in
