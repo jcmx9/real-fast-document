@@ -19,7 +19,8 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   semibold; H2/H3+ use the Book weight (`wght` 450). H2 gets a thin 1 pt frame
   plus a 3 pt accent bar on the left, H3+ just the 3 pt left bar (both 80 % grey)
   — the same bar repeats before the chapter name in the running header, whose
-  font size grows by 2 pt (11 → 13 pt).
+  font size grows by 2 pt (11 → 13 pt). Headings are left-aligned (ragged, never
+  justified); only the H1 title is centered.
 
 ### Fixed
 - `build.sh` resolved a relative source/output path against the project root

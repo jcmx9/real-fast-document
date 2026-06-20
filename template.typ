@@ -230,6 +230,9 @@ $endif$
 // Wichtig: `it` darf NICHT in einem context realisiert werden (sonst greift
 // Typsts Rekursionsschutz nicht). Daher nur Zählung/TOC/Umbruch im context.
 #show heading: it => {
+  // Überschriften nie im Blocksatz: H1 wird explizit zentriert, alle anderen
+  // bleiben linksbündig (auch über mehrere Zeilen, ohne Streckung).
+  set par(justify: false)
   if it.level == 1 {
     // Titel zentriert, halbfett, mit Luft nach unten.
     block(width: 100%, above: 0.2em, below: 1.0em,
