@@ -162,7 +162,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | **TOC** | bedingt: ab `#H2 + #H3 > 5` → Inhaltsverzeichnis + Kapitel je neue Seite; per Frontmatter `toc`/`h2-break` übersteuerbar |
 | Kopf rechts | Logo (`logo.svg` → `.png` → `.jpg`), Höhe 13 mm — **optional** |
 | Fuß | ohne Datum: Name links · Seite rechts. Mit Datum: Name links · Seite mittig · Datum rechts |
-| Überschriften | Source Serif 4, halbfett, `luma(20%)` |
+| Überschriften | Source Sans 3 (serifenlos), `luma(8%)`; H2 mit 1 pt-Rahmen + 3 pt-Akzentbalken links, H3+ nur 3 pt-Balken links (`luma(20%)`, 80 % Grau) |
 | Fließtext | Source Sans 3, 12 pt, Blocksatz mit Silbentrennung, `luma(13%)` |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
 
@@ -171,12 +171,12 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Element | Schrift | Grad |
 |---------|---------|------|
 | Fließtext | Source Sans 3 | 12 pt |
-| Titel (H1) | Source Serif 4 halbfett | 28 pt, zentriert |
-| Kapitel (H2) | Source Serif 4 halbfett | 18 pt |
-| H3 / H4 / H5 / H6 | Source Serif 4 halbfett | 14,5 / 13 / 12 / 12 pt |
-| TOC-Titel „Inhalt" | Source Serif 4 halbfett | 16 pt |
+| Titel (H1) | Source Sans 3 halbfett | 28 pt, zentriert |
+| Kapitel (H2) | Source Sans 3 Book (`wght` 450) | 18 pt, 1 pt-Rahmen + 3 pt-Balken links |
+| H3 / H4 / H5 / H6 | Source Sans 3 Book (`wght` 450) | 14,5 / 13 / 12 / 12 pt, 3 pt-Balken links |
+| TOC-Titel „Inhalt" | Source Sans 3 halbfett | 16 pt |
 | TOC-Einträge | Source Sans 3 | 13 pt, Book (`wght` 450) |
-| Kopf (Kapitel) | Source Serif 4 halbfett | 11 pt |
+| Kopf (Kapitel) | Source Sans 3 Book (`wght` 450) | 13 pt, mit 3 pt-Balken links |
 | Code | Source Code Pro | 10 pt |
 | Fußzeile | Source Sans 3 | 9 pt |
 
