@@ -118,12 +118,8 @@ $endif$
   } else if prior.len() > 0 {
     prior.last().body
   } else { [] }
-  // Kapitel im Kopf: serifenlos, +2pt (13pt), mit kurzem Akzentbalken links als
-  // "leichtes grafisches Element" – dasselbe 3pt-Motiv wie bei den Überschriften.
-  let chapter = if current != [] {
-    box(inset: (left: 6pt), stroke: (left: 3pt + accent),
-      text(font: heading-font, weight: 450, size: 13pt, fill: head-color)[#current])
-  } else { [] }
+  // Kapitel im Kopf: serifenlos, +2pt (13pt), ohne grafisches Element.
+  let chapter = text(font: heading-font, weight: 450, size: 13pt, fill: head-color)[#current]
   grid(
     columns: (1fr, auto),
     column-gutter: 6mm,
@@ -222,6 +218,11 @@ $endif$
 // (statt der ebenenabhängigen Standardzeichen •/‣/–). Als Typst-Form gezeichnet
 // (font-unabhängig, exakte Größe/Farbe), leicht angehoben zur optischen Mitte.
 #set list(marker: box(baseline: -0.2em, square(size: 0.32em, fill: luma(20%))))
+
+// Blockzitate heben sich ab: schmaler als der Satzspiegel (beidseitig
+// eingerückt) und kursiv.
+#show quote.where(block: true): it => pad(left: 2em, right: 2em,
+  block(spacing: 1.1em, text(style: "italic", it.body)))
 
 // H1 (Dokumenttitel) erscheint nicht im Inhaltsverzeichnis.
 #show heading.where(level: 1): set heading(outlined: false)
