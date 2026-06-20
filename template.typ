@@ -71,7 +71,15 @@ $endif$
 
 // Alles "Source", aber serifenlos: Überschriften nutzen denselben Sans wie der
 // Fließtext (statt Source Serif 4). Code bleibt SourceCodeVF.
-#let heading-font = "SourceSans3VF"
+//
+// Zeichenbasierter Fallback (Typst macht das pro Glyph automatisch): zuerst
+// Source; nur Zeichen, die Source NICHT hat (Emoji, Symbole), fallen einzeln auf
+// Noto Emoji, dann Noto Sans Symbols 2. Normaler Text bleibt damit voll Source.
+// Beide Notos sind monochrom -> PDF/A-3b-tauglich und einbettbar.
+#let fallback-fonts = ("Noto Emoji", "Noto Sans Symbols 2")
+#let body-font = ("SourceSans3VF", ..fallback-fonts)
+#let heading-font = ("SourceSans3VF", ..fallback-fonts)
+#let code-font = ("SourceCodeVF", ..fallback-fonts)
 
 // Seitengeometrie (zentral, von Seite UND Header-Logik genutzt)
 #let margin-top = 35mm
@@ -170,7 +178,7 @@ $endif$
   let page-num = [Seite #n / #total]
   line(length: 100%, stroke: rule-stroke)
   v(2pt)
-  set text(font: "SourceSans3VF", size: 9pt, fill: head-color)
+  set text(font: body-font, size: 9pt, fill: head-color)
   if date-disp == none {
     // 2-spaltig: Name links, Seitenzahl rechts (bzw. mittig, wenn kein Name).
     if show-name {
@@ -207,7 +215,7 @@ $endif$
 // ---------------------------------------------------------------------------
 // Fließtext, Überschriften, Code
 // ---------------------------------------------------------------------------
-#set text(font: "SourceSans3VF", size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%))
+#set text(font: body-font, size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%))
 #set par(justify: true, leading: 0.8em, spacing: 1.1em)
 
 // H1 (Dokumenttitel) erscheint nicht im Inhaltsverzeichnis.
@@ -281,7 +289,7 @@ $endif$
 #show outline.entry.where(level: 2): it => toc-entry(1.0em, it)
 #show outline.entry.where(level: 3): it => toc-entry(0.5em, it)
 
-#show raw: set text(font: "SourceCodeVF", size: 10pt)
+#show raw: set text(font: code-font, size: 10pt)
 #show raw.where(block: true): it => block(
   fill: luma(245),
   inset: 8pt,

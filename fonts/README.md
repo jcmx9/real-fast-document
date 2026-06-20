@@ -10,8 +10,19 @@ Releases geladen.
 | Source Sans 3    | `SourceSans3VF`      | 3.052R  | https://github.com/adobe-fonts/source-sans |
 | Source Code Pro  | `SourceCodeVF`       | 1.026vf | https://github.com/adobe-fonts/source-code-pro |
 
-> **Hinweis zur Quelle:** Google Fonts (`github.com/google/fonts`) verteilt diese
-> Familien ausschließlich als TTF; variable **OTF** gibt es nur bei Adobe.
+**Zeichenbasierte Fallbacks** (monochrom, TTF) von `github.com/google/fonts` —
+greifen pro Glyph nur für Zeichen, die Source nicht hat (Emoji, Symbole). Beide
+sind PDF/A-3b-tauglich (Outline-Glyphen, kein Farbformat).
+
+| Familie             | Familienname (Typst)   | Abdeckung |
+|---------------------|------------------------|-----------|
+| Noto Emoji          | `Noto Emoji`           | Emoji/Piktogramme (variabel, `wght`) |
+| Noto Sans Symbols 2 | `Noto Sans Symbols 2`  | Dingbats, Pfeile, weitere Symbole |
+
+> **Hinweis zur Quelle:** Google Fonts (`github.com/google/fonts`) verteilt die
+> Source-Familien ausschließlich als TTF; variable **OTF** gibt es nur bei Adobe.
+> Die Noto-Fallbacks kommen direkt als TTF von Google Fonts (Format dort egal —
+> Typst bettet TTF ebenso PDF/A-konform ein).
 
 > **Familiennamen:** Die variablen OTF von Sans/Code melden interne VF-Namen
 > (`SourceSans3VF`, `SourceCodeVF`) — `template.typ` referenziert exakt diese.
