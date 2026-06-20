@@ -1,5 +1,5 @@
 ---
-date: 2026-06-19
+date: 2026-06-20
 toc: true
 h2-break: true
 filename: true
@@ -10,7 +10,8 @@ filename: true
 Dieses Dokument zeigt, wie aus einer einzigen Markdown-Datei ein archivfähiges,
 einheitlich gestaltetes PDF entsteht — **ohne Textverarbeitung, ohne manuelles
 Layout**. Es ist selbst mit genau dieser Pipeline gesetzt und dient damit
-zugleich als Vorlage für das Ergebnis.[^pipeline]
+zugleich als Vorlage für das Ergebnis und als Falltest für alle unterstützten
+Elemente.[^pipeline]
 
 [^pipeline]: Der Ablauf in einem Satz: Markdown → Pandoc → Typst → PDF/A-3b.
     Die Quelle bleibt reiner Text; das Layout lebt vollständig im Template.
@@ -49,6 +50,15 @@ Verschachtelte und nummerierte Listen werden sauber gesetzt:
    - `h2-break` für den Kapitelumbruch.
 3. Bauen lassen — fertig.
 
+### Aufgabenlisten
+
+Auch Checklisten werden erkannt — die Kästchen ersetzen den Listenpunkt, statt
+doppelt zu erscheinen:
+
+- [x] Vorlage erstellt
+- [x] PDF/A-Export eingerichtet
+- [ ] Letzter Feinschliff am Layout
+
 ### Tabellen
 
 Tabellen folgen der gewohnten Pipe-Syntax:
@@ -61,9 +71,16 @@ Tabellen folgen der gewohnten Pipe-Syntax:
 
 ### Bilder
 
-Bilder werden als *Abbildung* mit nummeriertem Untertitel gesetzt:
+Lokale Bilder werden als *Abbildung* mit nummeriertem Untertitel gesetzt:
 
 ![Der Ablauf der Pipeline in vier Schritten — vom reinen Text bis zum Archiv-PDF.](assets/pipeline.svg)
+
+Bilder mit **Remote-Adresse** (`http(s)://`) lassen sich offline nicht
+einbetten — Typst hat bewusst keinen Netzzugriff. Solche Bilder entfallen daher
+automatisch, der Build bleibt fehlerfrei. Das folgende Logo liegt im Netz und
+wird beim Bauen still entfernt:
+
+![Dieses Logo liegt im Netz und wird beim Offline-Build entfernt.](https://typst.app/assets/logo.svg)
 
 ### Definitionslisten
 
@@ -106,6 +123,20 @@ $$
 \int_{a}^{b} f(x)\,\mathrm{d}x = F(b) - F(a)
 $$
 
+## Sonderzeichen & Emoji
+
+Normaler Text bleibt **Source Sans 3**; nur Zeichen, die Source nicht kennt,
+fallen pro Glyph monochrom auf **Noto Emoji** und **Noto Sans Symbols 2** zurück
+— PDF/A-3b-konform. Dass dieser Abschnitt fehlerfrei baut, belegt den Fallback:
+
+- Objekte und Status: 🚀 📊 📝 🔧 🔍 📌 ✅ ❌ ⚠️ 💡 🎯 🔒.
+- Gesten und Natur: 🙂 👍 👎 👀 🤝 ☀️ ⚡ ❄️ 🌙 ⭐ 🔥 🌱.
+- Pfeile: → ← ↑ ↓ ↔ ⇒ ⇐ ⇔ ➤ ⟶.
+- Häkchen und Marker: ✓ ✔ ✗ ✘ ☑ ☐ ★ ☆ • ◦ ‣.
+- Mathe und Technik: ± × ÷ ≤ ≥ ≠ ≈ ∞ √ ∑ ∫ ∂ ∈ ⊆ ½ m² H₂O CO₂.
+- Währung und Recht: € £ ¥ $ ₿ № § ¶ © ® ™ ‰.
+- Geometrie und Spiel: ■ □ ▲ △ ● ○ ◆ ◇ ♠ ♥ ♦ ♣ ♛ ♞.
+
 ## Struktur & Layout
 
 Die Überschriftenebenen haben feste Rollen:
@@ -118,7 +149,7 @@ Die Überschriftenebenen haben feste Rollen:
 Ab mehr als fünf H2-/H3-Überschriften schaltet das Dokument automatisch in den
 strukturierten Modus (Inhaltsverzeichnis voran, jedes Kapitel auf neuer Seite) —
 hier zusätzlich per Frontmatter erzwungen. Ist im Frontmatter ein `date` gesetzt,
-erhält die Ausgabedatei einen ISO-Präfix (`2026-06-19_example.pdf`) und das Datum
+erhält die Ausgabedatei einen ISO-Präfix (`2026-06-20_example.pdf`) und das Datum
 erscheint rechts in der Fußzeile.
 
 ---

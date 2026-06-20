@@ -23,33 +23,77 @@ function BulletList(el)
   }
 end
 
---- Remote-Bilder (http/https) entfernen. Typst hat bewusst keinen Netzwerk-
---- zugriff (`network access is not supported`); ein `image("https://…")` würde
---- den Build hart abbrechen. Da wir offline bauen, werden solche Bilder ersatz-
---- los verworfen, bevor Pandoc sie nach Typst übersetzt. Lokale Bilder bleiben.
-local function is_remote(src)
-  return src ~= nil and src:match("^https?://") ~= nil
+--- Nicht-ladbare Bilder entfernen. Typst hat bewusst keinen Netzwerkzugriff
+--- (`network access is not supported`); ein `image("https://…")` würde den Build
+--- hart abbrechen. Da wir offline bauen, werden solche Bilder vor der Typst-Stufe
+--- verworfen. Betroffen sind http(s)-URLs, protokoll-relative URLs (`//host/…`)
+--- und `data:`-URIs (die Typst als Dateipfad nähme und nicht fände). Lokale
+--- Bilder bleiben unberührt.
+local function is_unloadable(src)
+  if src == nil then return false end
+  return src:match("^https?://") ~= nil
+    or src:match("^//") ~= nil
+    or src:match("^data:") ~= nil
 end
 
+-- Ein entferntes Bild hinterlässt einen markierten Platzhalter (leerer Span mit
+-- dieser Klasse), damit ein Container, der *nur* daraus bestand, gezielt mit-
+-- entfernt werden kann – ohne zufällig leere Container anzufassen, die so im
+-- Quelltext standen.
+local REMOVED_MARK = "rfd-removed-remote-image"
+
 function Image(el)
-  if is_remote(el.src) then
+  if is_unloadable(el.src) then
     io.stderr:write(
       "Hinweis: Remote-Bild entfernt (Typst hat keinen Netzzugriff): "
       .. el.src .. "\n"
     )
-    return {} -- ersatzlos entfernen
+    return pandoc.Span({}, pandoc.Attr("", { REMOVED_MARK }))
   end
   return nil
 end
 
---- Ein Link, dessen einziger Inhalt ein gerade entferntes Remote-Bild war
---- (häufiges `[![alt](img)](url)`-Muster), bliebe sonst als leerer, unsicht-
---- barer Geister-Link zurück – ebenfalls entfernen. Pandoc traversiert
---- bottom-up, das innere Image ist hier also bereits verschwunden.
-function Link(el)
-  if #el.content == 0 then
-    return {}
+-- true, wenn die Inlines ausschließlich aus entfernten Bild-Platzhaltern (und
+-- Leerraum) bestehen – der Container trug also nichts außer Remote-Bildern.
+local function only_removed(inlines)
+  local saw = false
+  for _, x in ipairs(inlines) do
+    if x.t == "Span" and x.classes:includes(REMOVED_MARK) then
+      saw = true
+    elseif x.t == "Space" or x.t == "SoftBreak" or x.t == "LineBreak" then
+      -- Leerraum ignorieren
+    else
+      return false
+    end
   end
+  return saw
+end
+
+--- Ein Link, der nur ein entferntes Remote-Bild umschloss (häufiges
+--- `[![alt](img)](url)`-Muster), bliebe sonst als leerer Geister-Link zurück.
+function Link(el)
+  if only_removed(el.content) then return {} end
+  return nil
+end
+
+--- Ein Absatz, der nur aus entfernten Remote-Bildern bestand, würde sonst als
+--- leerer Block toten vertikalen Raum erzeugen – ebenfalls entfernen.
+function Para(el)
+  if only_removed(el.content) then return {} end
+  return nil
+end
+
+function Plain(el)
+  if only_removed(el.content) then return {} end
+  return nil
+end
+
+--- Ein allein stehendes `![untertitel](url)` rendert Pandoc als `Figure` (Bild +
+--- Untertitel). Ist das Bild ein entferntes Remote-Bild, leert sich der Figure-
+--- Inhalt (der innere Plain ist oben schon weg) – sonst bliebe der Untertitel als
+--- Geister-Abbildung stehen. Dann die ganze Abbildung inkl. Untertitel entfernen.
+function Figure(el)
+  if #el.content == 0 then return {} end
   return nil
 end
 
@@ -74,6 +118,16 @@ function Pandoc(doc)
   if doc.meta.title == nil and #h1 == 1 then
     doc.meta.title = pandoc.MetaInlines(h1[1].content)
   end
+
+  -- Übrig gebliebene Platzhalter restlos entfernen: ein Remote-Bild mitten in
+  -- einem sonst nicht-leeren Absatz hinterlässt einen Marker, der hier (nach dem
+  -- Haupt-Traversal) spurlos getilgt wird.
+  doc = doc:walk {
+    Span = function(s)
+      if s.classes:includes(REMOVED_MARK) then return {} end
+      return nil
+    end,
+  }
 
   return doc
 end

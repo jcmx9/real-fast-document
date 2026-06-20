@@ -32,13 +32,21 @@ notify() {
 
 ok=0
 fail=0
+stripped=0
 for f in "$@"; do
-  if bash "${root}/scripts/build.sh" "${f}"; then
+  # build.sh-Ausgabe abfangen (kein Terminal im GUI-Pfad), um daraus die Zahl
+  # übersprungener Remote-Bilder zu lesen – sonst verschwänden sie unbemerkt.
+  if log="$(bash "${root}/scripts/build.sh" "${f}" 2>&1)"; then
     ok=$((ok + 1))
   else
     fail=$((fail + 1))
   fi
+  printf '%s\n' "${log}"
+  n="$(printf '%s\n' "${log}" | grep -oE '[0-9]+ Remote-Bild' | head -1 | grep -oE '^[0-9]+' || true)"
+  stripped=$((stripped + ${n:-0}))
 done
 
-notify "PDF/A: ${ok} erstellt, ${fail} fehlgeschlagen."
+msg="PDF/A: ${ok} erstellt, ${fail} fehlgeschlagen."
+[[ "${stripped}" -gt 0 ]] && msg="${msg} ${stripped} Remote-Bild(er) übersprungen."
+notify "${msg}"
 [[ "${fail}" -eq 0 ]]
