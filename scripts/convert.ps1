@@ -22,6 +22,18 @@ $Template    = Join-Path $InstallRoot 'template.typ'
 $LuaFilter   = Join-Path (Join-Path $InstallRoot 'filters') 'meta-from-h1.lua'
 $FontDir     = Join-Path $InstallRoot 'fonts'
 
+# Einen YAML-Skalar zu 'true'/'false' normalisieren (YAML-1.1-Boolean-Menge,
+# Obsidian-kompatibel; Superset von YAML 1.2). Akzeptiert true/false/yes/no/on/
+# off/y/n in beliebiger Gross-/Kleinschreibung, entfernt umschliessende Quotes
+# und einen Inline-Kommentar (' # ...'). Unbekannte Werte -> $null (Aufrufer warnt).
+function ConvertTo-YamlBool {
+  param([string]$Raw)
+  $v = ($Raw -replace '\s#.*$', '').Trim().Trim('"', "'").ToLower()
+  if ($v -in @('true', 'yes', 'on', 'y'))  { return 'true' }
+  if ($v -in @('false', 'no', 'off', 'n')) { return 'false' }
+  return $null
+}
+
 function Convert-One {
   param([string]$Src)
 
@@ -35,16 +47,29 @@ function Convert-One {
   $mdLeaf = Split-Path -Leaf $Src
 
   # Optionalen YAML-Frontmatter (fuehrender ---...---) parsen: nur diese vier
-  # Schluessel; toc/h2-break/filename nur exakt true|false, sonst Default.
+  # Schluessel; toc/h2-break/filename werden YAML-1.1-konform als Boolean gelesen
+  # (siehe ConvertTo-YamlBool); ein erkannter Schluessel mit ungueltigem Wert
+  # warnt und behaelt den Default.
   $fmDate = ''; $fmToc = 'auto'; $fmBreak = 'auto'; $fmShowname = 'true'
   $lines = Get-Content -LiteralPath $Src
   if ($lines.Count -gt 0 -and $lines[0].Trim() -eq '---') {
     for ($i = 1; $i -lt $lines.Count; $i++) {
       if ($lines[$i].Trim() -eq '---') { break }
-      if     ($lines[$i] -match '^date:\s*(.+?)\s*$')           { $fmDate     = $Matches[1].Trim('"',"'") }
-      elseif ($lines[$i] -match '^toc:\s*(true|false)\s*$')      { $fmToc      = $Matches[1] }
-      elseif ($lines[$i] -match '^h2-break:\s*(true|false)\s*$') { $fmBreak    = $Matches[1] }
-      elseif ($lines[$i] -match '^filename:\s*(true|false)\s*$') { $fmShowname = $Matches[1] }
+      if ($lines[$i] -match '^date:\s*(.+?)\s*$') {
+        $fmDate = $Matches[1].Trim('"', "'")
+      }
+      elseif ($lines[$i] -match '^toc:\s*(.+?)\s*$') {
+        $b = ConvertTo-YamlBool $Matches[1]
+        if ($b) { $fmToc = $b } else { Write-Warning "Ungueltiger Wert fuer 'toc': '$($Matches[1])' - ignoriert (true/false)." }
+      }
+      elseif ($lines[$i] -match '^h2-break:\s*(.+?)\s*$') {
+        $b = ConvertTo-YamlBool $Matches[1]
+        if ($b) { $fmBreak = $b } else { Write-Warning "Ungueltiger Wert fuer 'h2-break': '$($Matches[1])' - ignoriert (true/false)." }
+      }
+      elseif ($lines[$i] -match '^filename:\s*(.+?)\s*$') {
+        $b = ConvertTo-YamlBool $Matches[1]
+        if ($b) { $fmShowname = $b } else { Write-Warning "Ungueltiger Wert fuer 'filename': '$($Matches[1])' - ignoriert (true/false)." }
+      }
     }
   }
 
@@ -96,6 +121,9 @@ function Convert-One {
     if ($LASTEXITCODE) { throw "typst-Fehler ($LASTEXITCODE)" }
 
     Write-Host "OK  $outPdf" -ForegroundColor Green
+
+    # Erzeugte PDF automatisch oeffnen (immer). Opt-out ueber RFD_NO_OPEN=1.
+    if (-not $env:RFD_NO_OPEN) { Start-Process -FilePath $outPdf }
   }
   finally {
     Remove-Item -LiteralPath $typ -ErrorAction SilentlyContinue

@@ -94,6 +94,10 @@ bash scripts/build.sh in.md out.pdf   # explizite Ausgabe
 Ohne zweites Argument landet die Ausgabe neben der Quelle. Ist im Frontmatter ein `date`
 gesetzt, bekommt die Datei automatisch einen ISO-Präfix (`2026-06-19_dokument.pdf`).
 
+Die erzeugte PDF wird nach erfolgreichem Build automatisch im Standardprogramm geöffnet
+(Terminal und Rechtsklick, alle drei Systeme). Für Batch-/Cron-Läufe lässt sich das mit
+der Umgebungsvariable `RFD_NO_OPEN=1` abschalten.
+
 ### Ohne Terminal (Rechtsklick)
 
 Nach der Einrichtung steht auf allen drei Systemen ein Rechtsklick-Eintrag bereit; die
@@ -122,6 +126,10 @@ filename: false    # Dateiname unten links ausblenden (Default: true)
 | `toc` | `true` / `false` | Übersteuert den TOC-Automatismus. Ohne Angabe entscheidet die Heuristik `#H2 + #H3 > 5`. |
 | `h2-break` | `true` / `false` | Übersteuert den Kapitel-Seitenumbruch, unabhängig von `toc`. |
 | `filename` | `true` / `false` | Dateiname unten links anzeigen. Default `true`. |
+
+Die Boolean-Schlüssel (`toc`, `h2-break`, `filename`) akzeptieren alle YAML-1.1-Schreibweisen,
+unabhängig von Groß-/Kleinschreibung: `true`/`false`, `yes`/`no`, `on`/`off` (sowie `"true"` in
+Anführungszeichen). Ein nicht erkannter Wert wird mit einer Warnung ignoriert und der Default greift.
 
 `lang` (Standard-Pandoc-Schlüssel) steuert die Dokumentsprache und damit das Datumsformat.
 
@@ -162,21 +170,22 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | **TOC** | bedingt: ab `#H2 + #H3 > 5` → Inhaltsverzeichnis + Kapitel je neue Seite; per Frontmatter `toc`/`h2-break` übersteuerbar |
 | Kopf rechts | Logo (`logo.svg` → `.png` → `.jpg`), Höhe 13 mm — **optional** |
 | Fuß | ohne Datum: Name links · Seite rechts. Mit Datum: Name links · Seite mittig · Datum rechts |
-| Überschriften | Source Serif 4, halbfett, `luma(20%)` |
+| Überschriften | Source Sans 3 (serifenlos), `luma(8%)`; H2 mit 1 pt-Rahmen + 3 pt-Akzentbalken links, H3+ nur 3 pt-Balken links (`luma(20%)`, 80 % Grau) |
 | Fließtext | Source Sans 3, 12 pt, Blocksatz mit Silbentrennung, `luma(13%)` |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
+| Emoji/Symbole | zeichenbasierter Fallback: Noto Emoji + Noto Sans Symbols 2 (monochrom, nur für Zeichen ohne Source-Glyph) |
 
 ### Typografie (Schriftgrade)
 
 | Element | Schrift | Grad |
 |---------|---------|------|
 | Fließtext | Source Sans 3 | 12 pt |
-| Titel (H1) | Source Serif 4 halbfett | 28 pt, zentriert |
-| Kapitel (H2) | Source Serif 4 halbfett | 18 pt |
-| H3 / H4 / H5 / H6 | Source Serif 4 halbfett | 14,5 / 13 / 12 / 12 pt |
-| TOC-Titel „Inhalt" | Source Serif 4 halbfett | 16 pt |
+| Titel (H1) | Source Sans 3 halbfett | 28 pt, zentriert |
+| Kapitel (H2) | Source Sans 3 Book (`wght` 450) | 18 pt, 1 pt-Rahmen + 3 pt-Balken links |
+| H3 / H4 / H5 / H6 | Source Sans 3 Book (`wght` 450) | 14,5 / 13 / 12 / 12 pt, 3 pt-Balken links |
+| TOC-Titel „Inhalt" | Source Sans 3 halbfett | 16 pt |
 | TOC-Einträge | Source Sans 3 | 13 pt, Book (`wght` 450) |
-| Kopf (Kapitel) | Source Serif 4 halbfett | 11 pt |
+| Kopf (Kapitel) | Source Sans 3 Book (`wght` 450) | 13 pt, mit 3 pt-Balken links |
 | Code | Source Code Pro | 10 pt |
 | Fußzeile | Source Sans 3 | 9 pt |
 
