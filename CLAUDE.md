@@ -206,11 +206,17 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 
 ## Release flow
 
-GitHub Flow: `feature/*` (or `fix/*`/`docs/*`) → PR → squash-merge to `main`. There is **no
-`dev` branch** in this repo (only `main`) — skip any fast-forward-`dev` step. CalVer
+GitHub Flow: `feature/*` (or `fix/*`/`docs/*`) → PR → squash-merge to `main`, then
+fast-forward `dev` to `main` (the repo keeps both `main` and `dev`). CalVer
 `YY.M.MICRO` in `VERSION` + `CHANGELOG.md`; tag `vX` and create a GitHub release. The version
 bump + CHANGELOG entry ride in the feature PR; a docs-only change can merge without a bump
 (cut a separate `release: X` PR if you do want to ship it as a versioned release).
+
+**Note on this repo vs. the install path:** the development repo lives under `~/GitHub/`
+and keeps `main` + `dev`; `~/.local/share/real-fast-document` is a *separate* bootstrap
+**installation** (only `main`, the `bin/` install artifacts). Develop in the repo, not in the
+install. Verify with `git -C <dir> remote -v` / the presence of `bin/rfd-tools.env` before
+committing.
 
 When scripting a merge+tag+release, **verify the merge landed in `main` before tagging**
 (`gh pr merge` can return "not mergeable" right after a push while GitHub recomputes
