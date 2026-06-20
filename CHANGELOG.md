@@ -6,6 +6,13 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.6] - 2026-06-20
+
+### Added
+- The generated PDF now opens automatically in the default viewer after a
+  successful build (terminal and right-click, all three platforms). Set
+  `RFD_NO_OPEN=1` to disable it for batch/cron runs.
+
 ### Changed
 - Fresher, fully sans-serif look: headings now use Source Sans 3 instead of
   Source Serif 4 (body and code unchanged). H1 and the "Inhalt" label stay
