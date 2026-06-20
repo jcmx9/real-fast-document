@@ -6,6 +6,14 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+### Changed
+- Fresher, fully sans-serif look: headings now use Source Sans 3 instead of
+  Source Serif 4 (body and code unchanged). H1 and the "Inhalt" label stay
+  semibold; H2/H3+ use the Book weight (`wght` 450). H2 gets a thin 1 pt frame
+  plus a 3 pt accent bar on the left, H3+ just the 3 pt left bar (both 80 % grey)
+  — the same bar repeats before the chapter name in the running header, whose
+  font size grows by 2 pt (11 → 13 pt).
+
 ## [26.6.5] - 2026-06-19
 
 ### Added
