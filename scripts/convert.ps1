@@ -96,6 +96,9 @@ function Convert-One {
     if ($LASTEXITCODE) { throw "typst-Fehler ($LASTEXITCODE)" }
 
     Write-Host "OK  $outPdf" -ForegroundColor Green
+
+    # Erzeugte PDF automatisch oeffnen (immer). Opt-out ueber RFD_NO_OPEN=1.
+    if (-not $env:RFD_NO_OPEN) { Start-Process -FilePath $outPdf }
   }
   finally {
     Remove-Item -LiteralPath $typ -ErrorAction SilentlyContinue

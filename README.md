@@ -94,6 +94,10 @@ bash scripts/build.sh in.md out.pdf   # explizite Ausgabe
 Ohne zweites Argument landet die Ausgabe neben der Quelle. Ist im Frontmatter ein `date`
 gesetzt, bekommt die Datei automatisch einen ISO-Präfix (`2026-06-19_dokument.pdf`).
 
+Die erzeugte PDF wird nach erfolgreichem Build automatisch im Standardprogramm geöffnet
+(Terminal und Rechtsklick, alle drei Systeme). Für Batch-/Cron-Läufe lässt sich das mit
+der Umgebungsvariable `RFD_NO_OPEN=1` abschalten.
+
 ### Ohne Terminal (Rechtsklick)
 
 Nach der Einrichtung steht auf allen drei Systemen ein Rechtsklick-Eintrag bereit; die

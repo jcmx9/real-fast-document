@@ -121,3 +121,15 @@ pandoc "${src}" \
   --input "showname=${fm_showname}"
 
 echo "✓ ${out} erzeugt (PDF/A-3b)"
+
+# Erzeugte PDF automatisch öffnen (immer). Opt-out über RFD_NO_OPEN=1 (z. B. für
+# Batch-/Cron-Läufe). Im Hintergrund gestartet, damit das Skript sofort endet.
+if [[ -z "${RFD_NO_OPEN:-}" ]]; then
+  case "$(uname -s)" in
+    Darwin) opener="open" ;;
+    *)      opener="xdg-open" ;;
+  esac
+  if command -v "${opener}" >/dev/null 2>&1; then
+    "${opener}" "${out}" >/dev/null 2>&1 &
+  fi
+fi
