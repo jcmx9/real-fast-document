@@ -6,6 +6,16 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.13] - 2026-06-20
+
+### Docs
+- Both READMEs now document the image handling shipped in 26.6.12: local captioned
+  figures and the automatic stripping of remote images (`http(s)://`, `//host`,
+  `data:`) when building offline, plus the skip count the build reports. Added task
+  lists to the Markdown quick-start, an Images row to the layout spec, and refreshed
+  the `meta-from-h1.lua` description (also fixing a de/en parity gap where only the
+  English README mentioned task lists).
+
 ## [26.6.12] - 2026-06-20
 
 ### Added
