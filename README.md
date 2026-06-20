@@ -123,6 +123,10 @@ filename: false    # Dateiname unten links ausblenden (Default: true)
 | `h2-break` | `true` / `false` | Übersteuert den Kapitel-Seitenumbruch, unabhängig von `toc`. |
 | `filename` | `true` / `false` | Dateiname unten links anzeigen. Default `true`. |
 
+Die Boolean-Schlüssel (`toc`, `h2-break`, `filename`) akzeptieren alle YAML-1.1-Schreibweisen,
+unabhängig von Groß-/Kleinschreibung: `true`/`false`, `yes`/`no`, `on`/`off` (sowie `"true"` in
+Anführungszeichen). Ein nicht erkannter Wert wird mit einer Warnung ignoriert und der Default greift.
+
 `lang` (Standard-Pandoc-Schlüssel) steuert die Dokumentsprache und damit das Datumsformat.
 
 ## Markdown — Kurzeinstieg

@@ -6,6 +6,18 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+### Fixed
+- `build.sh` resolved a relative source/output path against the project root
+  (which it `cd`s into for template/fonts) instead of the caller's directory, so
+  `rf-document foo.md` from any other folder failed with "file not found". Paths
+  are now resolved against the invocation directory before the `cd`.
+- Frontmatter booleans (`toc`, `h2-break`, `filename`) only accepted exact
+  lowercase `true`/`false` and fell back to the default *silently* for anything
+  else. They now parse the full YAML-1.1 boolean set case-insensitively
+  (`true`/`false`/`yes`/`no`/`on`/`off`, quoted values, inline comments) in both
+  `build.sh` and `convert.ps1`, and warn on an unrecognized value instead of
+  ignoring it silently.
+
 ## [26.6.5] - 2026-06-19
 
 ### Added
