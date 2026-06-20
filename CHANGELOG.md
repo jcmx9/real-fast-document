@@ -6,6 +6,14 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.15] - 2026-06-20
+
+### Docs
+- CLAUDE.md: corrected the release-flow note — the repo keeps both `main` and `dev`
+  (`dev` is fast-forwarded to `main` after merge); a previous edit had wrongly claimed
+  there is no `dev` branch. Added a note distinguishing the `~/GitHub` development repo
+  from the `~/.local/share` bootstrap installation.
+
 ## [26.6.14] - 2026-06-20
 
 ### Docs
