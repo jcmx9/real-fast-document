@@ -6,6 +6,15 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.11] - 2026-06-20
+
+### Fixed
+- Remote images (`http(s)://` sources) no longer abort the build. Typst has no
+  network access, so an `image("https://…")` hard-errors (`network access is not
+  supported`); the Lua filter now strips remote images (we build offline) and
+  drops a link left empty by the removal (the common `[![alt](img)](url)`
+  pattern). Local images are untouched.
+
 ## [26.6.10] - 2026-06-20
 
 ### Added

@@ -110,7 +110,11 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   H1** (errors otherwise) — H1 is the document title. It also handles **task lists**: Pandoc
   renders `- [ ]`/`- [x]` as a normal list whose items start with ☐/☒, which together with the
   template's square bullet would show two markers; the filter wraps a pure task list in
-  `#[ #set list(marker: none) … ]` so only the checkbox remains.
+  `#[ #set list(marker: none) … ]` so only the checkbox remains. It also **strips remote
+  images**: Typst has no network access, so a `image("https://…")` hard-errors (`network
+  access is not supported`); the filter drops any `http(s)://` image (we build offline) and
+  removes a link left empty by the removal (the common `[![alt](img)](url)` pattern). Local
+  images are untouched.
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the
   conversion entry points. They resolve the logo (`logo.svg → .png → .jpg`, optional), run
   pandoc then typst, and emit PDF/A-3b with the source Markdown embedded (`pdf.attach`).
