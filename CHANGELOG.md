@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.8] - 2026-06-20
+
+### Changed
+- Unordered lists now use a single small square marker (drawn, `luma(20%)`) at
+  **all** nesting levels, instead of the level-dependent defaults (•/‣/–).
+  Ordered lists keep their numbering.
+
+### Added
+- `example_special-characters.md` — a fixture/falltest exercising the emoji and
+  symbol fallback (emoji, arrows, marks, math symbols, currency, geometry).
+
 ## [26.6.7] - 2026-06-20
 
 ### Added
