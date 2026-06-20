@@ -59,6 +59,16 @@ $FontZips = @(
      Files = @('SourceCodeVF-Upright.otf', 'SourceCodeVF-Italic.otf') }
 )
 
+# Zeichenbasierte Fallback-Fonts (monochrom, OFL) als Einzeldateien von
+# google/fonts: Noto Emoji (Emoji/Piktogramme) + Noto Sans Symbols 2 (Symbole).
+# PDF/A-3b-tauglich; greifen nur fuer Zeichen, die Source nicht hat.
+$FontFiles = @(
+  @{ Url = 'https://github.com/google/fonts/raw/main/ofl/notoemoji/NotoEmoji%5Bwght%5D.ttf'
+     Name = 'NotoEmoji[wght].ttf' }
+  @{ Url = 'https://github.com/google/fonts/raw/main/ofl/notosanssymbols2/NotoSansSymbols2-Regular.ttf'
+     Name = 'NotoSansSymbols2-Regular.ttf' }
+)
+
 function Install-Fonts {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
   New-Item -ItemType Directory -Force -Path $FontDir | Out-Null
@@ -78,10 +88,14 @@ function Install-Fonts {
         Copy-Item -LiteralPath $src.FullName -Destination (Join-Path $FontDir $file) -Force
       }
     }
+    foreach ($f in $FontFiles) {
+      Write-Host "-> $($f.Name)"
+      Invoke-WebRequest -Uri $f.Url -OutFile (Join-Path $FontDir $f.Name) -UseBasicParsing
+    }
   } finally {
     Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
   }
-  Write-Host "OK  Variable OTF -> $FontDir" -ForegroundColor Green
+  Write-Host "OK  Fonts -> $FontDir" -ForegroundColor Green
 }
 
 function Install-Tools {

@@ -173,6 +173,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Überschriften | Source Sans 3 (serifenlos), `luma(8%)`; H2 mit 1 pt-Rahmen + 3 pt-Akzentbalken links, H3+ nur 3 pt-Balken links (`luma(20%)`, 80 % Grau) |
 | Fließtext | Source Sans 3, 12 pt, Blocksatz mit Silbentrennung, `luma(13%)` |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
+| Emoji/Symbole | zeichenbasierter Fallback: Noto Emoji + Noto Sans Symbols 2 (monochrom, nur für Zeichen ohne Source-Glyph) |
 
 ### Typografie (Schriftgrade)
 

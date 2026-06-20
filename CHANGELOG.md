@@ -6,6 +6,16 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.7] - 2026-06-20
+
+### Added
+- Bundled monochrome fallback fonts **Noto Emoji** and **Noto Sans Symbols 2**
+  (OFL, in `fonts/`, fetched by `fetch-fonts.sh` / `install.ps1`). Typst falls
+  back per glyph: text stays fully Source, and only characters Source lacks
+  (emoji, symbols) render from Noto. This fixes the `PDF/A-3b error: the text …
+  could not be displayed with font "SourceSans3VF"` abort on documents with
+  emoji/symbols (e.g. Obsidian notes), without dropping `--ignore-system-fonts`.
+
 ## [26.6.6] - 2026-06-20
 
 ### Added
