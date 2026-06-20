@@ -23,6 +23,36 @@ function BulletList(el)
   }
 end
 
+--- Remote-Bilder (http/https) entfernen. Typst hat bewusst keinen Netzwerk-
+--- zugriff (`network access is not supported`); ein `image("https://…")` würde
+--- den Build hart abbrechen. Da wir offline bauen, werden solche Bilder ersatz-
+--- los verworfen, bevor Pandoc sie nach Typst übersetzt. Lokale Bilder bleiben.
+local function is_remote(src)
+  return src ~= nil and src:match("^https?://") ~= nil
+end
+
+function Image(el)
+  if is_remote(el.src) then
+    io.stderr:write(
+      "Hinweis: Remote-Bild entfernt (Typst hat keinen Netzzugriff): "
+      .. el.src .. "\n"
+    )
+    return {} -- ersatzlos entfernen
+  end
+  return nil
+end
+
+--- Ein Link, dessen einziger Inhalt ein gerade entferntes Remote-Bild war
+--- (häufiges `[![alt](img)](url)`-Muster), bliebe sonst als leerer, unsicht-
+--- barer Geister-Link zurück – ebenfalls entfernen. Pandoc traversiert
+--- bottom-up, das innere Image ist hier also bereits verschwunden.
+function Link(el)
+  if #el.content == 0 then
+    return {}
+  end
+  return nil
+end
+
 --- Setzt den Dokumenttitel (PDF/A-Pflicht) aus dem H1 und erzwingt, dass H1
 --- genau einmal vorkommt – H1 ist der Dokumenttitel.
 function Pandoc(doc)
