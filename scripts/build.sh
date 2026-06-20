@@ -4,8 +4,24 @@
 # Usage: scripts/build.sh [SOURCE.md] [OUTPUT.pdf]
 set -euo pipefail
 
+# Aufruf-Verzeichnis merken, BEVOR wir in den Projekt-Root wechseln: relative
+# Quell-/Ziel-Pfade beziehen sich auf das Verzeichnis, aus dem der Nutzer das
+# Skript (bzw. rf-document) aufgerufen hat – nicht auf den Projekt-Root, in den
+# wir gleich für template/fonts cd'en. Ohne das schlägt `rf-document foo.md` aus
+# einem beliebigen Ordner mit "file not found" fehl.
+orig_pwd="$(pwd)"
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${root_dir}"
+
+# Relativen Pfad gegen das Aufruf-Verzeichnis zu einem absoluten machen.
+# Existiert er dort nicht, unverändert lassen (Default example.md liegt im Root,
+# und ein klarer Fehler beim Lesen ist besser als stilles Umbiegen).
+resolve_from_pwd() {
+  case "$1" in
+    /*) printf '%s' "$1" ;;
+    *)  if [[ -e "${orig_pwd}/$1" ]]; then printf '%s' "${orig_pwd}/$1"; else printf '%s' "$1"; fi ;;
+  esac
+}
 
 # Typst-Binary überschreibbar (z. B. zum Testen einer bestimmten Version).
 typst_bin="${TYPST:-typst}"
@@ -19,15 +35,33 @@ if (( ver_major == 0 && ver_minor < 15 )); then
   exit 1
 fi
 
-src="${1:-example.md}"
+src="$(resolve_from_pwd "${1:-example.md}")"
 base="$(basename "${src%.*}")"
 typ="${base}.typ"
 standard="a-3b"
 
+# Einen YAML-Skalar zu "true"/"false" normalisieren (YAML-1.1-Boolean-Menge,
+# Obsidian-kompatibel; Superset von YAML 1.2). Akzeptiert true/false/yes/no/on/
+# off/y/n in beliebiger Groß-/Kleinschreibung, entfernt umschließende Quotes und
+# einen Inline-Kommentar (` # ...`). Unbekannte Werte -> leer (Aufrufer warnt).
+yaml_bool() {
+  local v="$1"
+  v="$(printf '%s' "${v}" | sed -e 's/[[:space:]]#.*$//' \
+                                -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+                                -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'\$//" \
+                                -e 's/[[:space:]]*$//')"
+  case "$(printf '%s' "${v}" | tr '[:upper:]' '[:lower:]')" in
+    true|yes|on|y)  printf 'true'  ;;
+    false|no|off|n) printf 'false' ;;
+    *)              printf ''       ;;
+  esac
+}
+
 # Optionalen YAML-Frontmatter (führender ---...---) parsen: nur diese vier
-# Schlüssel, CRLF-tolerant. toc/h2-break/filename nur exakt true|false, sonst
-# bleibt der Default. (if-Blöcke statt `[[ ]] && x=`, sonst beendet set -e das
-# Skript, sobald eine Bedingung falsch ist.)
+# Schlüssel, CRLF-tolerant. toc/h2-break/filename werden YAML-1.1-konform als
+# Boolean gelesen (siehe yaml_bool); ein erkannter Schlüssel mit ungültigem Wert
+# warnt und behält den Default. (if-Blöcke statt `[[ ]] && x=`, sonst beendet
+# set -e das Skript, sobald eine Bedingung falsch ist.)
 fm_date=""
 fm_toc="auto"
 fm_break="auto"
@@ -42,16 +76,19 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
                 -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'\$//")"
         ;;
       toc:*)
-        v="$(printf '%s' "${line#toc:}" | tr -d '[:space:]')"
-        if [[ "${v}" == "true" || "${v}" == "false" ]]; then fm_toc="${v}"; fi
+        b="$(yaml_bool "${line#toc:}")"
+        if [[ -n "${b}" ]]; then fm_toc="${b}"
+        else echo "Warnung: ungültiger Wert für 'toc' im Frontmatter: '${line#toc:}' – ignoriert (true/false)." >&2; fi
         ;;
       h2-break:*)
-        v="$(printf '%s' "${line#h2-break:}" | tr -d '[:space:]')"
-        if [[ "${v}" == "true" || "${v}" == "false" ]]; then fm_break="${v}"; fi
+        b="$(yaml_bool "${line#h2-break:}")"
+        if [[ -n "${b}" ]]; then fm_break="${b}"
+        else echo "Warnung: ungültiger Wert für 'h2-break' im Frontmatter: '${line#h2-break:}' – ignoriert (true/false)." >&2; fi
         ;;
       filename:*)
-        v="$(printf '%s' "${line#filename:}" | tr -d '[:space:]')"
-        if [[ "${v}" == "true" || "${v}" == "false" ]]; then fm_showname="${v}"; fi
+        b="$(yaml_bool "${line#filename:}")"
+        if [[ -n "${b}" ]]; then fm_showname="${b}"
+        else echo "Warnung: ungültiger Wert für 'filename' im Frontmatter: '${line#filename:}' – ignoriert (true/false)." >&2; fi
         ;;
     esac
   done <<< "${block}"
@@ -63,7 +100,12 @@ fi
 src_dir="$(cd "$(dirname "${src}")" && pwd)"
 src_abs="${src_dir}/$(basename "${src}")"
 if [[ -n "${2:-}" ]]; then
-  out="${2}"
+  # Zielpfad existiert noch nicht -> immer gegen das Aufruf-Verzeichnis (nicht
+  # die Existenzprüfung von resolve_from_pwd, die für Lese-Pfade gedacht ist).
+  case "${2}" in
+    /*) out="${2}" ;;
+    *)  out="${orig_pwd}/${2}" ;;
+  esac
 elif [[ -n "${fm_date}" ]]; then
   out="${src_dir}/${fm_date}_${base}.pdf"
 else
@@ -121,3 +163,15 @@ pandoc "${src}" \
   --input "showname=${fm_showname}"
 
 echo "✓ ${out} erzeugt (PDF/A-3b)"
+
+# Erzeugte PDF automatisch öffnen (immer). Opt-out über RFD_NO_OPEN=1 (z. B. für
+# Batch-/Cron-Läufe). Im Hintergrund gestartet, damit das Skript sofort endet.
+if [[ -z "${RFD_NO_OPEN:-}" ]]; then
+  case "$(uname -s)" in
+    Darwin) opener="open" ;;
+    *)      opener="xdg-open" ;;
+  esac
+  if command -v "${opener}" >/dev/null 2>&1; then
+    "${opener}" "${out}" >/dev/null 2>&1 &
+  fi
+fi

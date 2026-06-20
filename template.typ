@@ -67,6 +67,11 @@ $endif$
 #let heading-color = luma(8%)  // Überschriften: dunkel, kontrastreich
 #let head-color = luma(20%)    // "Chrome" (Kopf/Fuß-Text): 80 % Grau
 #let rule-stroke = 0.5pt + luma(20%) // Trennlinien: 80 % Grau
+#let accent = luma(20%)        // Akzent (Balken/Rahmen der Überschriften): 80 % Grau
+
+// Alles "Source", aber serifenlos: Überschriften nutzen denselben Sans wie der
+// Fließtext (statt Source Serif 4). Code bleibt SourceCodeVF.
+#let heading-font = "SourceSans3VF"
 
 // Seitengeometrie (zentral, von Seite UND Header-Logik genutzt)
 #let margin-top = 35mm
@@ -105,11 +110,17 @@ $endif$
   } else if prior.len() > 0 {
     prior.last().body
   } else { [] }
+  // Kapitel im Kopf: serifenlos, +2pt (13pt), mit kurzem Akzentbalken links als
+  // "leichtes grafisches Element" – dasselbe 3pt-Motiv wie bei den Überschriften.
+  let chapter = if current != [] {
+    box(inset: (left: 6pt), stroke: (left: 3pt + accent),
+      text(font: heading-font, weight: 450, size: 13pt, fill: head-color)[#current])
+  } else { [] }
   grid(
     columns: (1fr, auto),
     column-gutter: 6mm,
     align: (left + bottom, right + bottom),
-    text(font: "Source Serif 4", weight: "semibold", size: 11pt, fill: head-color)[#current],
+    chapter,
     if logo-path != "" { image(logo-path, height: logo-height) } else { [] },
   )
   v(2pt)
@@ -202,9 +213,10 @@ $endif$
 // H1 (Dokumenttitel) erscheint nicht im Inhaltsverzeichnis.
 #show heading.where(level: 1): set heading(outlined: false)
 
-// Schrift/Farbe für alle Überschriften.
-#let heading-text(size, body) = text(
-  font: "Source Serif 4", weight: "semibold", fill: heading-color, size: size, body,
+// Schrift/Farbe für alle Überschriften (serifenlos; Gewicht je Ebene:
+// H1/„Inhalt" halbfett, H2/H3 im Book-Schnitt der variablen Schrift).
+#let heading-text(size, weight, body) = text(
+  font: heading-font, weight: weight, fill: heading-color, size: size, body,
 )
 
 // Strukturmodus-Steuerung: Frontmatter (toc/h2-break) übersteuert den
@@ -218,25 +230,43 @@ $endif$
 // Wichtig: `it` darf NICHT in einem context realisiert werden (sonst greift
 // Typsts Rekursionsschutz nicht). Daher nur Zählung/TOC/Umbruch im context.
 #show heading: it => {
+  // Überschriften nie im Blocksatz: H1 wird explizit zentriert, alle anderen
+  // bleiben linksbündig (auch über mehrere Zeilen, ohne Streckung).
+  set par(justify: false)
   if it.level == 1 {
-    // Titel zentriert, mit Luft nach unten.
+    // Titel zentriert, halbfett, mit Luft nach unten.
     block(width: 100%, above: 0.2em, below: 1.0em,
-      align(center, heading-text(28pt, it.body)))
+      align(center, heading-text(28pt, "semibold", it.body)))
     context {
       if want-toc() {
         // "Inhalt" als Text (kein Heading -> sonst Rekursion der Show-Regel),
         // mit deutlich Abstand nach oben und unten.
-        block(above: 2.0em, below: 1.0em, heading-text(16pt, [Inhalt]))
+        block(above: 2.0em, below: 1.0em, heading-text(16pt, "semibold", [Inhalt]))
         outline(title: none, depth: 3)
         pagebreak(weak: true)
       }
     }
   } else if it.level == 2 {
+    // Kapitel: Book-Schnitt, Block mit dünnem 1pt-Rahmen und 3pt-Akzentbalken
+    // links (beide 80 % Grau) – das "grafische Element" der Überschrift.
     context { if want-break() { pagebreak(weak: true) } }
-    block(above: 1.5em, below: 0.6em, heading-text(18pt, it))
+    block(
+      width: 100%,
+      above: 1.5em, below: 0.6em,
+      inset: (left: 10pt, top: 5pt, bottom: 5pt, right: 8pt),
+      stroke: (left: 3pt + accent, rest: 1pt + accent),
+      heading-text(18pt, 450, it),
+    )
   } else {
+    // H3+: Book-Schnitt, ohne Rahmen, nur der 3pt-Akzentbalken links.
     let size = (14.5pt, 13pt, 12pt, 12pt).at(it.level - 3)
-    block(above: 1.3em, below: 0.5em, heading-text(size, it))
+    block(
+      width: 100%,
+      above: 1.3em, below: 0.5em,
+      inset: (left: 10pt, top: 2pt, bottom: 2pt),
+      stroke: (left: 3pt + accent),
+      heading-text(size, 450, it),
+    )
   }
 }
 

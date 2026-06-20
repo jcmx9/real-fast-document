@@ -6,6 +6,34 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.6] - 2026-06-20
+
+### Added
+- The generated PDF now opens automatically in the default viewer after a
+  successful build (terminal and right-click, all three platforms). Set
+  `RFD_NO_OPEN=1` to disable it for batch/cron runs.
+
+### Changed
+- Fresher, fully sans-serif look: headings now use Source Sans 3 instead of
+  Source Serif 4 (body and code unchanged). H1 and the "Inhalt" label stay
+  semibold; H2/H3+ use the Book weight (`wght` 450). H2 gets a thin 1 pt frame
+  plus a 3 pt accent bar on the left, H3+ just the 3 pt left bar (both 80 % grey)
+  — the same bar repeats before the chapter name in the running header, whose
+  font size grows by 2 pt (11 → 13 pt). Headings are left-aligned (ragged, never
+  justified); only the H1 title is centered.
+
+### Fixed
+- `build.sh` resolved a relative source/output path against the project root
+  (which it `cd`s into for template/fonts) instead of the caller's directory, so
+  `rf-document foo.md` from any other folder failed with "file not found". Paths
+  are now resolved against the invocation directory before the `cd`.
+- Frontmatter booleans (`toc`, `h2-break`, `filename`) only accepted exact
+  lowercase `true`/`false` and fell back to the default *silently* for anything
+  else. They now parse the full YAML-1.1 boolean set case-insensitively
+  (`true`/`false`/`yes`/`no`/`on`/`off`, quoted values, inline comments) in both
+  `build.sh` and `convert.ps1`, and warn on an unrecognized value instead of
+  ignoring it silently.
+
 ## [26.6.5] - 2026-06-19
 
 ### Added
