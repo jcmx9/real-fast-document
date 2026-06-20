@@ -218,6 +218,11 @@ $endif$
 #set text(font: body-font, size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%))
 #set par(justify: true, leading: 0.8em, spacing: 1.1em)
 
+// Ungeordnete Listen: auf ALLEN Ebenen derselbe Marker – ein kleines Quadrat
+// (statt der ebenenabhängigen Standardzeichen •/‣/–). Als Typst-Form gezeichnet
+// (font-unabhängig, exakte Größe/Farbe), leicht angehoben zur optischen Mitte.
+#set list(marker: box(baseline: -0.2em, square(size: 0.32em, fill: luma(20%))))
+
 // H1 (Dokumenttitel) erscheint nicht im Inhaltsverzeichnis.
 #show heading.where(level: 1): set heading(outlined: false)
 
