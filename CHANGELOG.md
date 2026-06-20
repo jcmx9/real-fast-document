@@ -6,6 +6,24 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.9] - 2026-06-20
+
+### Changed
+- Blockquotes are now visually distinct: indented on both sides (narrower than
+  the text block) and italic.
+- The running header shows the current chapter as plain text — the small accent
+  bar before it was removed (heading accent bars are unchanged).
+
+### Fixed
+- Task lists (`- [ ]` / `- [x]`) no longer show the square list bullet **and** the
+  checkbox; the Lua filter renders pure task lists without a list marker, leaving
+  only the checkbox.
+
+### Docs
+- `CLAUDE.md` updated for the 26.6.6–26.6.9 features (sans-serif layout, accent
+  bars, square bullets, heading alignment, auto-open, relative-path resolution,
+  YAML-1.1 booleans, Noto emoji/symbol fallback, task-list handling, quotes).
+
 ## [26.6.8] - 2026-06-20
 
 ### Changed
