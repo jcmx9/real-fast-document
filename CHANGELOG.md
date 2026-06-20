@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.10] - 2026-06-20
+
+### Added
+- English README parity: `README.en.md` mirrors `README.md` (cross-linked at the
+  top of each).
+
+### Docs
+- README updated for the latest layout: square list bullets, task-list checkbox
+  handling, italic indented quotes, plain running-header chapter (no accent bar),
+  Noto emoji/symbol fallback, and the `example_special-characters.md` fixture.
+
 ## [26.6.9] - 2026-06-20
 
 ### Changed
