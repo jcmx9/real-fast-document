@@ -138,8 +138,14 @@ Anführungszeichen). Ein nicht erkannter Wert wird mit einer Warnung ignoriert u
 ## Markdown — Kurzeinstieg
 
 Markdown deckt im Alltag fast alles ab: `*kursiv*`, `**fett**`, `` `inline-code` ``,
-Aufzählungen, nummerierte Listen, Tabellen, Zitate, Fußnoten und `[Links](https://typst.app)`
-funktionieren ohne Zusatzaufwand. Codeblöcke werden mit Syntax-Hervorhebung gesetzt.
+Aufzählungen, nummerierte Listen, Aufgabenlisten (`- [ ]`), Tabellen, Zitate, Fußnoten und
+`[Links](https://typst.app)` funktionieren ohne Zusatzaufwand. Codeblöcke werden mit
+Syntax-Hervorhebung gesetzt.
+
+**Bilder:** `![Untertitel](pfad.svg)` wird als nummerierte Abbildung mit Untertitel gesetzt.
+Lokale Bilder werden eingebettet. **Remote-Bilder** (`http(s)://`, protokoll-relativ `//host`,
+`data:`) lassen sich offline nicht laden — Typst hat bewusst keinen Netzzugriff — und entfallen
+daher automatisch; der Build meldet, wie viele Bilder übersprungen wurden.
 
 Eine einzige Regel ist Pflicht: **genau ein `# H1` pro Dokument** — es ist der Titel
 (zentriert, in die PDF-Metadaten gezogen, nicht im Kopf/TOC). Kapitel beginnen bei `## H2`
@@ -176,6 +182,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Fließtext | Source Sans 3, 12 pt, Blocksatz mit Silbentrennung, `luma(13%)` |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
 | Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): nur Checkbox |
+| Bilder | lokal: nummerierte Abbildung mit Untertitel; remote (`http(s)`, `//host`, `data:`) offline automatisch entfernt |
 | Zitate | beidseitig eingerückt (schmaler als Satzspiegel) + kursiv |
 | Emoji/Symbole | zeichenbasierter Fallback: Noto Emoji + Noto Sans Symbols 2 (monochrom, nur für Zeichen ohne Source-Glyph) |
 
@@ -197,7 +204,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 
 ```
 template.typ              Pandoc-Typst-Template: gesamtes Seitenlayout
-filters/meta-from-h1.lua  Dokumenttitel (PDF/A) aus H1, erzwingt genau ein H1
+filters/meta-from-h1.lua  Dokumenttitel (PDF/A) aus genau einem H1, Aufgabenlisten, entfernt Remote-Bilder
 scripts/build.sh          Pipeline Markdown -> PDF/A (macOS/Linux), Frontmatter-Parser
 scripts/fetch-fonts.sh    bündelt variable Source-Fonts nach ./fonts
 scripts/bootstrap.sh      Ein-Zeiler-Installer (macOS/Linux): klont + ruft install.sh

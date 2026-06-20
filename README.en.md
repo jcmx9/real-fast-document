@@ -138,8 +138,14 @@ value is ignored with a warning and the default applies.
 ## Markdown — quick start
 
 Markdown covers almost everything day to day: `*italic*`, `**bold**`, `` `inline-code` ``,
-bullet lists, numbered lists, tables, quotes, footnotes and `[links](https://typst.app)`
-work without extra effort. Code blocks are set with syntax highlighting.
+bullet lists, numbered lists, task lists (`- [ ]`), tables, quotes, footnotes and
+`[links](https://typst.app)` work without extra effort. Code blocks are set with syntax
+highlighting.
+
+**Images:** `![caption](path.svg)` is set as a numbered figure with a caption. Local images
+are embedded. **Remote images** (`http(s)://`, protocol-relative `//host`, `data:`) cannot be
+loaded offline — Typst deliberately has no network access — and are therefore dropped
+automatically; the build reports how many images were skipped.
 
 A single rule is mandatory: **exactly one `# H1` per document** — it is the title
 (centered, pulled into the PDF metadata, not in the header/TOC). Chapters start at `## H2`
@@ -176,6 +182,7 @@ Body text with **emphasis** and a footnote.[^1]
 | Body | Source Sans 3, 12 pt, justified with hyphenation, `luma(13%)` |
 | Code | Source Code Pro, 10 pt, with syntax highlighting |
 | Lists | unordered: a small square at **all** levels; ordered: numbers; tasks (`- [ ]`): checkbox only |
+| Images | local: numbered figure with caption; remote (`http(s)`, `//host`, `data:`) dropped automatically when offline |
 | Quotes | indented on both sides (narrower than the text block) + italic |
 | Emoji/symbols | glyph-level fallback: Noto Emoji + Noto Sans Symbols 2 (monochrome, only for characters without a Source glyph) |
 
@@ -197,7 +204,7 @@ Body text with **emphasis** and a footnote.[^1]
 
 ```
 template.typ              Pandoc/Typst template: the entire page layout
-filters/meta-from-h1.lua  document title (PDF/A) from H1, enforces exactly one H1, task lists
+filters/meta-from-h1.lua  document title (PDF/A) from exactly one H1, task lists, strips remote images
 scripts/build.sh          pipeline Markdown -> PDF/A (macOS/Linux), frontmatter parser
 scripts/fetch-fonts.sh    bundles the fonts into ./fonts
 scripts/bootstrap.sh      one-line installer (macOS/Linux): clones + runs install.sh
