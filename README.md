@@ -1,5 +1,7 @@
 # real·fast·document
 
+**Deutsch** · [English](README.en.md)
+
 > Aus einer Markdown-Datei ein archivfähiges, einheitlich gestaltetes **PDF/A-3b** —
 > ohne Textverarbeitung, ohne manuelles Layout.
 
@@ -173,6 +175,8 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Überschriften | Source Sans 3 (serifenlos), `luma(8%)`; H2 mit 1 pt-Rahmen + 3 pt-Akzentbalken links, H3+ nur 3 pt-Balken links (`luma(20%)`, 80 % Grau) |
 | Fließtext | Source Sans 3, 12 pt, Blocksatz mit Silbentrennung, `luma(13%)` |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
+| Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): nur Checkbox |
+| Zitate | beidseitig eingerückt (schmaler als Satzspiegel) + kursiv |
 | Emoji/Symbole | zeichenbasierter Fallback: Noto Emoji + Noto Sans Symbols 2 (monochrom, nur für Zeichen ohne Source-Glyph) |
 
 ### Typografie (Schriftgrade)
@@ -185,7 +189,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | H3 / H4 / H5 / H6 | Source Sans 3 Book (`wght` 450) | 14,5 / 13 / 12 / 12 pt, 3 pt-Balken links |
 | TOC-Titel „Inhalt" | Source Sans 3 halbfett | 16 pt |
 | TOC-Einträge | Source Sans 3 | 13 pt, Book (`wght` 450) |
-| Kopf (Kapitel) | Source Sans 3 Book (`wght` 450) | 13 pt, mit 3 pt-Balken links |
+| Kopf (Kapitel) | Source Sans 3 Book (`wght` 450) | 13 pt, reiner Text (kein Balken) |
 | Code | Source Code Pro | 10 pt |
 | Fußzeile | Source Sans 3 | 9 pt |
 
@@ -202,11 +206,12 @@ scripts/install.sh        macOS/Linux-Setup: Werkzeuge + Fonts + Rechtsklick-Int
 scripts/rfd-convert.sh    Konverter-Dispatcher der Rechtsklick-Integration (macOS/Linux)
 scripts/install.ps1       Windows-Setup: Werkzeuge + Fonts + "Senden an"-Verknüpfung
 scripts/convert.ps1       Windows-Konverter (von "Senden an" aufgerufen)
-fonts/                    gebündelte variable OTF (Source Serif 4 / Sans 3 / Code Pro)
+fonts/                    Source-OTF (Serif 4 / Sans 3 / Code Pro) + Noto-Fallbacks (Emoji, Symbols 2)
 logo.svg                  Kopf-Logo (optional)
 example.md                kompaktes Beispiel mit dokumentiertem Frontmatter
 long-example.md           strukturiertes Beispiel (Titel + TOC + Kapitelseiten)
 showcase.md               Markdown-Schaukasten (alle Elemente)
+example_special-characters.md  Falltest für den Emoji-/Symbol-Fallback
 faust.md                  Großbeispiel: Goethes Faust I (gemeinfrei, Gutenberg #2229)
 ```
 
