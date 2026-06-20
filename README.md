@@ -75,13 +75,18 @@ bash scripts/install.sh --uninstall # nur die Rechtsklick-Integration entfernen
 
 ## Update
 
+**Einfachster Weg:** denselben Bootstrap-Einzeiler erneut ausführen — er erkennt die
+vorhandene Installation und aktualisiert sie (`git pull --ff-only` + Installer).
+
+Alternativ manuell im Installordner:
+
 ```bash
 cd ~/.local/share/real-fast-document   # bzw. der gewählte Installpfad
-git pull                               # neueste Version holen
+git pull --ff-only                     # neueste Version holen
 bash scripts/install.sh                # Fonts/Integration bei Bedarf aktualisieren
 ```
 
-Unter Windows nach `git pull` bei Bedarf `./scripts/install.ps1` erneut ausführen.
+Unter Windows nach `git pull --ff-only` bei Bedarf `./scripts/install.ps1` erneut ausführen.
 
 ## Verwendung
 
