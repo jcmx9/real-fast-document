@@ -208,11 +208,8 @@ scripts/install.ps1       Windows-Setup: Werkzeuge + Fonts + "Senden an"-Verknü
 scripts/convert.ps1       Windows-Konverter (von "Senden an" aufgerufen)
 fonts/                    Source-OTF (Serif 4 / Sans 3 / Code Pro) + Noto-Fallbacks (Emoji, Symbols 2)
 logo.svg                  Kopf-Logo (optional)
-example.md                kompaktes Beispiel mit dokumentiertem Frontmatter
-long-example.md           strukturiertes Beispiel (Titel + TOC + Kapitelseiten)
-showcase.md               Markdown-Schaukasten (alle Elemente)
-example_special-characters.md  Falltest für den Emoji-/Symbol-Fallback
-faust.md                  Großbeispiel: Goethes Faust I (gemeinfrei, Gutenberg #2229)
+assets/pipeline.svg       lokale Beispielabbildung für example.md
+example.md                volle Beispiel-/Falltest-Datei (alle Elemente, dokumentierter Frontmatter)
 ```
 
 ## Anpassen

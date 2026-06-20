@@ -103,10 +103,16 @@ function Convert-One {
     } else {
       @('--highlight-style', 'pygments')
     }
-    & pandoc $Src --from markdown --to typst --standalone `
+    # pandoc-Ausgabe abfangen, um vom Lua-Filter uebersprungene Remote-Bilder zu
+    # zaehlen (fuer den Hinweis), aber unveraendert durchreichen - auch im
+    # Fehlerfall, sonst bliebe eine Filter-Fehlermeldung unsichtbar.
+    $pandocOut = & pandoc $Src --from markdown --to typst --standalone `
       --template $Template --lua-filter $LuaFilter `
-      @hlFlag --output $typ
-    if ($LASTEXITCODE) { throw "pandoc-Fehler ($LASTEXITCODE)" }
+      @hlFlag --output $typ 2>&1
+    $pandocRc = $LASTEXITCODE
+    foreach ($line in $pandocOut) { Write-Host $line }
+    if ($pandocRc) { throw "pandoc-Fehler ($pandocRc)" }
+    $stripped = @($pandocOut | Where-Object { "$_" -match 'Remote-Bild entfernt' }).Count
 
     & typst compile $typ $outPdf `
       --font-path $FontDir --ignore-system-fonts `
@@ -121,6 +127,9 @@ function Convert-One {
     if ($LASTEXITCODE) { throw "typst-Fehler ($LASTEXITCODE)" }
 
     Write-Host "OK  $outPdf" -ForegroundColor Green
+    if ($stripped -gt 0) {
+      Write-Host "Hinweis: $stripped Remote-Bild(er) uebersprungen (kein Netzzugriff in Typst)." -ForegroundColor Yellow
+    }
 
     # Erzeugte PDF automatisch oeffnen (immer). Opt-out ueber RFD_NO_OPEN=1.
     if (-not $env:RFD_NO_OPEN) { Start-Process -FilePath $outPdf }

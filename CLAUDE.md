@@ -32,10 +32,11 @@ shellcheck scripts/build.sh scripts/fetch-fonts.sh scripts/install.sh scripts/bo
 ```
 
 There is **no test suite**. Verification is **visual**: render pages to PNG and inspect them.
-Render fixtures live in the root: `example.md` (default build target), `showcase.md` and
-`long-example.md` (exercise the structured/TOC mode, `#H2 + #H3 > 5`), `faust.md` (a
-large real-world document), and `example_special-characters.md` (exercises the emoji/symbol
-glyph fallback). Use these to eyeball layout changes; their `*.pdf` are git-ignored.
+There is **one** render fixture in the root: `example.md` (the default build target). It is a
+full showcase and doubles as the regression probe for every supported element — structured/TOC
+mode (`#H2 + #H3 > 5`), task lists, tables, math, the emoji/symbol glyph fallback, a local
+captioned figure, **and** a remote image that the filter must strip (see below). Use it to
+eyeball layout changes; its `*.pdf` is git-ignored.
 
 ```bash
 pandoc SRC.md -f markdown -t typst -s --template template.typ \
@@ -77,7 +78,8 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   system fallback, and PDF/A-3b *aborts* on a missing glyph (`error: the text "🚀" could not
   be displayed`). Color emoji fonts are not PDF/A-embeddable, so the fallbacks are monochrome
   (which also matches the design). Coverage isn't 100 % — a glyph absent from all three (e.g.
-  `⁃` U+2043) still hard-errors; `example_special-characters.md` doubles as a coverage probe.
+  `⁃` U+2043) still hard-errors; the "Sonderzeichen & Emoji" section of `example.md` doubles
+  as a coverage probe.
 - **Font-family names differ by family**: the variable OTF expose `Source Serif 4` but
   `SourceSans3VF` and `SourceCodeVF` (internal VF names, *not* "Source Sans 3" / "Source Code
   Pro"). `template.typ` must reference exactly those names. Verify what Typst sees with
@@ -110,11 +112,15 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   H1** (errors otherwise) — H1 is the document title. It also handles **task lists**: Pandoc
   renders `- [ ]`/`- [x]` as a normal list whose items start with ☐/☒, which together with the
   template's square bullet would show two markers; the filter wraps a pure task list in
-  `#[ #set list(marker: none) … ]` so only the checkbox remains. It also **strips remote
+  `#[ #set list(marker: none) … ]` so only the checkbox remains. It also **strips unloadable
   images**: Typst has no network access, so a `image("https://…")` hard-errors (`network
-  access is not supported`); the filter drops any `http(s)://` image (we build offline) and
-  removes a link left empty by the removal (the common `[![alt](img)](url)` pattern). Local
-  images are untouched.
+  access is not supported`); the filter drops any image whose source is `http(s)://`, a
+  protocol-relative `//host/…`, or a `data:` URI (we build offline). To avoid leftovers, a
+  removed image becomes a marked placeholder span (`rfd-removed-remote-image`); a container
+  that held **only** such placeholders is then removed too — a `Link` (the common
+  `[![alt](img)](url)` pattern), an empty `Para`/`Plain`, and a `Figure` (a lone
+  `![caption](url)` whose caption would otherwise survive as a ghost). Placeholders left
+  inside otherwise non-empty text are swept in a final `doc:walk`. Local images are untouched.
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the
   conversion entry points. They resolve the logo (`logo.svg → .png → .jpg`, optional), run
   pandoc then typst, and emit PDF/A-3b with the source Markdown embedded (`pdf.attach`).

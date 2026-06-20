@@ -6,6 +6,25 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.12] - 2026-06-20
+
+### Added
+- Build scripts report how many remote images were skipped: `build.sh` and
+  `convert.ps1` print a hint, and the right-click dispatcher (`rfd-convert.sh`)
+  includes the count in its system notification.
+
+### Changed
+- Consolidated the render fixtures into a single full `example.md` — structured/TOC
+  mode, task lists, tables, math, the emoji/symbol fallback, a local captioned
+  figure, and a remote image that gets stripped. Removed `showcase.md`,
+  `long-example.md`, `faust.md` and `example_special-characters.md`.
+
+### Fixed
+- Remote-image stripping no longer leaves artefacts: an empty paragraph, an empty
+  link, or a lone `![caption](url)` whose caption would survive as a ghost figure
+  are now removed too. Stripping also covers protocol-relative (`//host/…`) and
+  `data:` image sources, not just `http(s)://`.
+
 ## [26.6.11] - 2026-06-20
 
 ### Fixed

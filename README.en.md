@@ -208,11 +208,8 @@ scripts/install.ps1       Windows setup: tools + fonts + "Send to" shortcut
 scripts/convert.ps1       Windows converter (invoked by "Send to")
 fonts/                    Source OTF (Serif 4 / Sans 3 / Code Pro) + Noto fallbacks (Emoji, Symbols 2)
 logo.svg                  header logo (optional)
-example.md                compact example with documented frontmatter
-long-example.md           structured example (title + TOC + chapter pages)
-showcase.md               Markdown showcase (all elements)
-example_special-characters.md  probe for the emoji/symbol fallback
-faust.md                  large example: Goethe's Faust I (public domain, Gutenberg #2229)
+assets/pipeline.svg       local example figure for example.md
+example.md                full example/probe file (all elements, documented frontmatter)
 ```
 
 ## Customizing

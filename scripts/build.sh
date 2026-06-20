@@ -137,14 +137,24 @@ if pandoc --help 2>&1 | grep -q -- '--syntax-highlighting'; then
   hl_flag=(--syntax-highlighting pygments)
 fi
 
-pandoc "${src}" \
+# pandoc-stderr abfangen, um vom Lua-Filter übersprungene Remote-Bilder zu zählen
+# (für die Erfolgsmeldung / GUI-Notification), aber unverändert durchreichen –
+# auch im Fehlerfall, sonst bliebe eine Filter-Fehlermeldung (z. B. >1 H1)
+# unsichtbar.
+set +e
+pandoc_err="$(pandoc "${src}" \
   --from markdown \
   --to typst \
   --standalone \
   --template template.typ \
   --lua-filter filters/meta-from-h1.lua \
   "${hl_flag[@]}" \
-  --output "${typ}"
+  --output "${typ}" 2>&1 1>/dev/null)"
+pandoc_rc=$?
+set -e
+[[ -n "${pandoc_err}" ]] && printf '%s\n' "${pandoc_err}" >&2
+[[ "${pandoc_rc}" -ne 0 ]] && exit "${pandoc_rc}"
+stripped="$(printf '%s' "${pandoc_err}" | grep -c 'Remote-Bild entfernt' || true)"
 
 # 2) Typst -> PDF/A-3b (Dateiname & Logo als Laufzeit-Inputs)
 # --root / : Typst behandelt absolute Pfade projektwurzel-relativ und sperrt
@@ -163,6 +173,9 @@ pandoc "${src}" \
   --input "showname=${fm_showname}"
 
 echo "✓ ${out} erzeugt (PDF/A-3b)"
+if [[ "${stripped:-0}" -gt 0 ]]; then
+  echo "Hinweis: ${stripped} Remote-Bild(er) übersprungen (kein Netzzugriff in Typst)."
+fi
 
 # Erzeugte PDF automatisch öffnen (immer). Opt-out über RFD_NO_OPEN=1 (z. B. für
 # Batch-/Cron-Läufe). Im Hintergrund gestartet, damit das Skript sofort endet.
