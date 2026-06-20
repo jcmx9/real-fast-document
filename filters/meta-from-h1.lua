@@ -1,3 +1,28 @@
+--- Aufgabenlisten (`- [ ]` / `- [x]`) rendern in Pandoc als normale Liste,
+--- deren Items mit ☐/☒ beginnen. Mit dem Quadrat-Marker des Templates gäbe das
+--- zwei Marker (Bullet + Checkbox). Solche Listen daher ohne Listen-Marker
+--- setzen, sodass nur die Checkbox bleibt.
+local task_boxes = { ["☐"] = true, ["☒"] = true, ["☑"] = true }
+
+local function starts_with_checkbox(item)
+  local first = item[1]
+  if not first or not first.content then return false end
+  local inl = first.content[1]
+  return inl ~= nil and inl.t == "Str" and task_boxes[inl.text] == true
+end
+
+function BulletList(el)
+  for _, item in ipairs(el.content) do
+    if not starts_with_checkbox(item) then return nil end
+  end
+  -- alle Items sind Task-Items -> Liste ohne Marker rendern (nur Checkbox)
+  return {
+    pandoc.RawBlock("typst", "#[\n#set list(marker: none)"),
+    el,
+    pandoc.RawBlock("typst", "]"),
+  }
+end
+
 --- Setzt den Dokumenttitel (PDF/A-Pflicht) aus dem H1 und erzwingt, dass H1
 --- genau einmal vorkommt – H1 ist der Dokumenttitel.
 function Pandoc(doc)

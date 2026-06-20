@@ -18,24 +18,31 @@ Markdown → Pandoc (-t typst, custom template, Lua filter) → .typ → Typst �
 ## Commands
 
 ```bash
-bash scripts/build.sh                 # build example.md → example.pdf
-bash scripts/build.sh SRC.md          # → SRC.pdf
+bash scripts/build.sh                 # build example.md → example.pdf (next to source)
+bash scripts/build.sh SRC.md          # → SRC.pdf  (or DATE_SRC.pdf if frontmatter has date:)
 bash scripts/build.sh SRC.md OUT.pdf  # explicit output
-bash scripts/fetch-fonts.sh           # (re)download the bundled variable fonts into ./fonts
-shellcheck scripts/build.sh scripts/fetch-fonts.sh   # lint the shell scripts (PowerShell is untested here)
+RFD_NO_OPEN=1 bash scripts/build.sh SRC.md   # suppress the auto-open (build.sh opens the PDF by default)
+bash scripts/fetch-fonts.sh           # (re)download the bundled fonts into ./fonts (Source OTF + Noto fallbacks)
+bash scripts/install.sh               # set up tools + fonts + right-click + rf-document CLI (idempotent)
+bash scripts/install.sh --uninstall   # remove the right-click integration + rf-document
+rf-document SRC.md                    # global CLI after install (wrapper → build.sh)
 TYPST=/path/to/typst bash scripts/build.sh ...       # override the typst binary (e.g. to test a version)
+# Lint ALL shell scripts (PowerShell has no runner here — review only):
+shellcheck scripts/build.sh scripts/fetch-fonts.sh scripts/install.sh scripts/bootstrap.sh scripts/rfd-convert.sh
 ```
 
 There is **no test suite**. Verification is **visual**: render pages to PNG and inspect them.
 Render fixtures live in the root: `example.md` (default build target), `showcase.md` and
-`long-example.md` (exercise the structured/TOC mode, `#H2 + #H3 > 5`), and `faust.md` (a
-large real-world document). Use these to eyeball layout changes; their `*.pdf` are git-ignored.
+`long-example.md` (exercise the structured/TOC mode, `#H2 + #H3 > 5`), `faust.md` (a
+large real-world document), and `example_special-characters.md` (exercises the emoji/symbol
+glyph fallback). Use these to eyeball layout changes; their `*.pdf` are git-ignored.
 
 ```bash
 pandoc SRC.md -f markdown -t typst -s --template template.typ \
   --lua-filter filters/meta-from-h1.lua --syntax-highlighting pygments -o _tmp.typ
 typst compile _tmp.typ --font-path fonts --ignore-system-fonts \
   --input filename=OUT.pdf --input logo=logo.svg --input source=SRC.md \
+  --input date= --input toc=auto --input "h2-break=auto" --input showname=true \
   --format png --ppi 120 preview-{p}.png
 # then open / Read the preview-*.png, then clean up scratch files
 # (`preview-*.png` is the git-ignored scratch name — other PNG names show up in `git status`)
@@ -44,6 +51,11 @@ typst compile _tmp.typ --font-path fonts --ignore-system-fonts \
 `mutool extract FILE.pdf` (mupdf) pulls the embedded Markdown back out; check PDF/A
 conformance with `strings FILE.pdf | grep pdfaid` (Typst 0.15 compresses object streams,
 so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confirm attachments).
+
+There is no Linux/Windows runner here (this is macOS). The **Linux installer** can be
+validated for real in Docker (mount read-only, copy inside, run `install.sh`): this is how
+the install path was verified, and it caught real bugs. Windows `.ps1` can only be reviewed
+(the `mcr.microsoft.com/powershell` image crashes under qemu on arm64).
 
 ## Requirements & environment gotchas
 
@@ -56,6 +68,16 @@ so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confir
   (and `install.ps1`): `google/fonts` only ships these families as TTF — variable OTF exist
   only at Adobe. Typst's *embedded* math font still works under `--ignore-system-fonts`, so
   math renders without bundling a math font.
+- **Glyph fallback for emoji/symbols** — `fonts/` also bundles two monochrome OFL fonts,
+  `Noto Emoji` (variable TTF) and `Noto Sans Symbols 2`, fetched from `google/fonts` (TTF is
+  fine — the OTF rule was Source-specific). `template.typ` appends them to every font list
+  (`("SourceSans3VF", "Noto Emoji", "Noto Sans Symbols 2")` via `body-font`/`heading-font`/
+  `code-font`), so Typst falls back **per glyph**: text stays fully Source, only characters
+  Source lacks render from Noto. **Why this matters:** `--ignore-system-fonts` blocks any
+  system fallback, and PDF/A-3b *aborts* on a missing glyph (`error: the text "🚀" could not
+  be displayed`). Color emoji fonts are not PDF/A-embeddable, so the fallbacks are monochrome
+  (which also matches the design). Coverage isn't 100 % — a glyph absent from all three (e.g.
+  `⁃` U+2043) still hard-errors; `example_special-characters.md` doubles as a coverage probe.
 - **Font-family names differ by family**: the variable OTF expose `Source Serif 4` but
   `SourceSans3VF` and `SourceCodeVF` (internal VF names, *not* "Source Sans 3" / "Source Code
   Pro"). `template.typ` must reference exactly those names. Verify what Typst sees with
@@ -75,6 +97,9 @@ so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confir
   shows a `lang`-localized date in the footer right; `toc:`/`h2-break:` true|false override
   the `> 5` automatism; `filename:` true|false toggles the footer-left name. The footer is
   2-col without a date (name | page) and 3-col with one (name | page centered | date).
+  The three bool keys are parsed **YAML-1.1-tolerant** (case-insensitive
+  `true/false/yes/no/on/off`, quotes, inline comments via `yaml_bool`/`ConvertTo-YamlBool`);
+  an unrecognized value warns and keeps the default instead of failing silently.
   Typst does not localize month names (`[month repr:long]` is English only) → a manual
   `months-de` array lives in `template.typ`; `fmt-date` validates the ISO string defensively
   because an invalid `datetime`/`int()` *panics* and aborts the whole build.
@@ -82,7 +107,10 @@ so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confir
   of Typst comments), so any literal `$` — even inside a `//` comment or a `regex("…$")` —
   must be written `$$`, or the Pandoc step fails. The date regex in `fmt-date` relies on this.
 - **`filters/meta-from-h1.lua`** sets the PDF/A title from the H1 and **enforces exactly one
-  H1** (errors otherwise) — H1 is the document title.
+  H1** (errors otherwise) — H1 is the document title. It also handles **task lists**: Pandoc
+  renders `- [ ]`/`- [x]` as a normal list whose items start with ☐/☒, which together with the
+  template's square bullet would show two markers; the filter wraps a pure task list in
+  `#[ #set list(marker: none) … ]` so only the checkbox remains.
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the
   conversion entry points. They resolve the logo (`logo.svg → .png → .jpg`, optional), run
   pandoc then typst, and emit PDF/A-3b with the source Markdown embedded (`pdf.attach`).
@@ -91,6 +119,11 @@ so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confir
   **absolute** `source=` so the attach works for sources anywhere on disk (Typst sandboxes
   reads to its root and treats `/…` as root-relative). `convert.ps1` instead works in the
   source dir (intermediate `.typ` there, logo copied in, `source=` as leaf).
+  - **Relative paths:** because `build.sh` `cd`s into the project root, it records `orig_pwd`
+    **before** the `cd` and resolves a relative source/output argument against it (`resolve_from_pwd`).
+    Without this, `rf-document foo.md` from any other directory failed with "file not found".
+  - **Auto-open:** after a successful build both scripts open the PDF in the default viewer
+    (`open`/`xdg-open`/`Start-Process`); set `RFD_NO_OPEN=1` to suppress (batch/cron).
 - **Install / bootstrap** (separate from conversion):
   - `scripts/bootstrap.sh` / `scripts/bootstrap.ps1` are the curl|bash / irm|iex one-liners:
     require git, clone/pull into `~/.local/share/real-fast-document` (Windows
@@ -103,15 +136,37 @@ so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confir
   - `scripts/install.ps1` (Windows) auto-installs pandoc/typst via winget (`-Tools`), fetches
     fonts, and creates the "Send to" shortcut (`-SendTo`). The logic stays in the install
     path; only a shortcut lands in the system.
-  - `scripts/rfd-convert.sh` is the dispatcher the macOS/Linux right-click calls: it exports
-    `TYPST=./bin/typst` when the bundled binary exists, loops `build.sh` over the files, and
-    posts a success/fail notification (osascript / notify-send). Output lands next to source.
+  - `scripts/rfd-convert.sh` is the dispatcher the macOS/Linux right-click calls: it loops
+    `build.sh` over the files (output next to source) and posts a success/fail notification
+    (osascript / notify-send).
+  - **`rf-document`** is the global terminal command: `install.sh` writes a wrapper to
+    `~/.local/bin/rf-document` (macOS/Linux), `install.ps1` a `rf-document.cmd` shim into
+    `%LOCALAPPDATA%\Microsoft\WindowsApps` (on PATH by default). It just calls the converter.
+  - **GUI-PATH gotcha:** Finder Quick Actions / `.desktop` launches do **not** inherit the
+    shell `PATH`, so a `typst`/`pandoc` in `~/.local/bin` or `/opt/homebrew/bin` is invisible
+    and the build fails with `command not found`. `install.sh` therefore records the real tool
+    dirs (resolved while PATH is correct) in `bin/rfd-tools.env`; `rfd-convert.sh` and the
+    `rf-document` wrapper source it and prepend `RFD_TOOL_PATH`. `bin/` is git-ignored.
+  - **pandoc highlight flag differs by version:** newer pandoc uses `--syntax-highlighting`,
+    older (e.g. Debian-stable 3.1.x) only `--highlight-style`. `build.sh`/`convert.ps1` detect
+    which exists and pick accordingly — don't hardcode one.
+  - `install.sh` shell notes: never hardcode `sudo` (use the `run_priv` helper — works as root
+    or without sudo); avoid `trap … RETURN` referencing a local under `set -u` (it fires
+    unbound — use explicit cleanup).
 
 ### Heading / document model (encoded in template.typ)
 
 - **H1 = document title** (exactly one, centered, excluded from header and TOC).
-- **H2 = chapter** — the active H2 is threaded into the running header (left).
+- **H2 = chapter** — the active H2 is threaded into the running header (left, plain text, no
+  graphic element).
 - **H3+** = subsections.
+- **Visual language** (all sans-serif now — `Source Sans 3`, *not* Source Serif): H1 and the
+  "Inhalt" label are semibold; H2/H3+ use the Book weight (`wght` 450). Headings are
+  left-aligned (ragged, `justify: false`); only H1 is centered. H2 gets a 1 pt frame + a 3 pt
+  left accent bar, H3+ only the 3 pt bar (both `luma(20%)`). Fonts come from `body-font`/
+  `heading-font`/`code-font` (Source + Noto fallbacks). Unordered lists use one small drawn
+  square marker at **all** levels (`#set list(marker: …)`); ordered lists keep numbers.
+  Blockquotes are indented both sides + italic (`#show quote.where(block: true)`).
 - **Conditional TOC**: by default, when `#H2 + #H3 > 5` the document switches to "structured"
   mode — a table of contents over H2/H3 is rendered after the title and each chapter (H2)
   starts on a new page. At or below the threshold it stays compact (no TOC, chapters inline).
@@ -128,6 +183,10 @@ so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confir
 - `outline(title: [..])` renders its title as a *heading*, which re-triggers the heading
   show rule → recursion. Use `outline(title: none)` and render the "Inhalt" label as plain
   text.
+- The **full-width table** show rule rebuilds the table (`columns: (1fr,)*n`) to stretch it,
+  centered/bold header, left body, zebra `fill`. Emitting a `table` inside `#show table:`
+  recurses → guard on a field the rebuild sets but Pandoc never does: `if it.fill != none {
+  it } else { …rebuild… }`. `it.columns` is an int from Pandoc (`(1fr,)*n` needs that count).
 
 ## Release flow
 
@@ -142,7 +201,8 @@ mergeability; a `set -e`-less script will otherwise tag the wrong commit). Poll
 The README is dogfooded: `bash scripts/build.sh README.md README.pdf` renders it through
 the pipeline, and that PDF is attached to GitHub releases as an asset (it is not committed).
 
-Generated artifacts (`*.pdf`, generated `*.typ`, `preview-*.png`) are git-ignored —
+Generated artifacts (`*.pdf`, generated `*.typ`, `preview-*.png`, and `bin/` — the
+installer's bundled typst + `rfd-tools.env`) are git-ignored —
 note only `preview-*.png` matches, so scratch PNGs under any other name pollute
 `git status`. `build.sh` leaves the Pandoc intermediate as `<base>.typ` in the root
 (e.g. `example.typ`), itself git-ignored by `*.typ`.
