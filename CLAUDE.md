@@ -134,6 +134,12 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     Without this, `rf-document foo.md` from any other directory failed with "file not found".
   - **Auto-open:** after a successful build both scripts open the PDF in the default viewer
     (`open`/`xdg-open`/`Start-Process`); set `RFD_NO_OPEN=1` to suppress (batch/cron).
+  - **Skip reporting:** the Lua filter writes one `Hinweis: Remote-Bild entfernt …` line per
+    stripped image to stderr; `build.sh`/`convert.ps1` capture that stderr (without swallowing
+    real pandoc errors), count the hits, and print a human-readable `N Remote-Bild(er)
+    übersprungen` summary. `rfd-convert.sh` greps that summary out of each build's output and
+    folds the total into its system notification (so GUI right-click users notice). The
+    summary line is the parse contract — don't reword it without updating the grep.
 - **Install / bootstrap** (separate from conversion):
   - `scripts/bootstrap.sh` / `scripts/bootstrap.ps1` are the curl|bash / irm|iex one-liners:
     require git, clone/pull into `~/.local/share/real-fast-document` (Windows
@@ -148,7 +154,7 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     path; only a shortcut lands in the system.
   - `scripts/rfd-convert.sh` is the dispatcher the macOS/Linux right-click calls: it loops
     `build.sh` over the files (output next to source) and posts a success/fail notification
-    (osascript / notify-send).
+    (osascript / notify-send), including the aggregated count of skipped remote images.
   - **`rf-document`** is the global terminal command: `install.sh` writes a wrapper to
     `~/.local/bin/rf-document` (macOS/Linux), `install.ps1` a `rf-document.cmd` shim into
     `%LOCALAPPDATA%\Microsoft\WindowsApps` (on PATH by default). It just calls the converter.
@@ -200,8 +206,11 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 
 ## Release flow
 
-GitHub Flow: `feature/*` → PR → squash-merge to `main`, then fast-forward `dev` to `main`.
-CalVer `YY.M.MICRO` in `VERSION` + `CHANGELOG.md`; tag `vX` and create a GitHub release.
+GitHub Flow: `feature/*` (or `fix/*`/`docs/*`) → PR → squash-merge to `main`. There is **no
+`dev` branch** in this repo (only `main`) — skip any fast-forward-`dev` step. CalVer
+`YY.M.MICRO` in `VERSION` + `CHANGELOG.md`; tag `vX` and create a GitHub release. The version
+bump + CHANGELOG entry ride in the feature PR; a docs-only change can merge without a bump
+(cut a separate `release: X` PR if you do want to ship it as a versioned release).
 
 When scripting a merge+tag+release, **verify the merge landed in `main` before tagging**
 (`gh pr merge` can return "not mergeable" right after a push while GitHub recomputes
@@ -210,6 +219,8 @@ mergeability; a `set -e`-less script will otherwise tag the wrong commit). Poll
 
 The README is dogfooded: `bash scripts/build.sh README.md README.pdf` renders it through
 the pipeline, and that PDF is attached to GitHub releases as an asset (it is not committed).
+`README.md` and `README.en.md` must stay in parity (same structure, sections, version) — a
+change to one must land in the other in the same PR; both build cleanly through the pipeline.
 
 Generated artifacts (`*.pdf`, generated `*.typ`, `preview-*.png`, and `bin/` — the
 installer's bundled typst + `rfd-tools.env`) are git-ignored —
