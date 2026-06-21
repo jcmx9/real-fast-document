@@ -40,6 +40,18 @@ base="$(basename "${src%.*}")"
 typ="${base}.typ"
 standard="a-3b"
 
+# Das Pandoc-Zwischenprodukt ist reiner Scratch und muss nach jeder Konvertierung
+# verschwinden (auch im Fehlerfall) – sonst bleiben .typ-Dateien im Verzeichnis
+# liegen. Per EXIT-Trap aufräumen; das getrackte template.typ niemals anfassen
+# (greift nur, falls jemand eine Quelle "template.md" baut).
+typ_abs="${root_dir}/${typ}"
+cleanup_typ() {
+  if [[ "${typ_abs}" != "${root_dir}/template.typ" ]]; then
+    rm -f "${typ_abs}"
+  fi
+}
+trap cleanup_typ EXIT
+
 # Einen YAML-Skalar zu "true"/"false" normalisieren (YAML-1.1-Boolean-Menge,
 # Obsidian-kompatibel; Superset von YAML 1.2). Akzeptiert true/false/yes/no/on/
 # off/y/n in beliebiger Groß-/Kleinschreibung, entfernt umschließende Quotes und

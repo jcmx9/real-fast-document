@@ -231,8 +231,10 @@ change to one must land in the other in the same PR; both build cleanly through 
 Generated artifacts (`*.pdf`, generated `*.typ`, `preview-*.png`, and `bin/` — the
 installer's bundled typst + `rfd-tools.env`) are git-ignored —
 note only `preview-*.png` matches, so scratch PNGs under any other name pollute
-`git status`. `build.sh` leaves the Pandoc intermediate as `<base>.typ` in the root
-(e.g. `example.typ`), itself git-ignored by `*.typ`.
+`git status`. `build.sh` writes the Pandoc intermediate `<base>.typ` into the root
+(e.g. `example.typ`) but **removes it after every run via an `EXIT` trap** (even on a
+pandoc/typst failure), so it never lingers; the trap guards against deleting the tracked
+`template.typ`. `convert.ps1` does the same with a `finally` block (dot-prefixed temp).
 `template.typ` is the one tracked `.typ`. `.gitignore` globs `*.typ` are dangerous with
 `rm` — clean scratch with `find . -maxdepth 1 -name '*.typ' ! -name 'template.typ' -delete`.
 

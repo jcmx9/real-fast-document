@@ -6,6 +6,15 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.16] - 2026-06-21
+
+### Fixed
+- `build.sh` now removes the Pandoc intermediate `<base>.typ` (e.g. `example.typ`,
+  `README.typ`) after every run via an `EXIT` trap — previously it was left behind in
+  the project/install directory after each conversion. The trap fires on failures too
+  and never touches the tracked `template.typ`. (`convert.ps1` already cleaned up via a
+  `finally` block.)
+
 ## [26.6.15] - 2026-06-20
 
 ### Docs
