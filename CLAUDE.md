@@ -169,6 +169,11 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   - `install.sh` shell notes: never hardcode `sudo` (use the `run_priv` helper — works as root
     or without sudo); avoid `trap … RETURN` referencing a local under `set -u` (it fires
     unbound — use explicit cleanup).
+  - **`.ps1` files must stay pure ASCII.** They carry no BOM, so Windows PowerShell 5.1 reads
+    them in the ANSI code page (CP1252) — a non-ASCII char (e.g. an en-dash `–`) misdecodes
+    and can yield a stray typographic quote that PowerShell treats as a string delimiter,
+    breaking the parse (`Send to` then silently produces no PDF). Comments already
+    transliterate (`ae`/`ue`/`oe`); keep all `.ps1` content ASCII (`grep -nP '[^\x00-\x7F]'`).
 
 ### Heading / document model (encoded in template.typ)
 

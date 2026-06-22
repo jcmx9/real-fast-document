@@ -92,7 +92,7 @@ function Convert-One {
     Copy-Item -LiteralPath $logoSrc -Destination $logoTmp -Force
     $logoArg = Split-Path -Leaf $logoTmp
   } else {
-    Write-Host "Hinweis: kein Logo im Installpfad – baue ohne Logo." -ForegroundColor Yellow
+    Write-Host "Hinweis: kein Logo im Installpfad - baue ohne Logo." -ForegroundColor Yellow
   }
 
   try {
