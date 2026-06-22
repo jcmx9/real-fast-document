@@ -111,8 +111,12 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 - **`filters/meta-from-h1.lua`** sets the PDF/A title from the H1 and **enforces exactly one
   H1** (errors otherwise) — H1 is the document title. It also handles **task lists**: Pandoc
   renders `- [ ]`/`- [x]` as a normal list whose items start with ☐/☒, which together with the
-  template's square bullet would show two markers; the filter wraps a pure task list in
-  `#[ #set list(marker: none) … ]` so only the checkbox remains. It also **strips unloadable
+  template's square bullet would show two markers; the filter wraps any list containing **at
+  least one** task item in `#[ #set list(marker: none) … ]` so task items show only the
+  checkbox. **Mixed lists** (normal bullets + tasks in one list) are handled too: non-task
+  items get the template marker (`#rfd-list-marker`, a `#let` exported by `template.typ`)
+  prepended manually, so they keep their square while tasks lose it. (A previous version only
+  handled *pure* task lists; a mixed list wrongly kept the square on its task items.) It also **strips unloadable
   images**: Typst has no network access, so a `image("https://…")` hard-errors (`network
   access is not supported`); the filter drops any image whose source is `http(s)://`, a
   protocol-relative `//host/…`, or a `data:` URI (we build offline). To avoid leftovers, a

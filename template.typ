@@ -217,7 +217,11 @@ $endif$
 // Ungeordnete Listen: auf ALLEN Ebenen derselbe Marker – ein kleines Quadrat
 // (statt der ebenenabhängigen Standardzeichen •/‣/–). Als Typst-Form gezeichnet
 // (font-unabhängig, exakte Größe/Farbe), leicht angehoben zur optischen Mitte.
-#set list(marker: box(baseline: -0.2em, square(size: 0.32em, fill: luma(20%))))
+// Als #let exportiert, damit der Lua-Filter ihn in gemischten Listen (normale
+// Punkte + Tasks) den Nicht-Task-Items manuell voranstellen kann (siehe
+// filters/meta-from-h1.lua).
+#let rfd-list-marker = box(baseline: -0.2em, square(size: 0.32em, fill: luma(20%)))
+#set list(marker: rfd-list-marker)
 
 // Blockzitate heben sich ab: schmaler als der Satzspiegel (beidseitig
 // eingerückt) und kursiv.
