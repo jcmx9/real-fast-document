@@ -8,14 +8,39 @@ local function starts_with_checkbox(item)
   local first = item[1]
   if not first or not first.content then return false end
   local inl = first.content[1]
-  return inl ~= nil and inl.t == "Str" and task_boxes[inl.text] == true
+  if inl == nil or inl.t ~= "Str" then return false end
+  -- Praefix-Vergleich (nicht exakt): toleriert, wenn Pandoc die Box mit dem
+  -- folgenden Text/Leerzeichen in *einem* Str zusammenfasst.
+  for box in pairs(task_boxes) do
+    if inl.text:sub(1, #box) == box then return true end
+  end
+  return false
 end
 
+-- Liste mit mindestens einem Task-Item ohne Listen-Marker rendern, sodass Tasks
+-- nur die Checkbox zeigen. In gemischten Listen (normale Punkte + Tasks) behalten
+-- die Nicht-Task-Items ihr Quadrat: dazu den Template-Marker (#rfd-list-marker)
+-- manuell voranstellen. Frueher verlangte der Filter, dass *alle* Items Tasks
+-- sind -> gemischte Listen behielten faelschlich den Marker (Quadrat + Checkbox).
 function BulletList(el)
+  local has_task = false
   for _, item in ipairs(el.content) do
-    if not starts_with_checkbox(item) then return nil end
+    if starts_with_checkbox(item) then
+      has_task = true
+      break
+    end
   end
-  -- alle Items sind Task-Items -> Liste ohne Marker rendern (nur Checkbox)
+  if not has_task then return nil end
+
+  for _, item in ipairs(el.content) do
+    if not starts_with_checkbox(item) then
+      local first = item[1]
+      if first and first.content then
+        table.insert(first.content, 1, pandoc.RawInline("typst", "#rfd-list-marker "))
+      end
+    end
+  end
+
   return {
     pandoc.RawBlock("typst", "#[\n#set list(marker: none)"),
     el,

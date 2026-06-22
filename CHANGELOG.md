@@ -6,6 +6,18 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.18] - 2026-06-22
+
+### Fixed
+- Task lists **mixed** with normal bullets in a single list now render correctly. The Lua
+  filter previously suppressed the list marker only when *every* item was a task (`- [ ]` /
+  `- [x]`); a list with both normal items and tasks kept the square marker, so task items
+  showed both the square **and** the checkbox. The filter now triggers on **any** task item
+  in the list and re-adds the template marker (`#rfd-list-marker`, newly exported by
+  `template.typ`) to the non-task items, so normal bullets keep their square while tasks show
+  only the checkbox. The checkbox matcher is also prefix-based now (tolerates Pandoc emitting
+  the box glyph and trailing text in one `Str`).
+
 ## [26.6.17] - 2026-06-22
 
 ### Fixed
