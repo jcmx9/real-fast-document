@@ -90,7 +90,11 @@ function Install-Fonts {
     }
     foreach ($f in $FontFiles) {
       Write-Host "-> $($f.Name)"
-      Invoke-WebRequest -Uri $f.Url -OutFile (Join-Path $FontDir $f.Name) -UseBasicParsing
+      # -OutFile behandelt den Pfad als Wildcard-Pattern; eckige Klammern im
+      # Namen (NotoEmoji[wght].ttf) muessen escaped werden, sonst schlaegt der
+      # Download mit "aufgeloester Platzhalterpfad gibt keine Datei an" fehl.
+      $outFile = [Management.Automation.WildcardPattern]::Escape((Join-Path $FontDir $f.Name))
+      Invoke-WebRequest -Uri $f.Url -OutFile $outFile -UseBasicParsing
     }
   } finally {
     Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
