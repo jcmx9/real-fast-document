@@ -178,6 +178,11 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     and can yield a stray typographic quote that PowerShell treats as a string delimiter,
     breaking the parse (`Send to` then silently produces no PDF). Comments already
     transliterate (`ae`/`ue`/`oe`); keep all `.ps1` content ASCII (`grep -nP '[^\x00-\x7F]'`).
+  - **`Invoke-WebRequest -OutFile` treats its path as a wildcard pattern.** A font name with
+    brackets (`NotoEmoji[wght].ttf`) is read as a char class and the download aborts with
+    "resolved wildcard path does not specify a file". `install.ps1` escapes the target via
+    `[Management.Automation.WildcardPattern]::Escape(...)`; don't pass an unescaped bracketed
+    path to `-OutFile`. (bash `curl -o` is unaffected — it writes the literal name.)
 
 ### Heading / document model (encoded in template.typ)
 
