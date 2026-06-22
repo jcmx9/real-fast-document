@@ -14,6 +14,11 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   the project/install directory after each conversion. The trap fires on failures too
   and never touches the tracked `template.typ`. (`convert.ps1` already cleaned up via a
   `finally` block.)
+- `install.ps1` now escapes wildcard characters in the font-download target path
+  (`WildcardPattern::Escape`) before passing it to `Invoke-WebRequest -OutFile`. The
+  brackets in `NotoEmoji[wght].ttf` were read as a wildcard pattern, so the Windows
+  bootstrap aborted with "resolved wildcard path does not specify a file". macOS/Linux
+  were unaffected (`curl -o` writes the literal name).
 
 ## [26.6.15] - 2026-06-20
 
