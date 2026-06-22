@@ -6,6 +6,16 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.6.17] - 2026-06-22
+
+### Fixed
+- `convert.ps1` is now pure ASCII. A single en-dash (`–`, U+2013) in a `Write-Host`
+  string broke the script under Windows PowerShell 5.1: BOM-less `.ps1` files are read
+  in the ANSI code page (CP1252), where the en-dash's last UTF-8 byte (`0x93`) decodes
+  to a typographic quote (`"`, U+201C) that PowerShell treats as a string delimiter —
+  yielding an unterminated string and a parser error, so "Send to" produced no PDF.
+  `.ps1` scripts must stay ASCII-only.
+
 ## [26.6.16] - 2026-06-21
 
 ### Fixed
