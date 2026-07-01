@@ -5,8 +5,8 @@
   irm https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.ps1 | iex
 
   Klont das Repo nach %LOCALAPPDATA%\real-fast-document (oder aktualisiert es per
-  git pull) und ruft install.ps1 auf: Werkzeuge (pandoc, typst) via winget, Fonts
-  ins Projekt und die "Senden an"-Verknuepfung. Einzige Vorbedingung ist git.
+  git pull) und ruft install.ps1 auf: Werkzeug (typst) via winget, Fonts +
+  Typst-Packages ins Projekt und die "Senden an"-Verknuepfung. Vorbedingung: git.
 #>
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'

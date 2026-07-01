@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Baut aus einer Markdown-Datei ein PDF/A: Markdown -> Pandoc (+Lua) -> Typst -> PDF/A-3b.
+# Baut aus einer Markdown-Datei ein PDF/A: Markdown -> Typst (cmarker) -> PDF/A-3b.
+# Der Body wird vom Template selbst per cmarker aus der (vorverarbeiteten) Quelle
+# erzeugt; Pandoc/pygments/Lua werden nicht mehr benötigt.
 #
 # Usage: scripts/build.sh [SOURCE.md] [OUTPUT.pdf]
 set -euo pipefail
@@ -37,25 +39,24 @@ fi
 
 src="$(resolve_from_pwd "${1:-example.md}")"
 base="$(basename "${src%.*}")"
-typ="${base}.typ"
 standard="a-3b"
 
-# Das Pandoc-Zwischenprodukt ist reiner Scratch und muss nach jeder Konvertierung
-# verschwinden (auch im Fehlerfall) – sonst bleiben .typ-Dateien im Verzeichnis
-# liegen. Per EXIT-Trap aufräumen; das getrackte template.typ niemals anfassen
-# (greift nur, falls jemand eine Quelle "template.md" baut).
-typ_abs="${root_dir}/${typ}"
-cleanup_typ() {
-  if [[ "${typ_abs}" != "${root_dir}/template.typ" ]]; then
-    rm -f "${typ_abs}"
-  fi
-}
-trap cleanup_typ EXIT
+# Vorverarbeitete Render-Quelle: Frontmatter wird für Typst entfernt, loose
+# Task-Listen zu tight normalisiert (cmarker 0.1.9 crasht sonst; Upstream-Fix in SabrinaJewson/cmarker.typ#71, noch nicht > 0.1.9 released) und Pandoc-
+# Definitionslisten in HTML <dl> übersetzt (cmarker kennt nur <dl>). Die
+# EINGEBETTETE Quelle (pdf.attach) bleibt die unveränderte Original-.md.
+render_tmp="$(mktemp -t rfd-render.XXXXXX)"
+cleanup() { rm -f "${render_tmp}"; }
+trap cleanup EXIT
 
+# ---------------------------------------------------------------------------
+# Optionalen YAML-Frontmatter (führender ---...---) parsen: date/toc/h2-break/
+# print_filename/lang, CRLF-tolerant. Die Bool-Schlüssel werden YAML-1.1-konform
+# gelesen (siehe yaml_bool); ein erkannter Schlüssel mit ungültigem Wert warnt
+# und behält den Default.
+# ---------------------------------------------------------------------------
 # Einen YAML-Skalar zu "true"/"false" normalisieren (YAML-1.1-Boolean-Menge,
-# Obsidian-kompatibel; Superset von YAML 1.2). Akzeptiert true/false/yes/no/on/
-# off/y/n in beliebiger Groß-/Kleinschreibung, entfernt umschließende Quotes und
-# einen Inline-Kommentar (` # ...`). Unbekannte Werte -> leer (Aufrufer warnt).
+# Obsidian-kompatibel; Superset von YAML 1.2). Unbekannte Werte -> leer.
 yaml_bool() {
   local v="$1"
   v="$(printf '%s' "${v}" | sed -e 's/[[:space:]]#.*$//' \
@@ -69,23 +70,27 @@ yaml_bool() {
   esac
 }
 
-# Optionalen YAML-Frontmatter (führender ---...---) parsen: nur diese vier
-# Schlüssel, CRLF-tolerant. toc/h2-break/filename werden YAML-1.1-konform als
-# Boolean gelesen (siehe yaml_bool); ein erkannter Schlüssel mit ungültigem Wert
-# warnt und behält den Default. (if-Blöcke statt `[[ ]] && x=`, sonst beendet
-# set -e das Skript, sobald eine Bedingung falsch ist.)
+# Einen YAML-String-Skalar säubern (Whitespace + umschließende Quotes weg).
+yaml_str() {
+  printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+                         -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'\$//"
+}
+
 fm_date=""
 fm_toc="auto"
 fm_break="auto"
 fm_showname="true"
+fm_lang="de"
 if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
   block="$(awk 'NR==1 { next } /^---[[:space:]]*$/ { exit } { print }' "${src}" | tr -d '\r')"
   while IFS= read -r line; do
     case "${line}" in
       date:*)
-        fm_date="$(printf '%s' "${line#date:}" \
-          | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
-                -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'\$//")"
+        fm_date="$(yaml_str "${line#date:}")"
+        ;;
+      lang:*)
+        v="$(yaml_str "${line#lang:}")"
+        if [[ -n "${v}" ]]; then fm_lang="${v}"; fi
         ;;
       toc:*)
         b="$(yaml_bool "${line#toc:}")"
@@ -97,23 +102,73 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
         if [[ -n "${b}" ]]; then fm_break="${b}"
         else echo "Warnung: ungültiger Wert für 'h2-break' im Frontmatter: '${line#h2-break:}' – ignoriert (true/false)." >&2; fi
         ;;
-      filename:*)
-        b="$(yaml_bool "${line#filename:}")"
+      print_filename:*)
+        b="$(yaml_bool "${line#print_filename:}")"
         if [[ -n "${b}" ]]; then fm_showname="${b}"
-        else echo "Warnung: ungültiger Wert für 'filename' im Frontmatter: '${line#filename:}' – ignoriert (true/false)." >&2; fi
+        else echo "Warnung: ungültiger Wert für 'print_filename' im Frontmatter: '${line#print_filename:}' – ignoriert (true/false)." >&2; fi
         ;;
     esac
   done <<< "${block}"
 fi
 
-# Ausgabe: explizites zweites Argument gewinnt (relativ zum aktuellen Verzeichnis).
-# Sonst landet die PDF NEBEN der Quelle (nicht im Projekt-Root, in den build.sh
-# für template/fonts cd't); bei gesetztem Datum mit ISO-Präfix (sortierbar).
+# ---------------------------------------------------------------------------
+# Preprocessing: Frontmatter strippen, Task-Listen tighten, Deflisten -> <dl>.
+# ---------------------------------------------------------------------------
+awk '
+function is_blank(s) { return s ~ /^[ \t]*$/ }
+function is_task(s)  { return s ~ /^[ \t]*[-*+][ \t]+\[[ xX]\]/ }
+{
+  line = $0
+  sub(/\r$/, "", line)                                   # CRLF-tolerant
+  if (NR == 1 && line ~ /^---[ \t]*$/) { fm = 1; next }  # Frontmatter-Start
+  if (fm == 1) { if (line ~ /^(---|\.\.\.)[ \t]*$/) fm = 0; next }
+  L[++n] = line
+}
+END {
+  i = 1
+  while (i <= n) {
+    # Definitionsliste: Begriff (Blockanfang) + Folgezeile ": Definition".
+    # Ausgabe als HTML <dl> in Block-Form (Leerzeile nach <dd>, damit Inline-
+    # Markdown in der Definition rendert – inline crasht cmarker es zu Literal).
+    if (!is_blank(L[i]) && L[i] !~ /^:/ && (i == 1 || is_blank(L[i-1])) \
+        && i+1 <= n && L[i+1] ~ /^:[ \t]+/) {
+      print "<dl>"
+      while (1) {
+        if (is_blank(L[i]) || L[i] ~ /^:/ || i+1 > n || L[i+1] !~ /^:[ \t]+/) break
+        term = L[i]
+        def = L[i+1]; sub(/^:[ \t]+/, "", def)
+        print "<dt>" term "</dt>"
+        print "<dd>"
+        print ""
+        print def
+        print "</dd>"
+        i += 2
+        j = i; while (j <= n && is_blank(L[j])) j++          # Leerzeilen zwischen Paaren
+        if (j <= n && L[j] !~ /^:/ && j+1 <= n && L[j+1] ~ /^:[ \t]+/) i = j
+      }
+      print "</dl>"
+      continue
+    }
+    # Loose Task-Liste -> tight: Leerzeile entfernen, wenn die umgebenden
+    # nicht-leeren Zeilen beide Task-Items sind.
+    if (is_blank(L[i])) {
+      p = i-1; while (p >= 1 && is_blank(L[p])) p--
+      q = i+1; while (q <= n && is_blank(L[q])) q++
+      if (p >= 1 && q <= n && is_task(L[p]) && is_task(L[q])) { i++; continue }
+    }
+    print L[i]
+    i++
+  }
+}
+' "${src}" > "${render_tmp}"
+
+# ---------------------------------------------------------------------------
+# Ausgabepfad: explizites zweites Argument gewinnt (relativ zum Aufruf-Verz.).
+# Sonst NEBEN der Quelle; bei gesetztem Datum mit ISO-Präfix (sortierbar).
+# ---------------------------------------------------------------------------
 src_dir="$(cd "$(dirname "${src}")" && pwd)"
 src_abs="${src_dir}/$(basename "${src}")"
 if [[ -n "${2:-}" ]]; then
-  # Zielpfad existiert noch nicht -> immer gegen das Aufruf-Verzeichnis (nicht
-  # die Existenzprüfung von resolve_from_pwd, die für Lese-Pfade gedacht ist).
   case "${2}" in
     /*) out="${2}" ;;
     *)  out="${orig_pwd}/${2}" ;;
@@ -125,7 +180,6 @@ else
 fi
 
 # Logo: erstes vorhandenes in fester Reihenfolge svg -> png -> jpg.
-# Optional: ohne Logo wird ohne Logo gebaut (logo bleibt leer).
 logo=""
 for candidate in logo.svg logo.png logo.jpg; do
   if [[ -f "${candidate}" ]]; then
@@ -140,49 +194,37 @@ fi
 font_arg=()
 [[ -d fonts ]] && font_arg=(--font-path fonts --ignore-system-fonts)
 
-# 1) Markdown -> Typst (Layout aus template.typ, Titel aus erstem H1 via Lua)
-# Highlight-Flag je nach pandoc-Version: neuere kennen --syntax-highlighting,
-# ältere (z. B. Debian-stable, 3.1.x) nur das ältere --highlight-style. Eines
-# passt immer; so vermeiden wir sowohl Fehler als auch Deprecation-Warnungen.
-hl_flag=(--highlight-style pygments)
-if pandoc --help 2>&1 | grep -q -- '--syntax-highlighting'; then
-  hl_flag=(--syntax-highlighting pygments)
-fi
+# Laufzeit-Eingaben fürs Template. --root / : Typst behandelt absolute Pfade
+# projektwurzel-relativ und sperrt Lesezugriffe außerhalb; für die eingebettete
+# Quelle (die überall liegen kann) muss die Wurzel den absoluten Pfad umfassen.
+# title = .md-Basisname (PDF/A verlangt einen Dokumenttitel).
+typst_inputs=(
+  --input "filename=$(basename "${out}")"
+  --input "title=${base}"
+  --input "logo=${logo}"
+  --input "source=${render_tmp}"
+  --input "attach=${src_abs}"
+  --input "docdir=${src_dir}"
+  --input "date=${fm_date}"
+  --input "toc=${fm_toc}"
+  --input "h2-break=${fm_break}"
+  --input "showname=${fm_showname}"
+  --input "lang=${fm_lang}"
+)
 
-# pandoc-stderr abfangen, um vom Lua-Filter übersprungene Remote-Bilder zu zählen
-# (für die Erfolgsmeldung / GUI-Notification), aber unverändert durchreichen –
-# auch im Fehlerfall, sonst bliebe eine Filter-Fehlermeldung (z. B. >1 H1)
-# unsichtbar.
-set +e
-pandoc_err="$(pandoc "${src}" \
-  --from markdown \
-  --to typst \
-  --standalone \
-  --template template.typ \
-  --lua-filter filters/meta-from-h1.lua \
-  "${hl_flag[@]}" \
-  --output "${typ}" 2>&1 1>/dev/null)"
-pandoc_rc=$?
-set -e
-[[ -n "${pandoc_err}" ]] && printf '%s\n' "${pandoc_err}" >&2
-[[ "${pandoc_rc}" -ne 0 ]] && exit "${pandoc_rc}"
-stripped="$(printf '%s' "${pandoc_err}" | grep -c 'Remote-Bild entfernt' || true)"
-
-# 2) Typst -> PDF/A-3b (Dateiname & Logo als Laufzeit-Inputs)
-# --root / : Typst behandelt absolute Pfade projektwurzel-relativ und sperrt
-# Lesezugriffe außerhalb der Wurzel; für die eingebettete Quelle (die überall
-# liegen kann) muss die Wurzel den absoluten Quellpfad einschließen.
-"${typst_bin}" compile "${typ}" "${out}" \
+# Markdown -> PDF/A-3b (Template ruft cmarker auf der vorverarbeiteten Quelle).
+"${typst_bin}" compile template.typ "${out}" \
   "${font_arg[@]}" \
   --root / \
   --pdf-standard "${standard}" \
-  --input "filename=$(basename "${out}")" \
-  --input "logo=${logo}" \
-  --input "source=${src_abs}" \
-  --input "date=${fm_date}" \
-  --input "toc=${fm_toc}" \
-  --input "h2-break=${fm_break}" \
-  --input "showname=${fm_showname}"
+  "${typst_inputs[@]}"
+
+# Übersprungene Remote-Bilder zählen: das Template markiert jedes gestrippte
+# Bild mit einem unsichtbaren Metadatum <rfd-remote-skip>; per `typst query`
+# auslesen (gleiche Inputs, damit die Kompilierung identisch ist).
+stripped="$("${typst_bin}" query template.typ "<rfd-remote-skip>" \
+  "${font_arg[@]}" --root / --field value "${typst_inputs[@]}" 2>/dev/null \
+  | grep -o 'rfd-remote-skip' | wc -l | tr -d ' ' || true)"
 
 echo "✓ ${out} erzeugt (PDF/A-3b)"
 if [[ "${stripped:-0}" -gt 0 ]]; then

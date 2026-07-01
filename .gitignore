@@ -6,6 +6,7 @@ preview-*.png
 
 # Lokal installierte Werkzeuge / gemerkte Pfade (vom Installer)
 bin/
+vendor/
 
 # OS
 .DS_Store

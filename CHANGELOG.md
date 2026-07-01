@@ -6,6 +6,41 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.0] - 2026-07-01
+
+### Changed
+- **Pipeline reworked: Pandoc is gone.** Markdown is now converted to Typst by the
+  **cmarker** package (with **mitex** for math) directly inside Typst:
+  `Markdown → Typst (template.typ → cmarker) → PDF/A-3b`. `template.typ` is now a plain
+  Typst file (no longer a Pandoc template) that renders the body itself via
+  `cmarker.render(read(source))`. Removes the Pandoc, pygments and Lua-filter dependencies;
+  code syntax highlighting is now native to Typst. The intermediate `.typ` scratch file and
+  its cleanup trap are gone.
+- **Packages vendored for offline builds.** cmarker + mitex are fetched into `vendor/`
+  (git-ignored) by `scripts/fetch-typst-packages.sh` and imported by relative path, so builds
+  need no registry access — consistent with the bundled fonts.
+- **Headings restyled.** The framed H2 box is replaced by a 3 pt left accent bar plus a fine
+  full-width hairline; H3+ use a thinner 2 pt bar with a shorter hairline (lighter, better
+  delineated).
+- **Frontmatter key `filename` renamed to `print_filename`** (toggles the footer-left filename;
+  same default `true`). New `lang` frontmatter key controls the document language/date format.
+- Local image paths are now resolved **relative to the document** (via a `docdir` input), so
+  images next to documents anywhere on disk are found.
+- The PDF/A document title (required by PDF/A) is now the `.md` basename.
+
+### Added
+- `scripts/fetch-typst-packages.sh` and an `Install-TypstPackages` step in `install.ps1` /
+  `-Packages` switch — vendor cmarker + mitex into `vendor/`.
+- Build-time Markdown preprocessing (in `build.sh` / `convert.ps1`): Pandoc-style definition
+  lists are converted to HTML `<dl>`, and loose task lists are normalized to tight (works around
+  a cmarker 0.1.9 crash on blank-separated task items).
+
+### Removed
+- **The single-H1 requirement.** H1 is optional now and no longer enforced; a `# H1` is rendered
+  as the centered title.
+- `filters/meta-from-h1.lua` (its jobs are now handled by cmarker, the template's `safe-image`
+  scope override, and build-time preprocessing). Pandoc and pygments are no longer dependencies.
+
 ## [26.6.18] - 2026-06-22
 
 ### Fixed
