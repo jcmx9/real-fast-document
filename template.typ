@@ -301,10 +301,12 @@
   set par(justify: false)
   if it.level == 1 {
     // Kapitel: Umbruch davor (h1-break), Serif, feine Linie DICHT darunter.
+    // par(spacing) im Block klein setzen – sonst liegt zwischen Text und Linie
+    // der Default-Absatzabstand (1.1em) und die Linie sitzt zu tief.
     context { if want-break() { pagebreak(weak: true) } }
     block(width: 100%, above: 1.8em, below: 0.5em, {
+      set par(spacing: 2pt)
       heading-text(18pt, 450, it)
-      v(1pt)
       line(length: 100%, stroke: hairline-stroke)
     })
   } else if it.level == 2 {

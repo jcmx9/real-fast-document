@@ -10,7 +10,7 @@
   </g>
   <g>
     <rect x="171" y="32" width="130" height="46" rx="9" fill="#eef0fd" stroke="#5b54e0" stroke-width="1.5"/>
-    <text x="236" y="60" text-anchor="middle" font-size="18" fill="#141414">Pandoc</text>
+    <text x="236" y="60" text-anchor="middle" font-size="18" fill="#141414">cmarker</text>
   </g>
   <g>
     <rect x="336" y="32" width="130" height="46" rx="9" fill="#eef0fd" stroke="#5b54e0" stroke-width="1.5"/>
