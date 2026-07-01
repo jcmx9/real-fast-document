@@ -105,6 +105,34 @@ bash scripts/install.sh                # Fonts/Packages/Integration bei Bedarf a
 
 Unter Windows nach `git pull --ff-only` bei Bedarf `./scripts/install.ps1` erneut ausführen.
 
+## Deinstallation
+
+Die Integration (Rechtsklick-Eintrag, der globale Befehl `rf-document` und die
+PATH-Hilfsdatei) entfernen:
+
+**macOS / Linux:**
+
+```bash
+bash scripts/install.sh --uninstall
+```
+
+**Windows (PowerShell):**
+
+```powershell
+./scripts/install.ps1 -Uninstall
+```
+
+Der Installordner (Programm, Fonts, Packages, Logo) bleibt dabei erhalten. Um restlos
+alles zu entfernen, ihn zusätzlich löschen:
+
+```bash
+rm -rf ~/.local/share/real-fast-document                           # macOS / Linux
+```
+
+```powershell
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\real-fast-document"  # Windows
+```
+
 ## Verwendung
 
 ### macOS / Linux
@@ -272,10 +300,26 @@ example.md                  volle Beispiel-/Falltest-Datei (alle Elemente, dokum
 ## Anpassen
 
 - **Frontmatter** steuert einzelne Dokumente (Datum, TOC, Umbruch, Dateiname, Sprache) — siehe oben.
-- **Logo / Dateiname / Datum / Titel** werden zur Compile-Zeit als Typst-`--input` übergeben
-  (`scripts/build.sh`) und im Template über `sys.inputs` gelesen. Das Logo wird in der
-  Reihenfolge `logo.svg` → `logo.png` → `logo.jpg` gewählt; fehlt es, baut die Pipeline mit
-  Hinweis weiter. Logo-Höhe im Template über `logo-height`.
+- **Dateiname / Datum / Titel** werden zur Compile-Zeit als Typst-`--input` übergeben
+  (`scripts/build.sh`) und im Template über `sys.inputs` gelesen.
+- **Logo austauschen:** Das Logo liegt **im Installordner** und gilt für **alle** Dokumente
+  (nicht pro `.md`). Standardpfade nach der Schnellinstallation:
+  - macOS / Linux: `~/.local/share/real-fast-document/logo.svg`
+  - Windows: `%LOCALAPPDATA%\real-fast-document\logo.svg`
+
+  Den Installpfad im Zweifel selbst ermitteln — der installierte Befehl verrät ihn:
+
+  ```bash
+  cat "$(command -v rf-document)"                                  # macOS / Linux
+  ```
+
+  ```powershell
+  type "$env:LOCALAPPDATA\Microsoft\WindowsApps\rf-document.cmd"   # Windows
+  ```
+
+  Gewählt wird das **erste vorhandene** aus `logo.svg` → `logo.png` → `logo.jpg`; die
+  bestehende Datei ersetzen (oder die anderen Formate entfernen). Fehlt ein Logo, baut die
+  Pipeline mit Hinweis weiter. Logo-Höhe im Template über `logo-height`.
 - **Ränder, Fonts, Farben, Schriftgrade** stehen gesammelt oben in `template.typ`
   (`#set page`, `#set text`, `head-color`, `heading-text`).
 - **Anderer PDF/A-Grad**: `standard` in `scripts/build.sh` ändern (`a-1b`, `a-2b`, `a-3b`).
