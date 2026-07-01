@@ -66,7 +66,7 @@ Nummerierte und verschachtelte Listen werden sauber gesetzt und korrekt eingerü
 
 1. Quelle in Markdown schreiben.
 2. Optional einen Frontmatter ergänzen:
-   - `date` für ein Datum in der Fußzeile,
+   - `date` für Datum in der Fußzeile **und** einen ISO-Präfix am Dateinamen,
    - `toc` für das Inhaltsverzeichnis,
    - `h1-break` für den Kapitelumbruch,
      - und tiefere Ebenen behalten denselben Marker.
@@ -111,7 +111,7 @@ Auch mehr Spalten und kurze Werte bleiben lesbar:
 | Kürzel | Bedeutung          | Default | Bereich   |
 | ------ | ------------------ | ------- | --------- |
 | `toc`  | Inhaltsverzeichnis | auto    | an/aus    |
-| `date` | Fußzeilen-Datum    | leer    | ISO-Datum |
+| `date` | Präfix + Fußzeile  | leer    | ISO-Datum |
 | `lang` | Sprache            | `de`    | `de`/`en` |
 
 # Abbildungen

@@ -105,6 +105,34 @@ bash scripts/install.sh                # refresh fonts/packages/integration if n
 
 On Windows, after `git pull --ff-only` re-run `./scripts/install.ps1` if needed.
 
+## Uninstall
+
+Remove the integration (right-click entry, the global `rf-document` command, and the
+PATH helper file):
+
+**macOS / Linux:**
+
+```bash
+bash scripts/install.sh --uninstall
+```
+
+**Windows (PowerShell):**
+
+```powershell
+./scripts/install.ps1 -Uninstall
+```
+
+The install folder (program, fonts, packages, logo) is left in place. To remove everything,
+delete it as well:
+
+```bash
+rm -rf ~/.local/share/real-fast-document                           # macOS / Linux
+```
+
+```powershell
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\real-fast-document"  # Windows
+```
+
 ## Usage
 
 ### macOS / Linux
@@ -270,10 +298,26 @@ example.md                  full example/probe file (all elements, documented fr
 ## Customizing
 
 - **Frontmatter** controls individual documents (date, TOC, break, filename, language) — see above.
-- **Logo / filename / date / title** are passed as Typst `--input` at compile time
-  (`scripts/build.sh`) and read in the template via `sys.inputs`. The logo is chosen in the order
-  `logo.svg` → `logo.png` → `logo.jpg`; if missing, the pipeline continues with a note. Logo
-  height in the template via `logo-height`.
+- **Filename / date / title** are passed as Typst `--input` at compile time
+  (`scripts/build.sh`) and read in the template via `sys.inputs`.
+- **Swapping the logo:** the logo lives **in the install folder** and applies to **all**
+  documents (not per `.md`). Default paths after the quick install:
+  - macOS / Linux: `~/.local/share/real-fast-document/logo.svg`
+  - Windows: `%LOCALAPPDATA%\real-fast-document\logo.svg`
+
+  If unsure of the install path, the installed command reveals it:
+
+  ```bash
+  cat "$(command -v rf-document)"                                  # macOS / Linux
+  ```
+
+  ```powershell
+  type "$env:LOCALAPPDATA\Microsoft\WindowsApps\rf-document.cmd"   # Windows
+  ```
+
+  The **first existing** of `logo.svg` → `logo.png` → `logo.jpg` is chosen; replace the
+  existing file (or remove the other formats). If no logo is present, the pipeline continues
+  with a note. Logo height in the template via `logo-height`.
 - **Margins, fonts, colors, font sizes** are collected at the top of `template.typ`
   (`#set page`, `#set text`, `head-color`, `heading-text`).
 - **Different PDF/A level**: change `standard` in `scripts/build.sh` (`a-1b`, `a-2b`, `a-3b`).

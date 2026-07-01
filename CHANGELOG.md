@@ -6,6 +6,20 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.2] - 2026-07-01
+
+### Fixed
+- **H1 underline gap** — the hairline under an H1 chapter sat too far below the heading; the
+  default paragraph spacing inside the heading block is now tightened so the line hugs the title.
+- **Pipeline diagram** (`assets/pipeline.svg`) still labeled the conversion step *Pandoc*; it now
+  reads *cmarker*, matching the current pipeline.
+
+### Docs
+- **README** (both languages) — document where the **logo** lives (per-install, in the install
+  folder) and how to find the install path, plus a dedicated **uninstall** section.
+- `example.md` — the `date` frontmatter note now mentions the ISO filename prefix (not just the
+  footer date).
+
 ## [26.7.1] - 2026-07-01
 
 ### Changed
