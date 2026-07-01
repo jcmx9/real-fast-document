@@ -106,11 +106,12 @@ function Convert-One {
   $base   = [IO.Path]::GetFileNameWithoutExtension($Src)
   $lines  = Get-Content -LiteralPath $Src
 
-  # Optionalen YAML-Frontmatter (fuehrender ---...---) parsen: date/lang/toc/
-  # h2-break/print_filename. Die Bool-Schluessel werden YAML-1.1-konform gelesen
+  # Optionalen YAML-Frontmatter (fuehrender ---...---) parsen: title/date/lang/toc/
+  # h1-break/print_filename/header/watermark. Bool-Schluessel werden YAML-1.1-konform gelesen
   # (siehe ConvertTo-YamlBool); ein erkannter Schluessel mit ungueltigem Wert
   # warnt und behaelt den Default.
   $fmDate = ''; $fmToc = 'auto'; $fmBreak = 'auto'; $fmShowname = 'true'; $fmLang = 'de'
+  $fmHeader = ''; $fmWatermark = ''; $fmTitle = ''
   if ($lines.Count -gt 0 -and $lines[0].Trim() -eq '---') {
     for ($i = 1; $i -lt $lines.Count; $i++) {
       if ($lines[$i].Trim() -eq '---') { break }
@@ -120,13 +121,22 @@ function Convert-One {
       elseif ($lines[$i] -match '^lang:\s*(.+?)\s*$') {
         $fmLang = $Matches[1].Trim('"', "'")
       }
+      elseif ($lines[$i] -match '^header:\s*(.+?)\s*$') {
+        $fmHeader = $Matches[1].Trim('"', "'")
+      }
+      elseif ($lines[$i] -match '^watermark:\s*(.+?)\s*$') {
+        $fmWatermark = $Matches[1].Trim('"', "'")
+      }
       elseif ($lines[$i] -match '^toc:\s*(.+?)\s*$') {
         $b = ConvertTo-YamlBool $Matches[1]
         if ($b) { $fmToc = $b } else { Write-Warning "Ungueltiger Wert fuer 'toc': '$($Matches[1])' - ignoriert (true/false)." }
       }
-      elseif ($lines[$i] -match '^h2-break:\s*(.+?)\s*$') {
+      elseif ($lines[$i] -match '^h1-break:\s*(.+?)\s*$') {
         $b = ConvertTo-YamlBool $Matches[1]
-        if ($b) { $fmBreak = $b } else { Write-Warning "Ungueltiger Wert fuer 'h2-break': '$($Matches[1])' - ignoriert (true/false)." }
+        if ($b) { $fmBreak = $b } else { Write-Warning "Ungueltiger Wert fuer 'h1-break': '$($Matches[1])' - ignoriert (true/false)." }
+      }
+      elseif ($lines[$i] -match '^title:\s*(.+?)\s*$') {
+        $fmTitle = $Matches[1].Trim('"', "'")
       }
       elseif ($lines[$i] -match '^print_filename:\s*(.+?)\s*$') {
         $b = ConvertTo-YamlBool $Matches[1]
@@ -154,21 +164,25 @@ function Convert-One {
     Write-Host "Hinweis: kein Logo im Installpfad - baue ohne Logo." -ForegroundColor Yellow
   }
 
-  # Laufzeit-Eingaben fuers Template. title = .md-Basisname (PDF/A verlangt einen
-  # Dokumenttitel). --root deckt das Laufwerk ab, damit absolute Pfade (Quelle,
-  # Anhang, Bilder) lesbar sind.
+  # Laufzeit-Eingaben fuers Template. PDF/A-Metadatentitel: title: falls gesetzt,
+  # sonst Basisname; doctitle = sichtbarer Titel (nur aus title:). --root deckt
+  # das Laufwerk ab, damit absolute Pfade (Quelle, Anhang, Bilder) lesbar sind.
+  $titleMeta = if ($fmTitle) { $fmTitle } else { $base }
   $inputs = @(
     '--input', "filename=$outName",
-    '--input', "title=$base",
+    '--input', "title=$titleMeta",
+    '--input', "doctitle=$fmTitle",
     '--input', "logo=$logoArg",
     '--input', "source=$renderTmp",
     '--input', "attach=$Src",
     '--input', "docdir=$srcDir",
     '--input', "date=$fmDate",
     '--input', "toc=$fmToc",
-    '--input', "h2-break=$fmBreak",
+    '--input', "h1-break=$fmBreak",
     '--input', "showname=$fmShowname",
-    '--input', "lang=$fmLang"
+    '--input', "lang=$fmLang",
+    '--input', "header=$fmHeader",
+    '--input', "watermark=$fmWatermark"
   )
 
   try {

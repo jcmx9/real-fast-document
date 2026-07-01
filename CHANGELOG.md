@@ -6,6 +6,33 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.1] - 2026-07-01
+
+### Changed
+- **Reworked heading / document model.** The document title now comes from a new **`title:`
+  frontmatter** key (centered title block on top + title in the running header from page 1 + PDF/A
+  metadata title) instead of `# H1`. Consequently **`# H1` is now the top-level chapter** (fine
+  hairline below it, page break, runs in the running header), `## H2`/`### H3` are subsections, and
+  `#### H4`+ render as bold left-aligned only. The page-break key **`h2-break` is renamed to
+  `h1-break`**, the structured-mode automatism now triggers at **`#H1 + #H2 > 5`**, and the TOC
+  lists **H1 + H2 only**.
+- **Headings restyled to serif** (`Source Serif 4`), left-aligned, no accent bars; only H1 carries
+  a hairline, and all headings use space-above > space-below. Header and footer text are Sans.
+- **Tables** now use light row zebra + vertical separators + a line under the header (no horizontal
+  row lines). Figure captions are smaller (10 pt) with more space below. Task checkboxes render as
+  ☐ / ☒ glyphs.
+- **Running header** precedence: `header:` fixed text → active H1 chapter → the title before the
+  first chapter.
+
+### Added
+- **`title:` frontmatter** — visible document title (see above).
+- **`watermark:` frontmatter** — a diagonal, letter-spaced, bold, light-gray page-background
+  watermark under all content. Gray via `luma` (single-channel grayscale → clean K in print; Typst
+  0.15 cannot emit CMYK in PDF/A).
+- **`header:` frontmatter** — fixed running-header text from page 1 (overrides the running header).
+- Local image paths resolve relative to the document (`docdir`), and `lang:` controls the date
+  format — both carried over and documented.
+
 ## [26.7.0] - 2026-07-01
 
 ### Changed

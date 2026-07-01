@@ -21,11 +21,13 @@
 ]
 
 #set table(inset: 7pt, stroke: none)
-// Tabellen über die volle Satzspiegelbreite; Kopf zentriert + fett, alle Inhalte
-// linksbündig (auch Zahlen/Währungen), Zeilen mit dezent wechselndem Hintergrund.
+// Tabellen über die volle Satzspiegelbreite; Kopf zentriert + fett, Inhalte
+// linksbündig (auch Zahlen/Währungen), leichter Zebra-Hintergrund, senkrechte
+// Trennlinien und eine Linie unter der Kopfzeile.
 #show table: it => {
-  // Guard gegen Rekursion: die umgebaute Tabelle hat ein fill (Funktion), die
-  // cmarker-Originaltabelle nicht -> dann unverändert durchreichen.
+  // Guard gegen Rekursion: die umgebaute Tabelle setzt `fill` (eine Funktion),
+  // die cmarker-Originaltabelle nicht -> nur die Originaltabelle umbauen.
+  // (`it.columns` kommt von Typst als Array normalisiert – daher .len().)
   if it.fill != none {
     it
   } else {
@@ -33,7 +35,15 @@
     table(
       columns: (1fr,) * n,
       align: (_, y) => if y == 0 { center } else { left },
-      fill: (_, y) => if y > 0 and calc.even(y) { luma(95%) } else { none },
+      // Leichter Zeilen-Hintergrundwechsel (Zebra); zugleich der Guard-Marker
+      // (fill ist eine Funktion != none).
+      fill: (_, y) => if y > 0 and calc.even(y) { luma(96%) } else { none },
+      // Nur senkrechte Trennlinien (innen) und eine Linie unter der Kopfzeile –
+      // keine waagerechten Zeilenlinien.
+      stroke: (x, y) => (
+        left: if x > 0 { 0.4pt + luma(80%) } else { 0pt },
+        top: if y == 1 { 0.7pt + luma(45%) } else { 0pt },
+      ),
       ..it.children,
     )
   }
@@ -41,13 +51,19 @@
 #show table.cell.where(y: 0): strong
 #show figure.where(kind: table): set figure.caption(position: top)
 #show figure.where(kind: image): set figure.caption(position: bottom)
+// Bildunterschrift kleiner als Fließtext, mit etwas mehr Abstand unter der Abbildung.
+#show figure.caption: set text(size: 10pt)
+#show figure: it => block(below: 1.8em, it)
 
 // ---------------------------------------------------------------------------
 // Laufzeit-Eingaben (via `typst compile --input ...`)
 // ---------------------------------------------------------------------------
 #let doc-filename = sys.inputs.at("filename", default: "document.md")
-// PDF/A verlangt einen Dokumenttitel -> vom Build als .md-Basisname gereicht.
+// PDF/A-Metadatentitel (Frontmatter title: falls gesetzt, sonst .md-Basisname).
 #let doc-title = sys.inputs.at("title", default: "Dokument")
+// Sichtbarer Dokumenttitel aus dem Frontmatter (title:): Titelblock oben +
+// Kopfzeile ab Seite 1. Leer = kein Titelblock (H1 ist trotzdem ein Kapitel).
+#let title-text = sys.inputs.at("doctitle", default: "")
 // Leerer Pfad = kein Logo (Kopf läuft dann ohne Logo durch).
 #let logo-path = sys.inputs.at("logo", default: "")
 // Zu rendernde Quelle (ggf. vorverarbeitete Kopie).
@@ -62,8 +78,16 @@
 // Frontmatter-gesteuert (von build.sh/convert.ps1 aus dem YAML-Block gereicht):
 #let date-iso   = sys.inputs.at("date", default: "")       // ISO-Wert oder leer
 #let toc-mode   = sys.inputs.at("toc", default: "auto")    // "true" | "false" | "auto"
-#let break-mode = sys.inputs.at("h2-break", default: "auto")
+#let break-mode = sys.inputs.at("h1-break", default: "auto")
 #let show-name  = sys.inputs.at("showname", default: "true") != "false"
+// Kopfzeile (Vorrang von oben):
+//   header: "Text"  -> fester Kopfzeilentext, ab Seite 1
+//   sonst           -> Running Header mit dem aktiven H1-Kapitel; vor dem ersten
+//                      Kapitel der Titel (title:), falls gesetzt
+#let head-override = sys.inputs.at("header", default: "")
+// Optionales Wasserzeichen (Frontmatter watermark:): diagonal, gespreizt, fett,
+// auf unterster Ebene unter allen Elementen.
+#let watermark-text = sys.inputs.at("watermark", default: "")
 
 // PDF-/PDF-A-Metadaten: Titel ist für PDF/A Pflicht.
 #set document(title: doc-title)
@@ -83,14 +107,12 @@
 // ---------------------------------------------------------------------------
 #let heading-color = luma(8%)  // Überschriften: dunkel, kontrastreich
 #let head-color = luma(20%)    // "Chrome" (Kopf/Fuß-Text): 80 % Grau
-#let rule-stroke = 0.5pt + luma(20%) // Trennlinien: 80 % Grau
-#let accent = luma(20%)        // Akzent (Balken der Überschriften): 80 % Grau
-// Hairlines unter den Überschriften: heller als der Balken, leicht aber sichtbar.
-#let hairline-stroke = 0.6pt + luma(72%)
-#let hairline-thin   = 0.4pt + luma(78%)
+#let rule-stroke = 0.5pt + luma(20%) // Trennlinien (Kopf/Fuß): 80 % Grau
+// Hairline dicht unter H2: leicht aber sichtbar.
+#let hairline-stroke = 0.6pt + luma(60%)
 
-// Alles "Source", aber serifenlos: Überschriften nutzen denselben Sans wie der
-// Fließtext (statt Source Serif 4). Code bleibt SourceCodeVF.
+// Fließtext in Sans (Source Sans 3), Überschriften in Serif (Source Serif 4),
+// Code in Source Code Pro.
 //
 // Zeichenbasierter Fallback (Typst macht das pro Glyph automatisch): zuerst
 // Source; nur Zeichen, die Source NICHT hat (Emoji, Symbole), fallen einzeln auf
@@ -98,7 +120,9 @@
 // Beide Notos sind monochrom -> PDF/A-3b-tauglich und einbettbar.
 #let fallback-fonts = ("Noto Emoji", "Noto Sans Symbols 2")
 #let body-font = ("SourceSans3VF", ..fallback-fonts)
-#let heading-font = ("SourceSans3VF", ..fallback-fonts)
+// Überschriften (inkl. „Inhalt" und Kapitel im Seitenkopf) in Serif; Fließtext
+// und TOC-Einträge bleiben Sans.
+#let heading-font = ("Source Serif 4", ..fallback-fonts)
 #let code-font = ("SourceCodeVF", ..fallback-fonts)
 
 // Seitengeometrie (zentral, von Seite UND Header-Logik genutzt)
@@ -112,27 +136,34 @@
 #let logo-height = 13mm
 
 // ---------------------------------------------------------------------------
-// Laufender Seitenkopf: aktuelles H2-Kapitel links, Logo rechts, Linie darunter
-// (H1 ist der Dokumenttitel und erscheint NICHT im Kopf.)
+// Laufender Seitenkopf: Text links, Logo rechts, Linie darunter.
+//   header: gesetzt  -> fester Text ab Seite 1 (Vorrang).
+//   sonst            -> aktives H1-Kapitel; vor dem ersten Kapitel der Titel
+//                       (title:), falls gesetzt, sonst leer.
 // ---------------------------------------------------------------------------
 #let doc-header = context {
   let this-page = here().page()
-  let all = query(heading.where(level: 2))
-  // Kapitel (H2), das OBEN auf dieser Seite aktiv ist:
-  //   1) ein H2, das direkt am Seitenanfang beginnt (Seitenumbruch davor), sonst
-  //   2) das zuletzt auf einer früheren Seite begonnene H2 (Fortsetzung), sonst
-  //   3) nichts (Titel-/TOC-Seiten vor dem ersten Kapitel).
-  let at-top = all.filter(h => (
-    h.location().page() == this-page and h.location().position().y < margin-top + 8mm
-  ))
-  let prior = all.filter(h => h.location().page() < this-page)
-  let current = if at-top.len() > 0 {
-    at-top.first().body
-  } else if prior.len() > 0 {
-    prior.last().body
-  } else { [] }
-  // Kapitel im Kopf: serifenlos, +2pt (13pt), ohne grafisches Element.
-  let chapter = text(font: heading-font, weight: 450, size: 13pt, fill: head-color)[#current]
+  let current = if head-override != "" {
+    // Fester Kopfzeilentext: auf allen Seiten (ab Seite 1).
+    head-override
+  } else {
+    // Running Header: H1, das OBEN auf dieser Seite aktiv ist:
+    //   1) ein H1 direkt am Seitenanfang, sonst
+    //   2) das zuletzt auf einer früheren Seite begonnene H1 (Fortsetzung), sonst
+    //   3) der Titel (vor dem ersten Kapitel), sonst nichts.
+    let all = query(heading.where(level: 1))
+    let at-top = all.filter(h => (
+      h.location().page() == this-page and h.location().position().y < margin-top + 8mm
+    ))
+    let prior = all.filter(h => h.location().page() < this-page)
+    if at-top.len() > 0 { at-top.first().body }
+    else if prior.len() > 0 { prior.last().body }
+    else if title-text != "" { title-text }
+    else { [] }
+  }
+  // Kopf-Text: Sans (nicht Serif wie die Überschriften), 13pt, ohne grafisches
+  // Element. Kopf und Fuß bleiben bewusst serifenlos.
+  let chapter = text(font: body-font, weight: 450, size: 13pt, fill: head-color)[#current]
   grid(
     columns: (1fr, auto),
     column-gutter: 6mm,
@@ -209,6 +240,18 @@
 // ---------------------------------------------------------------------------
 // Seitengeometrie
 // ---------------------------------------------------------------------------
+// Wasserzeichen im Seitenhintergrund (liegt unter allem): diagonal (-45°),
+// gespreizt (tracking), fett. Grau über `luma()`: Typst legt neutrale Grautöne
+// im PDF/A als Einkanal-Graustufen ab (ICCBased /N 1, NICHT RGB) -> separiert
+// auf CMYK-Maschinen sauber nach K, kein „Rich-Gray". luma(92%) ~ 8 % Schwarz.
+// Echtes CMYK (cmyk(0,0,0,10%)) kann Typst 0.15 im PDF/A-Export (noch) nicht
+// einbetten. Leer -> kein Hintergrund.
+#let watermark-bg = if watermark-text != "" {
+  align(center + horizon, rotate(-45deg,
+    text(font: body-font, weight: "bold", size: 90pt, tracking: 0.18em,
+      fill: luma(92%))[#watermark-text]))
+} else { none }
+
 #set page(
   paper: "a4",
   margin: (top: margin-top, bottom: margin-bottom, left: margin-left, right: margin-right),
@@ -216,6 +259,7 @@
   header-ascent: 6mm,
   footer: doc-footer,
   footer-descent: 6mm,
+  background: watermark-bg,
 )
 
 // ---------------------------------------------------------------------------
@@ -237,74 +281,51 @@
 #show quote.where(block: true): it => pad(left: 2em, right: 2em,
   block(spacing: 1.1em, text(style: "italic", it.body)))
 
-// H1 (Dokumenttitel) erscheint nicht im Inhaltsverzeichnis.
-#show heading.where(level: 1): set heading(outlined: false)
-
-// Schrift/Farbe für alle Überschriften (serifenlos; Gewicht je Ebene:
-// H1/„Inhalt" halbfett, H2/H3 im Book-Schnitt der variablen Schrift).
+// Schrift/Farbe für alle Überschriften (Serif; Gewicht je Ebene: H1/„Inhalt"
+// halbfett bzw. Book-Schnitt der variablen Schrift).
 #let heading-text(size, weight, body) = text(
   font: heading-font, weight: weight, fill: heading-color, size: size, body,
 )
 
-// Strukturmodus-Steuerung: Frontmatter (toc/h2-break) übersteuert den
-// Automatismus (#H2 + #H3) > 5. Drei Zustände je Schlüssel: true|false|auto.
+// Strukturmodus-Steuerung: Frontmatter (toc/h1-break) übersteuert den
+// Automatismus (#H1 + #H2) > 5. Drei Zustände je Schlüssel: true|false|auto.
 // Die Helfer enthalten nur `query` (kein `it`) -> keine Rekursion der Show-Regel.
-#let auto-structured() = query(heading).filter(h => h.level == 2 or h.level == 3).len() > 5
+#let auto-structured() = query(heading).filter(h => h.level == 1 or h.level == 2).len() > 5
 #let want-toc() = if toc-mode == "true" { true } else if toc-mode == "false" { false } else { auto-structured() }
 #let want-break() = if break-mode == "true" { true } else if break-mode == "false" { false } else { auto-structured() }
 
-// H1 = Titel (+ bedingtes TOC), H2 = Kapitel, H3-H6 abgestuft.
-// Wichtig: `it` darf NICHT in einem context realisiert werden (sonst greift
-// Typsts Rekursionsschutz nicht). Daher nur Zählung/TOC/Umbruch im context.
+// H1 = Kapitel (Linie + Umbruch), H2/H3 = Unterabschnitte, H4+ nur fett.
+// Alle Überschriften linksbündig und mit Abstand-oben > Abstand-unten (binden an
+// den folgenden Text). Der Titel ist KEIN Heading mehr (kommt aus title:).
 #show heading: it => {
-  // Überschriften nie im Blocksatz: H1 wird explizit zentriert, alle anderen
-  // bleiben linksbündig (auch über mehrere Zeilen, ohne Streckung).
   set par(justify: false)
   if it.level == 1 {
-    // Titel zentriert, halbfett, mit Luft nach unten.
-    block(width: 100%, above: 0.2em, below: 1.0em,
-      align(center, heading-text(28pt, "semibold", it.body)))
-    context {
-      if want-toc() {
-        // "Inhalt" als Text (kein Heading -> sonst Rekursion der Show-Regel),
-        // mit deutlich Abstand nach oben und unten.
-        block(above: 2.0em, below: 1.0em, heading-text(16pt, "semibold", [Inhalt]))
-        outline(title: none, depth: 3)
-        pagebreak(weak: true)
-      }
-    }
-  } else if it.level == 2 {
-    // Kapitel: Book-Schnitt, 3pt-Akzentbalken links + feine Hairline über die
-    // volle Breite darunter (leicht, aber klar abgegrenzt – kein Rahmenkasten).
+    // Kapitel: Umbruch davor (h1-break), Serif, feine Linie DICHT darunter.
     context { if want-break() { pagebreak(weak: true) } }
-    block(width: 100%, above: 1.5em, below: 0.6em, {
-      block(inset: (left: 8pt, top: 2pt, bottom: 3pt), stroke: (left: 3pt + accent),
-        heading-text(18pt, 450, it))
-      v(3pt)
+    block(width: 100%, above: 1.8em, below: 0.5em, {
+      heading-text(18pt, 450, it)
+      v(1pt)
       line(length: 100%, stroke: hairline-stroke)
     })
+  } else if it.level == 2 {
+    block(width: 100%, above: 1.4em, below: 0.4em, heading-text(15pt, 450, it))
+  } else if it.level == 3 {
+    block(width: 100%, above: 1.2em, below: 0.35em, heading-text(13pt, 450, it))
   } else {
-    // H3+: dünnerer 2pt-Balken links + kürzere, leichtere Hairline.
-    let size = (14.5pt, 13pt, 12pt, 12pt).at(it.level - 3)
-    block(width: 100%, above: 1.3em, below: 0.5em, {
-      block(inset: (left: 8pt, top: 1pt, bottom: 2pt), stroke: (left: 2pt + accent),
-        heading-text(size, 450, it))
-      v(2pt)
-      line(length: 45%, stroke: hairline-thin)
-    })
+    // H4+: nur fett, linksbündig.
+    block(width: 100%, above: 1.0em, below: 0.3em, heading-text(12pt, "bold", it))
   }
 }
 
-// Inhaltsverzeichnis lichter: mehr Luft zwischen den Einträgen und Inhalt
-// höchstens in "Book" (wght 450, nicht fett) – das Default-Bold der obersten
-// Ebene wird neutralisiert.
-#let toc-entry(spacing, body) = block(above: spacing, below: 0pt, {
+// Inhaltsverzeichnis: nur H1 + H2, gleiche Zeilenabstände, Einträge in Sans und
+// knapp über Fließtextgröße (Book, wght 450 – Default-Bold der H1 neutralisiert).
+#let toc-entry(body) = block(above: 0.55em, below: 0pt, {
   show strong: s => s.body
-  set text(weight: 450, size: 13pt) // TOC-Schriftgrad
+  set text(font: body-font, weight: 450, size: 12pt)
   body
 })
-#show outline.entry.where(level: 2): it => toc-entry(1.0em, it)
-#show outline.entry.where(level: 3): it => toc-entry(0.5em, it)
+#show outline.entry.where(level: 1): it => toc-entry(it)
+#show outline.entry.where(level: 2): it => toc-entry(it)
 
 #show raw: set text(font: code-font, size: 10pt)
 #show raw.where(block: true): it => block(
@@ -364,6 +385,20 @@
 // löst eine Deprecation-Warnung aus. Hier explizit zu `terms.item` bauen
 // (stiller Build; das Aussehen macht die #show terms.item-Regel oben).
 #let rfd-terms(..pairs) = terms(..pairs.pos().map(p => terms.item(p.at(0), p.at(1))))
+
+// Titelblock (aus title:) + optionales Inhaltsverzeichnis, VOR dem Markdown-Body.
+// Der Titel ist KEIN Heading (steht daher nicht im TOC); H1 ist ein Kapitel.
+#if title-text != "" {
+  block(width: 100%, above: 0.2em, below: 1.0em,
+    align(center, heading-text(21pt, "semibold", title-text)))
+}
+#context {
+  if want-toc() {
+    block(above: 2.0em, below: 1.0em, heading-text(16pt, "semibold", [Inhalt]))
+    outline(title: none, depth: 2)
+    pagebreak(weak: true)
+  }
+}
 
 #cmarker.render(
   read(render-path),

@@ -48,8 +48,9 @@ tighten task lists, deflists → `<dl>`) into a temp file, then compile `templat
 # (build.sh does this; for a manual PNG render, feed a preprocessed copy as source=)
 typst compile template.typ --root / --font-path fonts --ignore-system-fonts \
   --input source=RENDER.md --input attach=SRC.md --input docdir=SRC_DIR \
-  --input filename=OUT.pdf --input title=SRC --input logo=logo.svg \
-  --input date= --input toc=auto --input "h2-break=auto" --input showname=true --input lang=de \
+  --input filename=OUT.pdf --input title=SRC --input doctitle= --input logo=logo.svg \
+  --input date= --input toc=auto --input "h1-break=auto" --input showname=true --input lang=de \
+  --input header= --input watermark= \
   --format png --ppi 120 preview-{p}.png
 # then open / Read the preview-*.png, then clean up scratch files
 # (`preview-*.png` is the git-ignored scratch name — other PNG names show up in `git status`)
@@ -105,13 +106,12 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 - **`template.typ`** owns the entire layout (DIN A4, margins, header/footer, fonts, heading
   rules, TOC, footnotes) **and** renders the body. It is a **plain Typst file** now (not a
   Pandoc template): after all `#set`/`#show` rules it calls `#cmarker.render(read(source), …)`.
-  Runtime values (`filename`, `title`, `logo`, `source`, `attach`, `docdir`, plus the
-  frontmatter-derived `date`, `toc`, `h2-break`, `showname`, `lang`) are passed as
-  `typst --input` and read via `sys.inputs`.
-  - The **cmarker call** uses `h1-level: 1` (H1 stays a level-1 heading → the existing heading
-    show rule styles it as the centered title) and `set-document-title: false` (we set the PDF/A
-    title ourselves from the `.md` basename via `--input title`, which is always present — no H1
-    dependency, no "set rules inside container" error). `math: mitex`, `task-list-marker:` a
+  Runtime values (`filename`, `title` [metadata], `doctitle` [visible title], `logo`, `source`,
+  `attach`, `docdir`, plus the frontmatter-derived `date`, `toc`, `h1-break`, `showname`, `lang`,
+  `header`, `watermark`) are passed as `typst --input` and read via `sys.inputs`.
+  - The **cmarker call** uses `h1-level: 1` (markdown `#` → Typst level-1 heading, styled as a
+    *chapter*) and `set-document-title: false` (the PDF/A metadata title comes from `--input title`
+    = the frontmatter `title:` or the `.md` basename). `math: mitex`, `task-list-marker:` a
     checkbox glyph (☐/☒ via Noto), and `scope:` overrides for `image` (`safe-image`), `divider` (the centered
     `horizontalrule`), and `terms` (`rfd-terms`, builds `terms.item` explicitly to silence a
     cmarker deprecation warning).
@@ -122,11 +122,14 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     resolved against `docdir` (the document's directory) so images next to documents anywhere
     on disk are found.
 - **Optional YAML frontmatter** (parsed by `build.sh`/`convert.ps1`, then passed via `--input`):
+  `title:` → centered title block + running-header title (from page 1) + PDF/A metadata title;
   `date:` (ISO) → ISO-prefixes the output file (`2026-06-19_name.pdf`) **and** shows a
-  `lang`-localized date in the footer right; `toc:`/`h2-break:` true|false override the `> 5`
+  `lang`-localized date in the footer right; `toc:`/`h1-break:` true|false override the `> 5`
   automatism; `print_filename:` true|false toggles the footer-left name (→ `showname` input);
-  `lang:` sets the document language / date format (default `de`). The footer is 2-col without a
-  date (name | page) and 3-col with one (name | page centered | date). The three bool keys are
+  `lang:` sets the document language / date format (default `de`); `header:` → fixed header text
+  (from page 1, overrides the running header); `watermark:` → diagonal page-background watermark.
+  The footer is 2-col without a date (name | page) and 3-col with one (name | page centered | date).
+  The bool keys are
   parsed **YAML-1.1-tolerant** (case-insensitive `true/false/yes/no/on/off`, quotes, inline
   comments via `yaml_bool`/`ConvertTo-YamlBool`); an unrecognized value warns and keeps the
   default. Typst does not localize month names (`[month repr:long]` is English only) → a manual
@@ -200,28 +203,30 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 
 ### Heading / document model (encoded in template.typ)
 
-- **H1 = document title** (centered, excluded from header and TOC). H1 is **not enforced** and
-  no longer required — it is optional and not limited to one. The PDF/A metadata title is the
-  `.md` basename (always present), independent of H1.
-- **H2 = chapter** — the active H2 is threaded into the running header (left, plain text, no
-  graphic element).
-- **H3+** = subsections.
-- **Visual language** (all sans-serif — `Source Sans 3`, *not* Source Serif): H1 and the
-  "Inhalt" label are semibold; H2/H3+ use the Book weight (`wght` 450). Headings are
-  left-aligned (ragged, `justify: false`); only H1 is centered. **H2 gets a 3 pt left accent bar
-  plus a fine full-width hairline underneath; H3+ a thinner 2 pt bar plus a shorter/lighter
-  hairline** (bars `luma(20%)`, hairlines lighter `luma(72%)`/`luma(78%)`). Fonts come from
-  `body-font`/`heading-font`/`code-font` (Source + Noto fallbacks). Unordered lists use one small
-  drawn square marker at **all** levels (`#set list(marker: …)`); ordered lists keep numbers;
-  task items use a checkbox glyph (☐ open, ☒ done, via Noto fallback). Blockquotes are indented
-  both sides + italic (`#show quote.where(block: true)`).
-- **Conditional TOC**: by default, when `#H2 + #H3 > 5` the document switches to "structured"
-  mode — a table of contents over H2/H3 is rendered after the title and each chapter (H2)
-  starts on a new page. At or below the threshold it stays compact (no TOC, chapters inline).
-  The `> 5` check lives in **one** helper (`auto-structured()`); `want-toc()` and `want-break()`
-  wrap it and let the `toc`/`h2-break` frontmatter override each independently
-  (`true`/`false`/`auto`). Edit the helpers, not scattered `> 5` literals. (These count real
-  Typst `heading` elements — cmarker emits genuine headings, so `query` works unchanged.)
+- **Title** comes from the **`title:` frontmatter**, NOT from `# H1`: a centered title block
+  emitted before the body, plus the title in the running header from page 1, plus the PDF/A
+  metadata title. Optional — without it there's no title block and the metadata title is the `.md`
+  basename.
+- **H1 = chapter** — the top content heading: serif, a fine full-width hairline right below it, a
+  page break before it (`h1-break`), and the active H1 threaded into the running header.
+- **H2 / H3** = subsections (serif, no line). **H4+** = bold, left-aligned only.
+- **Visual language:** all headings **serif** (`Source Serif 4`), `luma(8%)`, left-aligned
+  (`justify: false`), **no accent bars**; only **H1** carries a hairline (`luma(60%)`) right below.
+  Every heading uses space-above > space-below (binds to following text). Header **and** footer
+  text are Sans (`Source Sans 3`). Fonts come from `body-font`/`heading-font`/`code-font`. Unordered
+  lists use one small drawn square marker at **all** levels; ordered lists keep numbers; task items
+  use a checkbox glyph (☐ open, ☒ done, via Noto). Blockquotes are indented both sides + italic.
+- **Running header** (`doc-header`): `header:` fixed text wins; else the active **H1** chapter;
+  before the first chapter the `title:` (if set), else empty.
+- **Conditional TOC / structured mode**: when `#H1 + #H2 > 5` (`auto-structured()`) the doc renders
+  a TOC (**H1 + H2 only**, `outline(depth: 2)`) after the title and breaks each **H1** to a new
+  page. `toc`/`h1-break` override each independently via `want-toc()`/`want-break()`. The title
+  block + TOC are a **preamble emitted BEFORE `cmarker.render`** (no longer inside the heading show
+  rule). Edit the helpers, not scattered `> 5` literals.
+- **Watermark** (`watermark:` frontmatter): a diagonal (-45°), letter-spaced, bold, light-gray page
+  **background** (under all content) via `#set page(background: …)`. Gray via `luma(92%)` =
+  single-channel grayscale (ICCBased /N 1) → separates to clean **K** in print; **Typst 0.15 can't
+  emit CMYK in PDF/A** (`cmyk()` hard-errors in that export mode), so luma is the print-clean route.
 
 ### Typst show-rule traps (cost real debugging here)
 

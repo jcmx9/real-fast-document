@@ -137,31 +137,40 @@ Ein YAML-Block am Dateianfang steuert einzelne Dokumente. Alle Schlüssel sind o
 
 ```yaml
 ---
+title: "Mein Dokument"  # Titelblock oben + Titel in der Kopfzeile ab Seite 1
 date: 2026-06-19        # ISO-Datum: Präfix am Dateinamen + Datum unten rechts (nach Sprache)
 toc: true               # Inhaltsverzeichnis erzwingen (true) / unterdrücken (false)
-h2-break: false         # Kapitel-Seitenumbruch erzwingen (true) / unterdrücken (false)
+h1-break: false         # Kapitel-Seitenumbruch (vor jedem # H1) erzwingen / unterdrücken
 print_filename: false   # Dateiname unten links ausblenden (Default: true)
 lang: de                # Dokumentsprache (Datumsformat); Default de
+header: "Vertraulich"   # fester Kopfzeilentext ab Seite 1 (übersteuert den Running Header)
+watermark: "ENTWURF"    # diagonales Wasserzeichen unter allem
 ---
 ```
 
 | Schlüssel | Werte | Wirkung |
 |-----------|-------|---------|
+| `title` | Text | **Dokumenttitel**: zentrierter Titelblock oben, zusätzlich in der Kopfzeile ab Seite 1, und PDF/A-Metadatentitel. Ohne `title` bleibt der Metadatentitel der Dateiname und es gibt keinen Titelblock. |
 | `date` | ISO-Datum | Gesetzt → Ausgabedatei erhält den ISO-Präfix `JJJJ-MM-TT_name.pdf` **und** das Datum erscheint unten rechts, lokalisiert nach `lang` (de „19. Juni 2026", en „June 19, 2026"). Die Fußzeile wird dann 3-spaltig (Name · Seite mittig · Datum). |
 | `toc` | `true` / `false` | Inhaltsverzeichnis erzwingen / unterdrücken. Ohne Angabe greift der Struktur-Automatismus (siehe unten). |
-| `h2-break` | `true` / `false` | Kapitel-Seitenumbruch erzwingen / unterdrücken. Ohne Angabe greift derselbe Automatismus, unabhängig von `toc`. |
+| `h1-break` | `true` / `false` | Kapitel-Seitenumbruch (vor jedem `# H1`) erzwingen / unterdrücken. Ohne Angabe greift derselbe Automatismus, unabhängig von `toc`. |
 | `print_filename` | `true` / `false` | Dateiname unten links anzeigen. Default `true`. |
 | `lang` | Sprachcode | Dokumentsprache und Datumsformat (`de`, `en`, …). Default `de`. |
+| `header` | Text | Fester Kopfzeilentext ab **Seite 1**; übersteuert den Running Header (und den Titel im Kopf). |
+| `watermark` | Text | Diagonales, gespreiztes Wasserzeichen (fett, hellgrau) auf jeder Seite, **unter** allen anderen Elementen. |
 
-**Struktur-Automatismus:** Ohne explizite Angabe entscheidet die Heuristik `#H2 + #H3 > 5`.
+**Kopfzeile — Vorrang von oben:** (1) `header:` fester Text ab Seite 1; sonst (2) das jeweils
+aktive `# H1`-Kapitel als Running Header; davor, vor dem ersten Kapitel, (3) der **Titel**
+(`title:`), falls gesetzt. Text stets in Sans.
+
+**Struktur-Automatismus:** Ohne explizite Angabe entscheidet die Heuristik `#H1 + #H2 > 5`.
 Bei **mehr als fünf** Kapitel-/Unterüberschriften schaltet das Dokument in den *strukturierten
-Modus*: ein Inhaltsverzeichnis erscheint nach dem Titel **und** jedes Kapitel (`## H2`) beginnt
-auf einer neuen Seite. Bei **fünf oder weniger** bleibt es *kompakt* — kein Verzeichnis, die
-Kapitel laufen im Fluss. `toc` und `h2-break` schalten diese beiden Effekte **einzeln und
-unabhängig** (`true` erzwingt, `false` unterdrückt), sodass z. B. ein Inhaltsverzeichnis ohne
-Kapitel-Seitenumbruch möglich ist.
+Modus*: ein Inhaltsverzeichnis (nur H1 + H2) erscheint nach dem Titel **und** jedes Kapitel
+(`# H1`) beginnt auf einer neuen Seite. Bei **fünf oder weniger** bleibt es *kompakt* — kein
+Verzeichnis, die Kapitel laufen im Fluss. `toc` und `h1-break` schalten diese beiden Effekte
+**einzeln und unabhängig** (`true` erzwingt, `false` unterdrückt).
 
-Die Boolean-Schlüssel (`toc`, `h2-break`, `print_filename`) akzeptieren alle
+Die Boolean-Schlüssel (`toc`, `h1-break`, `print_filename`) akzeptieren alle
 YAML-1.1-Schreibweisen, unabhängig von Groß-/Kleinschreibung: `true`/`false`, `yes`/`no`,
 `on`/`off` (sowie `"true"` in Anführungszeichen). Ein nicht erkannter Wert wird mit einer
 Warnung ignoriert und der Default greift.
@@ -179,18 +188,20 @@ Lokale Bilder werden eingebettet; relative Pfade sind **relativ zum Dokument**. 
 bewusst keinen Netzzugriff — und entfallen daher automatisch; der Build meldet, wie viele Bilder
 übersprungen wurden.
 
-Ein `# H1` wird als zentrierter **Dokumenttitel** gesetzt (nicht im Kopf/TOC). Er ist optional
-und nicht auf eines beschränkt; der PDF/A-Metadatentitel ist der Dateiname. Kapitel beginnen bei
-`## H2` und laufen links im Seitenkopf mit; `### H3` und tiefer sind Unterabschnitte.
+Der **Dokumenttitel** kommt aus dem Frontmatter (`title:`), nicht aus dem Markdown. `# H1` ist das
+oberste **Kapitel** (feine Linie, Seitenumbruch bei `h1-break`, läuft im Seitenkopf mit); `## H2`
+und `### H3` sind Unterabschnitte, ab `#### H4` nur noch fett und linksbündig.
 
 ```markdown
-# Dokumenttitel
+---
+title: "Dokumenttitel"
+---
 
-## Erstes Kapitel
+# Erstes Kapitel
 
 Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 
-### Unterabschnitt
+## Unterabschnitt
 
 - Punkt eins
 - Punkt zwei
@@ -205,15 +216,19 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Format | DIN A4 Hochformat |
 | Ränder | links 30 mm · oben/unten/rechts je 20 mm |
 | PDF-Standard | PDF/A-3b, Schriften eingebettet, Quelle als Anhang |
-| **H1** | **Dokumenttitel** — zentriert, eröffnet das Dokument (optional, nicht im Kopf/TOC) |
-| **H2** | **Kapitel** — aktuelles Kapitel läuft dynamisch im Kopf links mit |
-| **TOC** | bedingt: ab `#H2 + #H3 > 5` → Inhaltsverzeichnis + Kapitel je neue Seite; per Frontmatter `toc`/`h2-break` übersteuerbar |
+| **Titel** | aus `title:` — zentriert oben (Serif) + in der Kopfzeile ab Seite 1; kein Heading, nicht im TOC |
+| **H1** | **Kapitel** (Serif, feine Linie dicht darunter); beginnt bei `h1-break` auf neuer Seite und läuft im Kopf mit |
+| **H2 / H3** | Unterabschnitte (Serif, ohne Linie); ab **H4** nur noch fett + linksbündig |
+| Kopf | `header:` fester Text · sonst aktives H1-Kapitel · vor dem 1. Kapitel der Titel. Text in **Sans** |
+| **TOC** | bedingt: ab `#H1 + #H2 > 5` → Inhaltsverzeichnis (nur H1 + H2) + Kapitel je neue Seite; per `toc`/`h1-break` übersteuerbar |
 | Kopf rechts | Logo (`logo.svg` → `.png` → `.jpg`), Höhe 13 mm — **optional** |
-| Fuß | ohne Datum: Name links · Seite rechts. Mit Datum: Name links · Seite mittig · Datum rechts |
-| Überschriften | Source Sans 3 (serifenlos), `luma(8%)`; H2 mit 3 pt-Akzentbalken links + feiner Hairline über die Breite, H3+ mit dünnerem 2 pt-Balken + kürzerer Hairline (`luma(20%)`, 80 % Grau) |
+| Fuß | **Sans**; ohne Datum: Name links · Seite rechts. Mit Datum: Name links · Seite mittig · Datum rechts |
+| Überschriften | **Source Serif 4**, `luma(8%)`, linksbündig, ohne Balken; **nur H1** trägt eine feine Hairline dicht darunter, alle anderen grenzen sich über Größe/Abstand ab |
+| Wasserzeichen | optional (`watermark:`): diagonal, gespreizt, fett, hellgrau (Einkanal-Grau → sauberes K im Druck), **unter** allem |
 | Fließtext | Source Sans 3, 12 pt, Blocksatz mit Silbentrennung, `luma(13%)` |
+| Tabellen | volle Breite; Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
-| Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): Kästchen (leer/gefüllt) |
+| Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): Kästchen ☐ offen / ☒ erledigt |
 | Bilder | lokal: nummerierte Abbildung mit Untertitel; remote (`http(s)`, `//host`, `data:`) offline automatisch entfernt |
 | Zitate | beidseitig eingerückt (schmaler als Satzspiegel) + kursiv |
 | Emoji/Symbole | zeichenbasierter Fallback: Noto Emoji + Noto Sans Symbols 2 (monochrom, nur für Zeichen ohne Source-Glyph) |
@@ -223,12 +238,14 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Element | Schrift | Grad |
 |---------|---------|------|
 | Fließtext | Source Sans 3 | 12 pt |
-| Titel (H1) | Source Sans 3 halbfett | 28 pt, zentriert |
-| Kapitel (H2) | Source Sans 3 Book (`wght` 450) | 18 pt, 3 pt-Balken + Hairline |
-| H3 / H4 / H5 / H6 | Source Sans 3 Book (`wght` 450) | 14,5 / 13 / 12 / 12 pt, 2 pt-Balken + Hairline |
-| TOC-Titel „Inhalt" | Source Sans 3 halbfett | 16 pt |
-| TOC-Einträge | Source Sans 3 | 13 pt, Book (`wght` 450) |
-| Kopf (Kapitel) | Source Sans 3 Book (`wght` 450) | 13 pt, reiner Text (kein Balken) |
+| Titel (`title:`) | Source Serif 4 halbfett | 21 pt, zentriert |
+| Kapitel (H1) | Source Serif 4 Book (`wght` 450) | 18 pt, feine Linie darunter |
+| H2 / H3 | Source Serif 4 Book (`wght` 450) | 15 / 13 pt, ohne Linie |
+| H4+ | Source Serif 4 fett | 12 pt, linksbündig |
+| TOC-Titel „Inhalt" | Source Serif 4 halbfett | 16 pt |
+| TOC-Einträge (H1 + H2) | Source Sans 3 (`wght` 450) | 12 pt, gleiche Zeilenabstände |
+| Kopf (Text) | Source Sans 3 (`wght` 450) | 13 pt |
+| Bildunterschrift | Source Sans 3 | 10 pt |
 | Code | Source Code Pro | 10 pt |
 | Fußzeile | Source Sans 3 | 9 pt |
 
