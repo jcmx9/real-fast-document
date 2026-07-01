@@ -50,8 +50,8 @@ cleanup() { rm -f "${render_tmp}"; }
 trap cleanup EXIT
 
 # ---------------------------------------------------------------------------
-# Optionalen YAML-Frontmatter (führender ---...---) parsen: date/toc/h2-break/
-# print_filename/lang, CRLF-tolerant. Die Bool-Schlüssel werden YAML-1.1-konform
+# Optionalen YAML-Frontmatter (führender ---...---) parsen: title/date/toc/
+# h1-break/print_filename/lang/header/watermark, CRLF-tolerant. Bool-Schlüssel YAML-1.1
 # gelesen (siehe yaml_bool); ein erkannter Schlüssel mit ungültigem Wert warnt
 # und behält den Default.
 # ---------------------------------------------------------------------------
@@ -81,6 +81,9 @@ fm_toc="auto"
 fm_break="auto"
 fm_showname="true"
 fm_lang="de"
+fm_header=""
+fm_watermark=""
+fm_title=""
 if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
   block="$(awk 'NR==1 { next } /^---[[:space:]]*$/ { exit } { print }' "${src}" | tr -d '\r')"
   while IFS= read -r line; do
@@ -92,15 +95,24 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
         v="$(yaml_str "${line#lang:}")"
         if [[ -n "${v}" ]]; then fm_lang="${v}"; fi
         ;;
+      header:*)
+        fm_header="$(yaml_str "${line#header:}")"
+        ;;
+      watermark:*)
+        fm_watermark="$(yaml_str "${line#watermark:}")"
+        ;;
       toc:*)
         b="$(yaml_bool "${line#toc:}")"
         if [[ -n "${b}" ]]; then fm_toc="${b}"
         else echo "Warnung: ungültiger Wert für 'toc' im Frontmatter: '${line#toc:}' – ignoriert (true/false)." >&2; fi
         ;;
-      h2-break:*)
-        b="$(yaml_bool "${line#h2-break:}")"
+      h1-break:*)
+        b="$(yaml_bool "${line#h1-break:}")"
         if [[ -n "${b}" ]]; then fm_break="${b}"
-        else echo "Warnung: ungültiger Wert für 'h2-break' im Frontmatter: '${line#h2-break:}' – ignoriert (true/false)." >&2; fi
+        else echo "Warnung: ungültiger Wert für 'h1-break' im Frontmatter: '${line#h1-break:}' – ignoriert (true/false)." >&2; fi
+        ;;
+      title:*)
+        fm_title="$(yaml_str "${line#title:}")"
         ;;
       print_filename:*)
         b="$(yaml_bool "${line#print_filename:}")"
@@ -197,19 +209,24 @@ font_arg=()
 # Laufzeit-Eingaben fürs Template. --root / : Typst behandelt absolute Pfade
 # projektwurzel-relativ und sperrt Lesezugriffe außerhalb; für die eingebettete
 # Quelle (die überall liegen kann) muss die Wurzel den absoluten Pfad umfassen.
-# title = .md-Basisname (PDF/A verlangt einen Dokumenttitel).
+# PDF/A-Metadatentitel: Frontmatter title: falls gesetzt, sonst .md-Basisname.
+# doctitle = der sichtbare Titel (nur aus title:, sonst leer -> kein Titelblock).
+title_meta="${fm_title:-${base}}"
 typst_inputs=(
   --input "filename=$(basename "${out}")"
-  --input "title=${base}"
+  --input "title=${title_meta}"
+  --input "doctitle=${fm_title}"
   --input "logo=${logo}"
   --input "source=${render_tmp}"
   --input "attach=${src_abs}"
   --input "docdir=${src_dir}"
   --input "date=${fm_date}"
   --input "toc=${fm_toc}"
-  --input "h2-break=${fm_break}"
+  --input "h1-break=${fm_break}"
   --input "showname=${fm_showname}"
   --input "lang=${fm_lang}"
+  --input "header=${fm_header}"
+  --input "watermark=${fm_watermark}"
 )
 
 # Markdown -> PDF/A-3b (Template ruft cmarker auf der vorverarbeiteten Quelle).
