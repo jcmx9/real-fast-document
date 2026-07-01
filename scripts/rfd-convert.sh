@@ -9,7 +9,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 root="$(dirname "${here}")"
 
 # GUI-Start (Finder Quick Action / .desktop) erbt den Shell-PATH NICHT. install.sh
-# hat die echten typst/pandoc-Verzeichnisse hier hinterlegt -> in den PATH holen.
+# hat das echte typst-Verzeichnis hier hinterlegt -> in den PATH holen.
 if [[ -f "${root}/bin/rfd-tools.env" ]]; then
   # shellcheck disable=SC1091
   source "${root}/bin/rfd-tools.env"

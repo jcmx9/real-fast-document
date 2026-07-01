@@ -4,9 +4,11 @@
 #   scripts/install.sh             # Werkzeuge + Fonts + Rechtsklick-Integration
 #   scripts/install.sh --uninstall # nur die Rechtsklick-Integration entfernen
 #
-# Werkzeuge: pandoc und typst (>= 0.15) über den System-Paketmanager; ist typst
-# dort nicht (oder zu alt) verfügbar, wird das offizielle typst-Binary nach
-# ./bin geladen und von build.sh via TYPST genutzt. Fonts: scripts/fetch-fonts.sh.
+# Werkzeug: typst (>= 0.15) über den System-Paketmanager; ist typst dort nicht
+# (oder zu alt) verfügbar, wird das offizielle typst-Binary nach ./bin geladen
+# und von build.sh via TYPST genutzt. Pandoc wird NICHT mehr benötigt (die
+# Markdown-Konvertierung macht das Typst-Package cmarker). Fonts:
+# scripts/fetch-fonts.sh, Typst-Packages: scripts/fetch-typst-packages.sh.
 # Integration: macOS Finder Quick Action, Linux .desktop + MIME-Verknüpfung.
 set -euo pipefail
 
@@ -57,17 +59,6 @@ pm_install() {
 }
 
 # --- Werkzeuge --------------------------------------------------------------
-ensure_pandoc() {
-  if command -v pandoc >/dev/null 2>&1; then ok "pandoc vorhanden"; return; fi
-  log "Installiere pandoc"
-  if ! pm_install pandoc; then
-    err "Kein unterstützter Paketmanager für pandoc gefunden."
-    err "Bitte pandoc manuell installieren: https://pandoc.org/installing.html"
-    exit 1
-  fi
-  ok "pandoc installiert"
-}
-
 typst_ge_015() {
   command -v "${1}" >/dev/null 2>&1 || return 1
   local v maj min
@@ -99,20 +90,18 @@ install_typst_binary() {
   ok "typst-Binary -> ${root_dir}/bin/typst"
 }
 
-# Werkzeugpfade merken: GUI-gestartete Skripte (Finder Quick Action, .desktop)
-# erben den Shell-PATH NICHT. Daher beim Einrichten (PATH korrekt) die echten
-# Verzeichnisse von typst/pandoc in bin/rfd-tools.env festhalten; der Dispatcher
-# und der CLI-Wrapper ergänzen damit ihren PATH.
+# Werkzeugpfad merken: GUI-gestartete Skripte (Finder Quick Action, .desktop)
+# erben den Shell-PATH NICHT. Daher beim Einrichten (PATH korrekt) das echte
+# Verzeichnis von typst in bin/rfd-tools.env festhalten; der Dispatcher und der
+# CLI-Wrapper ergänzen damit ihren PATH.
 write_tools_env() {
-  local tp pp tdir pdir
+  local tp tdir
   tp="$(command -v typst 2>/dev/null || true)"
   if [[ -x "${root_dir}/bin/typst" ]]; then tp="${root_dir}/bin/typst"; fi
-  pp="$(command -v pandoc 2>/dev/null || true)"
   tdir="$(cd "$(dirname "${tp:-/usr/bin/typst}")" 2>/dev/null && pwd || echo /usr/bin)"
-  pdir="$(cd "$(dirname "${pp:-/usr/bin/pandoc}")" 2>/dev/null && pwd || echo /usr/bin)"
   mkdir -p "${root_dir}/bin"
-  printf 'RFD_TOOL_PATH="%s"\n' "${tdir}:${pdir}" > "${root_dir}/bin/rfd-tools.env"
-  ok "Werkzeugpfade gemerkt -> bin/rfd-tools.env (${tdir}:${pdir})"
+  printf 'RFD_TOOL_PATH="%s"\n' "${tdir}" > "${root_dir}/bin/rfd-tools.env"
+  ok "Werkzeugpfad gemerkt -> bin/rfd-tools.env (${tdir})"
 }
 
 ensure_typst() {
@@ -330,10 +319,11 @@ case "${1:-install}" in
     rm -f "${root_dir}/bin/rfd-tools.env"
     ;;
   install)
-    ensure_pandoc
     ensure_typst
     log "Lade Fonts"
     bash scripts/fetch-fonts.sh
+    log "Lade Typst-Packages (cmarker + mitex)"
+    bash scripts/fetch-typst-packages.sh
     write_tools_env
     install_integration
     install_cli

@@ -2,7 +2,7 @@
 date: 2026-06-20
 toc: true
 h2-break: true
-filename: true
+print_filename: true
 ---
 
 # Markdown zu PDF/A — Leitfaden

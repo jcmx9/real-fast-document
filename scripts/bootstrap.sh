@@ -4,9 +4,9 @@
 #   curl -fsSL https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.sh | bash
 #
 # Klont das Repo nach ~/.local/share/real-fast-document (oder aktualisiert es per
-# git pull) und ruft scripts/install.sh auf: Werkzeuge (pandoc, typst) über den
-# Paketmanager, Fonts ins Projekt, Rechtsklick-Integration. Einzige Vorbedingung
-# ist ein installiertes git. Zielordner überschreibbar via RFD_HOME.
+# git pull) und ruft scripts/install.sh auf: Werkzeug (typst) über den
+# Paketmanager, Fonts + Typst-Packages ins Projekt, Rechtsklick-Integration.
+# Einzige Vorbedingung ist ein installiertes git. Zielordner via RFD_HOME.
 set -euo pipefail
 
 repo_url="https://github.com/jcmx9/real-fast-document.git"

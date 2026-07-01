@@ -3,18 +3,23 @@
 .SYNOPSIS
   Windows-Einrichtung von real-fast-document.
 .DESCRIPTION
-  Zwei Aufgaben:
-    * Fonts   - laedt die Variable Source-Fonts ins Projekt (./fonts).
-    * SendTo  - legt eine "Senden an"-Verknuepfung an, die eine .md per
-                convert.ps1 nach PDF/A wandelt und im Quellverzeichnis ablegt.
+  Aufgaben:
+    * Tools    - prueft typst (>= 0.15) und installiert es bei Bedarf via winget.
+                 Pandoc wird NICHT mehr benoetigt (cmarker uebernimmt das in Typst).
+    * Fonts    - laedt die Variable Source-Fonts ins Projekt (./fonts).
+    * Packages - laedt die Typst-Packages cmarker + mitex nach ./vendor (offline).
+    * SendTo   - legt eine "Senden an"-Verknuepfung an, die eine .md per
+                 convert.ps1 nach PDF/A wandelt und im Quellverzeichnis ablegt.
 
-  Die gesamte Logik (template.typ, filters/, fonts/, convert.ps1) bleibt im
+  Die gesamte Logik (template.typ, fonts/, vendor/, convert.ps1) bleibt im
   Installpfad. Im System landet ausschliesslich die Verknuepfung, die auf
   convert.ps1 im Installpfad zeigt.
 .PARAMETER Tools
-  Nur pandoc/typst pruefen und bei Bedarf via winget installieren.
+  Nur typst pruefen und bei Bedarf via winget installieren.
 .PARAMETER Fonts
   Nur die Fonts ins Projekt laden.
+.PARAMETER Packages
+  Nur die Typst-Packages (cmarker + mitex) nach ./vendor laden.
 .PARAMETER SendTo
   Nur die "Senden an"-Verknuepfung anlegen.
 .PARAMETER Cli
@@ -22,9 +27,10 @@
 .PARAMETER Uninstall
   Die "Senden an"-Verknuepfung und den Terminal-Befehl wieder entfernen.
 .EXAMPLE
-  ./scripts/install.ps1                # Tools + Fonts + SendTo + CLI
-  ./scripts/install.ps1 -Tools         # nur pandoc/typst via winget
+  ./scripts/install.ps1                # Tools + Fonts + Packages + SendTo + CLI
+  ./scripts/install.ps1 -Tools         # nur typst via winget
   ./scripts/install.ps1 -Fonts         # nur Fonts laden
+  ./scripts/install.ps1 -Packages      # nur Typst-Packages laden
   ./scripts/install.ps1 -SendTo        # nur Verknuepfung anlegen
   ./scripts/install.ps1 -Cli           # nur Terminal-Befehl rf-document
   ./scripts/install.ps1 -Uninstall     # Verknuepfung + Terminal-Befehl entfernen
@@ -33,6 +39,7 @@
 param(
   [switch]$Tools,
   [switch]$Fonts,
+  [switch]$Packages,
   [switch]$SendTo,
   [switch]$Cli,
   [switch]$Uninstall
@@ -43,8 +50,15 @@ $ErrorActionPreference = 'Stop'
 
 $ProjectRoot   = Split-Path -Parent $PSScriptRoot
 $FontDir       = Join-Path $ProjectRoot 'fonts'
+$VendorDir     = Join-Path $ProjectRoot 'vendor'
 $ConvertScript = Join-Path $PSScriptRoot 'convert.ps1'
 $ShortcutName  = 'Nach PDF-A (real-fast-document).lnk'
+
+# Typst-Packages (mit scripts/fetch-typst-packages.sh konsistent halten).
+$TypstPackages = @(
+  @{ Name = 'cmarker'; Version = '0.1.9' }
+  @{ Name = 'mitex';   Version = '0.2.7' }
+)
 
 # Variable OTF (CFF2) der Source-Familien (Source Serif 4 / Sans 3 / Code Pro,
 # je Roman/Upright + Italic) aus den Adobe-Upstream-Releases. Google Fonts
@@ -102,21 +116,42 @@ function Install-Fonts {
   Write-Host "OK  Fonts -> $FontDir" -ForegroundColor Green
 }
 
+function Install-TypstPackages {
+  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+  New-Item -ItemType Directory -Force -Path $VendorDir | Out-Null
+
+  $tmp = Join-Path ([IO.Path]::GetTempPath()) ('rfd-pkgs-' + [Guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+  try {
+    foreach ($p in $TypstPackages) {
+      $url = "https://packages.typst.org/preview/$($p.Name)-$($p.Version).tar.gz"
+      $tgz = Join-Path $tmp "$($p.Name).tar.gz"
+      Write-Host "-> $($p.Name) $($p.Version)"
+      Invoke-WebRequest -Uri $url -OutFile $tgz -UseBasicParsing
+      $dest = Join-Path $VendorDir $p.Name
+      if (Test-Path -LiteralPath $dest) { Remove-Item -LiteralPath $dest -Recurse -Force }
+      New-Item -ItemType Directory -Force -Path $dest | Out-Null
+      # tar.exe ist seit Windows 10 1803 vorhanden (bsdtar) und entpackt .tar.gz.
+      & tar -xzf $tgz -C $dest
+      if ($LASTEXITCODE) { throw "tar-Fehler beim Entpacken von $($p.Name)" }
+    }
+  } finally {
+    Remove-Item -LiteralPath $tmp -Recurse -Force -ErrorAction SilentlyContinue
+  }
+  Write-Host "OK  Typst-Packages -> $VendorDir" -ForegroundColor Green
+}
+
 function Install-Tools {
   if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-    Write-Host "winget nicht gefunden - pandoc/typst bitte manuell installieren:" -ForegroundColor Yellow
-    Write-Host "  https://pandoc.org/installing.html  /  https://github.com/typst/typst/releases"
+    Write-Host "winget nicht gefunden - typst bitte manuell installieren:" -ForegroundColor Yellow
+    Write-Host "  https://github.com/typst/typst/releases"
     return
   }
-  foreach ($t in @(
-      @{ Cmd = 'pandoc'; Id = 'JohnMacFarlane.Pandoc' },
-      @{ Cmd = 'typst';  Id = 'Typst.Typst' })) {
-    if (Get-Command $t.Cmd -ErrorAction SilentlyContinue) {
-      Write-Host "OK  $($t.Cmd) vorhanden" -ForegroundColor Green
-    } else {
-      Write-Host "->  Installiere $($t.Cmd) ($($t.Id))"
-      winget install --id $t.Id -e --accept-source-agreements --accept-package-agreements
-    }
+  if (Get-Command 'typst' -ErrorAction SilentlyContinue) {
+    Write-Host "OK  typst vorhanden" -ForegroundColor Green
+  } else {
+    Write-Host "->  Installiere typst (Typst.Typst)"
+    winget install --id Typst.Typst -e --accept-source-agreements --accept-package-agreements
   }
 }
 
@@ -190,11 +225,12 @@ if ($Uninstall) {
 }
 
 # Ohne Schalter: alles einrichten.
-if (-not $Tools -and -not $Fonts -and -not $SendTo -and -not $Cli) {
-  $Tools = $true; $Fonts = $true; $SendTo = $true; $Cli = $true
+if (-not $Tools -and -not $Fonts -and -not $Packages -and -not $SendTo -and -not $Cli) {
+  $Tools = $true; $Fonts = $true; $Packages = $true; $SendTo = $true; $Cli = $true
 }
 
-if ($Tools)  { Install-Tools }
-if ($Fonts)  { Install-Fonts }
-if ($SendTo) { Install-SendTo }
-if ($Cli)    { Install-Cli }
+if ($Tools)    { Install-Tools }
+if ($Fonts)    { Install-Fonts }
+if ($Packages) { Install-TypstPackages }
+if ($SendTo)   { Install-SendTo }
+if ($Cli)      { Install-Cli }

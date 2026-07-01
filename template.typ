@@ -1,12 +1,20 @@
-// Pandoc -> Typst Template (PDF/A-tauglich)
-// Layout: DIN A4 Hochformat, asymmetrische Ränder, dynamischer Kopf (aktuelles H1)
+// Markdown -> Typst Template (PDF/A-tauglich)
+// Layout: DIN A4 Hochformat, asymmetrische Ränder, dynamischer Kopf (aktuelles H2)
 // + Logo, Fußzeile mit Dateiname & Seite x/y, Trennlinien.
+//
+// Diese Datei ist eine reine Typst-Datei (KEIN Pandoc-Template mehr): der Body
+// wird am Ende selbst per cmarker aus der Markdown-Quelle erzeugt.
+
+#import "vendor/cmarker/lib.typ" as cmarker
+#import "vendor/mitex/lib.typ": mitex
 
 // ---------------------------------------------------------------------------
-// Von Pandoc generierter Body benötigte Helfer (aus dem Default-Template)
+// Helfer für von cmarker erzeugte Elemente
 // ---------------------------------------------------------------------------
-#let horizontalrule = line(start: (25%, 0%), end: (75%, 0%))
+// Thematische Trennlinie (`---`): mittige Teillinie statt voller Breite.
+#let horizontalrule = align(center, line(start: (25%, 0%), end: (75%, 0%)))
 
+// Definitionslisten (aus cmarker <dl>): Begriff fett, Beschreibung eingerückt.
 #show terms.item: it => block(breakable: false)[
   #text(weight: "bold")[#it.term]
   #block(inset: (left: 1.5em, top: -0.4em))[#it.description]
@@ -17,7 +25,7 @@
 // linksbündig (auch Zahlen/Währungen), Zeilen mit dezent wechselndem Hintergrund.
 #show table: it => {
   // Guard gegen Rekursion: die umgebaute Tabelle hat ein fill (Funktion), die
-  // Pandoc-Originaltabelle nicht -> dann unverändert durchreichen.
+  // cmarker-Originaltabelle nicht -> dann unverändert durchreichen.
   if it.fill != none {
     it
   } else {
@@ -34,27 +42,36 @@
 #show figure.where(kind: table): set figure.caption(position: top)
 #show figure.where(kind: image): set figure.caption(position: bottom)
 
-$if(highlighting-definitions)$
-$highlighting-definitions$
-$endif$
-
 // ---------------------------------------------------------------------------
 // Laufzeit-Eingaben (via `typst compile --input ...`)
 // ---------------------------------------------------------------------------
 #let doc-filename = sys.inputs.at("filename", default: "document.md")
+// PDF/A verlangt einen Dokumenttitel -> vom Build als .md-Basisname gereicht.
+#let doc-title = sys.inputs.at("title", default: "Dokument")
 // Leerer Pfad = kein Logo (Kopf läuft dann ohne Logo durch).
 #let logo-path = sys.inputs.at("logo", default: "")
-#let source-path = sys.inputs.at("source", default: none)
+// Zu rendernde Quelle (ggf. vorverarbeitete Kopie).
+#let render-path = sys.inputs.at("source", default: none)
+// Verzeichnis der Original-Quelle: relative Bildpfade im Markdown werden dagegen
+// aufgelöst (nicht gegen den Projekt-Root), damit Bilder neben Dokumenten überall
+// gefunden werden.
+#let doc-dir = sys.inputs.at("docdir", default: "")
+// Einzubettende Original-Quelle (pdf.attach); getrennt von render-path, damit
+// der Anhang die unveränderte .md mit korrektem Namen behält.
+#let attach-path = sys.inputs.at("attach", default: none)
 // Frontmatter-gesteuert (von build.sh/convert.ps1 aus dem YAML-Block gereicht):
 #let date-iso   = sys.inputs.at("date", default: "")       // ISO-Wert oder leer
 #let toc-mode   = sys.inputs.at("toc", default: "auto")    // "true" | "false" | "auto"
 #let break-mode = sys.inputs.at("h2-break", default: "auto")
 #let show-name  = sys.inputs.at("showname", default: "true") != "false"
 
-// PDF/A-3b erlaubt eingebettete Dateien: Markdown-Quelle als Anhang beilegen.
-#if source-path != none {
+// PDF-/PDF-A-Metadaten: Titel ist für PDF/A Pflicht.
+#set document(title: doc-title)
+
+// PDF/A-3b erlaubt eingebettete Dateien: Original-Markdown als Anhang beilegen.
+#if attach-path != none {
   pdf.attach(
-    source-path,
+    attach-path,
     relationship: "source",
     mime-type: "text/markdown",
     description: "Markdown-Quelle dieses Dokuments",
@@ -67,7 +84,10 @@ $endif$
 #let heading-color = luma(8%)  // Überschriften: dunkel, kontrastreich
 #let head-color = luma(20%)    // "Chrome" (Kopf/Fuß-Text): 80 % Grau
 #let rule-stroke = 0.5pt + luma(20%) // Trennlinien: 80 % Grau
-#let accent = luma(20%)        // Akzent (Balken/Rahmen der Überschriften): 80 % Grau
+#let accent = luma(20%)        // Akzent (Balken der Überschriften): 80 % Grau
+// Hairlines unter den Überschriften: heller als der Balken, leicht aber sichtbar.
+#let hairline-stroke = 0.6pt + luma(72%)
+#let hairline-thin   = 0.4pt + luma(78%)
 
 // Alles "Source", aber serifenlos: Überschriften nutzen denselben Sans wie der
 // Fließtext (statt Source Serif 4). Code bleibt SourceCodeVF.
@@ -90,13 +110,6 @@ $endif$
 // Logo-Höhe: muss in den (jetzt schmaleren) oberen Rand passen. Bei 20 mm
 // Top-Margin und 6 mm header-ascent bleibt der Kopf damit innerhalb des Randes.
 #let logo-height = 13mm
-
-// ---------------------------------------------------------------------------
-// PDF-/PDF-A-Metadaten (Titel ist für PDF/A Pflicht; via Lua-Filter aus erstem H1)
-// ---------------------------------------------------------------------------
-$if(title)$
-#set document(title: [$title$]$if(author)$, author: ($for(author)$"$author$"$sep$, $endfor$)$endif$)
-$endif$
 
 // ---------------------------------------------------------------------------
 // Laufender Seitenkopf: aktuelles H2-Kapitel links, Logo rechts, Linie darunter
@@ -134,7 +147,7 @@ $endif$
 // ---------------------------------------------------------------------------
 // Dokumentsprache (einmal zentral; auch für die Datumslokalisierung genutzt)
 // ---------------------------------------------------------------------------
-#let doc-lang = "$if(lang)$$lang$$else$de$endif$"
+#let doc-lang = sys.inputs.at("lang", default: "de")
 
 // Lokalisiertes Datum aus ISO-String. Typst lokalisiert Monatsnamen NICHT
 // selbst ([month repr:long] ist nur Englisch), daher manuelle Tabelle.
@@ -146,10 +159,7 @@ $endif$
 #let fmt-date(iso, lang) = {
   let s = iso.trim()
   if s == "" { return none }
-  // Das doppelte Dollarzeichen am Regex-Ende ist Absicht: Pandoc verarbeitet
-  // diese Datei als Template und escaped ein literales Dollar als zwei. Nicht
-  // auf eines reduzieren, sonst bricht der Pandoc-Schritt.
-  if s.match(regex("^\d{1,4}-\d{1,2}-\d{1,2}$$")) == none { return none }
+  if s.match(regex("^\d{1,4}-\d{1,2}-\d{1,2}$")) == none { return none }
   let p = s.split("-").map(int)
   let (y, m, d) = (p.at(0), p.at(1), p.at(2))
   if m < 1 or m > 12 or d < 1 or d > 31 { return none }
@@ -163,7 +173,7 @@ $endif$
 
 // ---------------------------------------------------------------------------
 // Fußzeile: Trennlinie darüber. Ohne Datum 2-spaltig (Name | Seite x/y),
-// mit Datum 3-spaltig (Name | Seite x/y mittig | Datum). filename:false
+// mit Datum 3-spaltig (Name | Seite x/y mittig | Datum). print_filename:false
 // blendet den Namen aus.
 // ---------------------------------------------------------------------------
 #let doc-footer = context {
@@ -217,9 +227,8 @@ $endif$
 // Ungeordnete Listen: auf ALLEN Ebenen derselbe Marker – ein kleines Quadrat
 // (statt der ebenenabhängigen Standardzeichen •/‣/–). Als Typst-Form gezeichnet
 // (font-unabhängig, exakte Größe/Farbe), leicht angehoben zur optischen Mitte.
-// Als #let exportiert, damit der Lua-Filter ihn in gemischten Listen (normale
-// Punkte + Tasks) den Nicht-Task-Items manuell voranstellen kann (siehe
-// filters/meta-from-h1.lua).
+// Gemischte Listen (normale Punkte + Tasks) löst cmarker nativ: Task-Items nutzen
+// den task-list-marker unten, Nicht-Task-Items diesen Quadrat-Marker.
 #let rfd-list-marker = box(baseline: -0.2em, square(size: 0.32em, fill: luma(20%)))
 #set list(marker: rfd-list-marker)
 
@@ -265,26 +274,24 @@ $endif$
       }
     }
   } else if it.level == 2 {
-    // Kapitel: Book-Schnitt, Block mit dünnem 1pt-Rahmen und 3pt-Akzentbalken
-    // links (beide 80 % Grau) – das "grafische Element" der Überschrift.
+    // Kapitel: Book-Schnitt, 3pt-Akzentbalken links + feine Hairline über die
+    // volle Breite darunter (leicht, aber klar abgegrenzt – kein Rahmenkasten).
     context { if want-break() { pagebreak(weak: true) } }
-    block(
-      width: 100%,
-      above: 1.5em, below: 0.6em,
-      inset: (left: 10pt, top: 5pt, bottom: 5pt, right: 8pt),
-      stroke: (left: 3pt + accent, rest: 1pt + accent),
-      heading-text(18pt, 450, it),
-    )
+    block(width: 100%, above: 1.5em, below: 0.6em, {
+      block(inset: (left: 8pt, top: 2pt, bottom: 3pt), stroke: (left: 3pt + accent),
+        heading-text(18pt, 450, it))
+      v(3pt)
+      line(length: 100%, stroke: hairline-stroke)
+    })
   } else {
-    // H3+: Book-Schnitt, ohne Rahmen, nur der 3pt-Akzentbalken links.
+    // H3+: dünnerer 2pt-Balken links + kürzere, leichtere Hairline.
     let size = (14.5pt, 13pt, 12pt, 12pt).at(it.level - 3)
-    block(
-      width: 100%,
-      above: 1.3em, below: 0.5em,
-      inset: (left: 10pt, top: 2pt, bottom: 2pt),
-      stroke: (left: 3pt + accent),
-      heading-text(size, 450, it),
-    )
+    block(width: 100%, above: 1.3em, below: 0.5em, {
+      block(inset: (left: 8pt, top: 1pt, bottom: 2pt), stroke: (left: 2pt + accent),
+        heading-text(size, 450, it))
+      v(2pt)
+      line(length: 45%, stroke: hairline-thin)
+    })
   }
 }
 
@@ -321,4 +328,48 @@ $endif$
   ))
 }
 
-$body$
+// ---------------------------------------------------------------------------
+// Body: Markdown -> Typst via cmarker
+// ---------------------------------------------------------------------------
+// Nicht-ladbare Bilder (Typst hat keinen Netzzugriff) werden entfernt: bei
+// http(s)-, protokoll-relativen (`//host/…`) und data:-Quellen wird nichts
+// gerendert, aber ein unsichtbares Metadatum als Zähl-Marker hinterlegt
+// (build.sh zählt es per `typst query <rfd-remote-skip>`). Lokale Bilder mit
+// Alt-Text werden zur nummerierten Abbildung mit Untertitel.
+#let is-remote(s) = type(s) == str and (
+  s.starts-with("http://") or s.starts-with("https://")
+    or s.starts-with("//") or s.starts-with("data:"))
+// Relative Pfade gegen das Dokumentverzeichnis auflösen; absolute (führendes "/")
+// und leeres doc-dir unverändert lassen.
+#let resolve-path(p) = if doc-dir == "" or p.starts-with("/") { p } else { doc-dir + "/" + p }
+#let safe-image(source, alt: none, ..args) = {
+  if is-remote(source) {
+    [#metadata("rfd-remote-skip")<rfd-remote-skip>]
+  } else if alt != none and alt != "" {
+    figure(image(resolve-path(source), alt: alt, ..args), caption: alt)
+  } else {
+    image(resolve-path(source), alt: alt, ..args)
+  }
+}
+
+// Task-Listen-Marker als Checkbox aus dem Zeichensatz (Noto-Fallback, monochrom
+// und PDF/A-tauglich): leeres Kästchen ☐ = offen, angekreuztes ☒ = erledigt.
+// Bewusst ein Kreuz (kein gefülltes Klötzchen), damit „erledigt" erkennbar ist.
+#let rfd-task-marker(checked) = {
+  box(text(fill: luma(20%), if checked [☒] else [☐]))
+  h(0.3em)
+}
+
+// `terms`-Override: cmarker reicht die <dl>-Paare als Arrays an `terms` – das
+// löst eine Deprecation-Warnung aus. Hier explizit zu `terms.item` bauen
+// (stiller Build; das Aussehen macht die #show terms.item-Regel oben).
+#let rfd-terms(..pairs) = terms(..pairs.pos().map(p => terms.item(p.at(0), p.at(1))))
+
+#cmarker.render(
+  read(render-path),
+  h1-level: 1,
+  set-document-title: false,
+  math: mitex,
+  task-list-marker: rfd-task-marker,
+  scope: (image: safe-image, divider: () => horizontalrule, terms: rfd-terms),
+)
