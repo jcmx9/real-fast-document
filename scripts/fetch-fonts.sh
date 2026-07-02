@@ -15,6 +15,32 @@ root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 font_dir="${root_dir}/fonts"
 mkdir -p "${font_dir}"
 
+# Idempotenz: liegen bereits alle Zieldateien in ./fonts, nichts neu laden – das
+# spart beim Update (bootstrap → install → hier) den mehrere-MB-Download. Mit
+# --force oder RFD_FORCE_FONTS=1 trotzdem erzwingen (z. B. nach einem Font-Pin-
+# Wechsel; die Dateinamen sind versionsneutral, daher kein Auto-Refresh wie bei
+# den Packages über typst.toml).
+expected_fonts=(
+  "SourceSerif4Variable-Roman.otf" "SourceSerif4Variable-Italic.otf"
+  "SourceSans3VF-Upright.otf" "SourceSans3VF-Italic.otf"
+  "SourceCodeVF-Upright.otf" "SourceCodeVF-Italic.otf"
+  "NotoEmoji[wght].ttf" "NotoSansSymbols2-Regular.ttf"
+)
+force=0
+if [[ "${1:-}" == "--force" || -n "${RFD_FORCE_FONTS:-}" ]]; then
+  force=1
+fi
+if [[ "${force}" -eq 0 ]]; then
+  missing=0
+  for f in "${expected_fonts[@]}"; do
+    [[ -f "${font_dir}/${f}" ]] || { missing=1; break; }
+  done
+  if [[ "${missing}" -eq 0 ]]; then
+    echo "✓ Fonts bereits vollständig in ${font_dir} – überspringe Download (--force zum Neuladen)"
+    exit 0
+  fi
+fi
+
 tmp="$(mktemp -d)"
 trap 'rm -rf "${tmp}"' EXIT
 

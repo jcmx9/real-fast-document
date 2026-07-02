@@ -14,6 +14,10 @@
   Die gesamte Logik (template.typ, fonts/, vendor/, convert.ps1) bleibt im
   Installpfad. Im System landet ausschliesslich die Verknuepfung, die auf
   convert.ps1 im Installpfad zeigt.
+
+  Fonts und Packages sind idempotent: sind sie schon vollstaendig (Fonts) bzw.
+  in der gepinnten Version (Packages) vorhanden, wird der Download bei einem
+  erneuten Lauf uebersprungen. -Force erzwingt das Neuladen.
 .PARAMETER Tools
   Nur typst pruefen und bei Bedarf via winget installieren.
 .PARAMETER Fonts
@@ -24,6 +28,8 @@
   Nur die "Senden an"-Verknuepfung anlegen.
 .PARAMETER Cli
   Nur den globalen Terminal-Befehl rf-document anlegen.
+.PARAMETER Force
+  Fonts/Packages neu laden, auch wenn sie bereits vorhanden sind.
 .PARAMETER Uninstall
   Die "Senden an"-Verknuepfung und den Terminal-Befehl wieder entfernen.
 .EXAMPLE
@@ -33,6 +39,7 @@
   ./scripts/install.ps1 -Packages      # nur Typst-Packages laden
   ./scripts/install.ps1 -SendTo        # nur Verknuepfung anlegen
   ./scripts/install.ps1 -Cli           # nur Terminal-Befehl rf-document
+  ./scripts/install.ps1 -Force         # Fonts + Packages neu laden (erzwingen)
   ./scripts/install.ps1 -Uninstall     # Verknuepfung + Terminal-Befehl entfernen
 #>
 [CmdletBinding()]
@@ -42,6 +49,7 @@ param(
   [switch]$Packages,
   [switch]$SendTo,
   [switch]$Cli,
+  [switch]$Force,
   [switch]$Uninstall
 )
 
@@ -87,6 +95,23 @@ function Install-Fonts {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
   New-Item -ItemType Directory -Force -Path $FontDir | Out-Null
 
+  # Idempotenz: liegen bereits alle Zieldateien in ./fonts, Download ueberspringen
+  # (spart beim Update den mehrere-MB-Download). -Force laedt trotzdem neu. Wichtig:
+  # Test-Path -LiteralPath (kein Wildcard) wegen der Klammern in NotoEmoji[wght].ttf.
+  if (-not $Force) {
+    $need = @()
+    foreach ($z in $FontZips)  { $need += $z.Files }
+    foreach ($f in $FontFiles) { $need += $f.Name }
+    $haveAll = $true
+    foreach ($n in $need) {
+      if (-not (Test-Path -LiteralPath (Join-Path $FontDir $n))) { $haveAll = $false; break }
+    }
+    if ($haveAll) {
+      Write-Host "OK  Fonts bereits vollstaendig -> $FontDir (uebersprungen; -Force zum Neuladen)" -ForegroundColor Green
+      return
+    }
+  }
+
   $tmp = Join-Path ([IO.Path]::GetTempPath()) ('rfd-fonts-' + [Guid]::NewGuid().ToString('N'))
   New-Item -ItemType Directory -Force -Path $tmp | Out-Null
   try {
@@ -119,6 +144,23 @@ function Install-Fonts {
 function Install-TypstPackages {
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
   New-Item -ItemType Directory -Force -Path $VendorDir | Out-Null
+
+  # Idempotenz: liegt jedes Package schon in der gepinnten Version vor (laut
+  # seiner typst.toml), Download ueberspringen. Ein Versions-Bump fuehrt zu einem
+  # Mismatch und laedt automatisch neu; -Force erzwingt es immer.
+  if (-not $Force) {
+    $haveAll = $true
+    foreach ($p in $TypstPackages) {
+      $toml = Join-Path $VendorDir (Join-Path $p.Name 'typst.toml')
+      $ok = (Test-Path -LiteralPath $toml) -and `
+            ((Get-Content -LiteralPath $toml -Raw) -match ('version\s*=\s*"' + [regex]::Escape($p.Version) + '"'))
+      if (-not $ok) { $haveAll = $false; break }
+    }
+    if ($haveAll) {
+      Write-Host "OK  Typst-Packages bereits vorhanden -> $VendorDir (uebersprungen; -Force zum Neuladen)" -ForegroundColor Green
+      return
+    }
+  }
 
   $tmp = Join-Path ([IO.Path]::GetTempPath()) ('rfd-pkgs-' + [Guid]::NewGuid().ToString('N'))
   New-Item -ItemType Directory -Force -Path $tmp | Out-Null

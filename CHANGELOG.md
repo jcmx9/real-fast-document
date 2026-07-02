@@ -17,6 +17,13 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   (`ä` → `Ã¤`) into the rendered PDF. It now reads via `[IO.File]::ReadAllLines` with UTF-8
   (BOM auto-detected), matching the BOM-less UTF-8 the render temp is written with.
 
+### Changed
+- **Idempotent font/package fetching** — re-running the installer (the normal update path) no
+  longer re-downloads what is already present. `fetch-fonts.sh` skips when all target files exist;
+  `fetch-typst-packages.sh` skips per package when `vendor/<name>/typst.toml` already carries the
+  pinned version (a version bump auto-refreshes). `install.ps1` mirrors this and gains a `-Force`
+  switch; override in bash via `--force` or `RFD_FORCE_FONTS`/`RFD_FORCE_PACKAGES=1`.
+
 ## [26.7.4] - 2026-07-02
 
 ### Fixed

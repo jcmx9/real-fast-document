@@ -17,16 +17,30 @@ root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 vendor_dir="${root_dir}/vendor"
 mkdir -p "${vendor_dir}"
 
+# Idempotenz-Schalter: mit --force oder RFD_FORCE_PACKAGES=1 immer neu laden.
+force=0
+if [[ "${1:-}" == "--force" || -n "${RFD_FORCE_PACKAGES:-}" ]]; then
+  force=1
+fi
+
 tmp="$(mktemp -d)"
 trap 'rm -rf "${tmp}"' EXIT
 
 # Lädt ein Package-Tarball aus der Registry und entpackt es flach nach
 # ./vendor/<name> (die Tarballs tragen die Package-Dateien im Wurzelverzeichnis).
+# Idempotent: liegt das Package schon in der gepinnten Version vor (laut seiner
+# typst.toml), wird der Download übersprungen. Ein Versions-Bump (oben) führt zu
+# einem Mismatch und lädt automatisch neu – kein --force nötig.
 fetch_pkg() {
   local name="$1" version="$2"
   local url="https://packages.typst.org/preview/${name}-${version}.tar.gz"
   local dest="${vendor_dir}/${name}"
+  local toml="${dest}/typst.toml"
   local tgz="${tmp}/${name}-${version}.tar.gz"
+  if [[ "${force}" -eq 0 && -f "${toml}" ]] && grep -q "version = \"${version}\"" "${toml}"; then
+    echo "✓ ${name} ${version} bereits vorhanden – überspringe"
+    return 0
+  fi
   echo "→ ${name} ${version}"
   curl -fsSL "${url}" -o "${tgz}"
   rm -rf "${dest}"

@@ -24,8 +24,8 @@ bash scripts/build.sh                 # build example.md → example.pdf (next t
 bash scripts/build.sh SRC.md          # → SRC.pdf  (or DATE_SRC.pdf if frontmatter has date:)
 bash scripts/build.sh SRC.md OUT.pdf  # explicit output
 RFD_NO_OPEN=1 bash scripts/build.sh SRC.md   # suppress the auto-open (build.sh opens the PDF by default)
-bash scripts/fetch-fonts.sh           # (re)download the bundled fonts into ./fonts (Source OTF + Noto fallbacks)
-bash scripts/fetch-typst-packages.sh  # (re)vendor cmarker + mitex into ./vendor (offline build)
+bash scripts/fetch-fonts.sh           # download bundled fonts into ./fonts (idempotent: skips if all present; --force to re-fetch)
+bash scripts/fetch-typst-packages.sh  # vendor cmarker + mitex into ./vendor (idempotent: skips if vendored at the pinned version; --force)
 bash scripts/install.sh               # set up tool + fonts + packages + right-click + rf-document CLI (idempotent)
 bash scripts/install.sh --uninstall   # remove the right-click integration + rf-document
 rf-document SRC.md                    # global CLI after install (wrapper → build.sh)
@@ -176,6 +176,13 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     integration: a Finder **Quick Action** (`~/Library/Services/*.workflow`) on macOS, a
     `.desktop` + `xdg-mime` association on Linux. `--uninstall` removes only the integration.
     Idempotent. **No pandoc** (it is not a dependency anymore).
+  - **Font/package fetching is idempotent** — re-running the installer (the normal *update* path
+    via `bootstrap`) does **not** re-download when things are already there. `fetch-fonts.sh` skips
+    if all target files exist; `fetch-typst-packages.sh` skips per package if `vendor/<name>/typst.toml`
+    already carries the **pinned version** (so a version bump auto-refreshes, no flag needed).
+    Override with `--force` (bash) / `-Force` (`install.ps1`) or `RFD_FORCE_FONTS`/`RFD_FORCE_PACKAGES=1`.
+    `install.ps1`'s `Install-Fonts`/`Install-TypstPackages` mirror this (using `Test-Path -LiteralPath`
+    so the brackets in `NotoEmoji[wght].ttf` aren't read as a wildcard).
   - `scripts/install.ps1` (Windows) auto-installs typst via winget (`-Tools`), fetches fonts
     (`-Fonts`), vendors the packages (`-Packages`), and creates the "Send to" shortcut
     (`-SendTo`). The logic stays in the install path; only a shortcut lands in the system.
