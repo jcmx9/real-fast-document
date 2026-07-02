@@ -6,6 +6,19 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.3] - 2026-07-02
+
+### Fixed
+- **Windows path separators** — `convert.ps1` now normalizes the four Typst `--input` values the
+  template resolves internally (`source`, `attach`, `docdir`, `logo`) from `\` to `/`. Typst's
+  virtual path system rejects backslashes (`error: path must not contain a backslash`), so the
+  Windows "Send to" build aborted at `pdf.attach`. CLI filesystem args (`--root`, `--font-path`,
+  template, output) go through the OS layer and are left untouched.
+
+### Docs
+- **CLAUDE.md** — document the forward-slash requirement for internally-resolved Typst `--input`
+  paths as a Windows `.ps1` gotcha, and note `assets/pipeline.svg` as the READMEs' embedded diagram.
+
 ## [26.7.2] - 2026-07-01
 
 ### Fixed

@@ -168,14 +168,24 @@ function Convert-One {
   # sonst Basisname; doctitle = sichtbarer Titel (nur aus title:). --root deckt
   # das Laufwerk ab, damit absolute Pfade (Quelle, Anhang, Bilder) lesbar sind.
   $titleMeta = if ($fmTitle) { $fmTitle } else { $base }
+  # Pfad-Inputs, die Typst INTERN als Pfade aufloest (read/image/pdf.attach und
+  # die docdir-Verkettung), muessen Forward-Slashes verwenden: Typst lehnt
+  # Backslashes in seinem virtuellen Pfadsystem ab ("path must not contain a
+  # backslash"). Windows-Resolve-Path liefert '\', also hier '\' -> '/' ersetzen.
+  # Die reinen CLI-fs-Argumente (Template, Ausgabe, --root, --font-path) sind
+  # davon NICHT betroffen und bleiben unveraendert.
+  $srcFwd       = $Src       -replace '\\', '/'
+  $renderFwd    = $renderTmp -replace '\\', '/'
+  $srcDirFwd    = $srcDir    -replace '\\', '/'
+  $logoFwd      = if ($logoArg) { $logoArg -replace '\\', '/' } else { '' }
   $inputs = @(
     '--input', "filename=$outName",
     '--input', "title=$titleMeta",
     '--input', "doctitle=$fmTitle",
-    '--input', "logo=$logoArg",
-    '--input', "source=$renderTmp",
-    '--input', "attach=$Src",
-    '--input', "docdir=$srcDir",
+    '--input', "logo=$logoFwd",
+    '--input', "source=$renderFwd",
+    '--input', "attach=$srcFwd",
+    '--input', "docdir=$srcDirFwd",
     '--input', "date=$fmDate",
     '--input', "toc=$fmToc",
     '--input', "h1-break=$fmBreak",

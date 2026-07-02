@@ -200,6 +200,14 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     "resolved wildcard path does not specify a file". `install.ps1` escapes the target via
     `[Management.Automation.WildcardPattern]::Escape(...)`; don't pass an unescaped bracketed
     path to `-OutFile`. (bash `curl -o` is unaffected — it writes the literal name.)
+  - **Typst `--input` paths that the template resolves internally must use forward slashes.**
+    Typst's virtual path system rejects backslashes (`error: path must not contain a backslash`),
+    but `Resolve-Path`/`Split-Path` on Windows yield `\`. So `convert.ps1` normalizes the four
+    path-valued inputs — `source` (`read`), `attach` (`pdf.attach`), `docdir` (relative-image
+    resolution), `logo` (`image`) — via `-replace '\\','/'` before passing them. The **CLI
+    filesystem args** (`$Template`, output, `--root`, `--font-path`) are the OS fs layer, accept
+    backslashes, and are left untouched. `build.sh` is unaffected (POSIX paths are already
+    forward-slashed). Non-path inputs (title, date, lang, …) need no normalization.
 
 ### Heading / document model (encoded in template.typ)
 
@@ -265,6 +273,8 @@ The README is dogfooded: `bash scripts/build.sh README.md README.pdf` renders it
 the pipeline, and that PDF is attached to GitHub releases as an asset (it is not committed).
 `README.md` and `README.en.md` must stay in parity (same structure, sections, version) — a
 change to one must land in the other in the same PR; both build cleanly through the pipeline.
+`assets/pipeline.svg` is the pipeline diagram both READMEs embed (the only tracked non-root
+resource); it is *not* rendered by the build — plain repo documentation.
 
 Generated artifacts (`*.pdf`, generated `*.typ`, `preview-*.png`, `bin/`, and `vendor/`) are
 git-ignored — note only `preview-*.png` matches, so scratch PNGs under any other name pollute
