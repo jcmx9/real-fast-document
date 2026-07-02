@@ -53,7 +53,10 @@
 #show figure.where(kind: image): set figure.caption(position: bottom)
 // Bildunterschrift kleiner als Fließtext, mit etwas mehr Abstand unter der Abbildung.
 #show figure.caption: set text(size: 10pt)
-#show figure: it => block(below: 1.8em, it)
+// breakable: false hält Abbildung UND Unterschrift zusammen auf einer Seite –
+// passt beides nicht mehr aufs Blatt, wandert die ganze Figure auf die nächste
+// Seite (die Unterschrift landet damit nie allein auf der Folgeseite).
+#show figure: it => block(above: 1.4em, below: 1.6em, breakable: false, it)
 
 // ---------------------------------------------------------------------------
 // Laufzeit-Eingaben (via `typst compile --input ...`)
@@ -265,7 +268,11 @@
 // ---------------------------------------------------------------------------
 // Fließtext, Überschriften, Code
 // ---------------------------------------------------------------------------
-#set text(font: body-font, size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%))
+// costs: Schusterjungen (orphan – erste Absatzzeile allein am Seitenfuß) und
+// Hurenkinder (widow – letzte Absatzzeile allein am Seitenkopf) werden über den
+// Default hinaus verteuert, sodass Typst sie vermeidet (eine Zeile mitnimmt).
+#set text(font: body-font, size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%),
+  costs: (orphan: 200%, widow: 200%))
 #set par(justify: true, leading: 0.8em, spacing: 1.1em)
 
 // Ungeordnete Listen: auf ALLEN Ebenen derselbe Marker – ein kleines Quadrat
@@ -304,18 +311,21 @@
     // par(spacing) im Block klein setzen – sonst liegt zwischen Text und Linie
     // der Default-Absatzabstand (1.1em) und die Linie sitzt zu tief.
     context { if want-break() { pagebreak(weak: true) } }
-    block(width: 100%, above: 1.8em, below: 0.5em, {
+    // sticky: true bindet die Überschrift an den Folgeinhalt -> nie allein am
+    // Seitenfuß. Alle Ebenen: Abstand-oben > Abstand-unten (bindet nach unten),
+    // aber below groß genug, dass der Text nicht klebt (~above/2).
+    block(width: 100%, above: 2.0em, below: 0.6em, sticky: true, {
       set par(spacing: 2pt)
       heading-text(18pt, 450, it)
       line(length: 100%, stroke: hairline-stroke)
     })
   } else if it.level == 2 {
-    block(width: 100%, above: 1.4em, below: 0.4em, heading-text(15pt, 450, it))
+    block(width: 100%, above: 1.5em, below: 0.7em, sticky: true, heading-text(15pt, 450, it))
   } else if it.level == 3 {
-    block(width: 100%, above: 1.2em, below: 0.35em, heading-text(13pt, 450, it))
+    block(width: 100%, above: 1.25em, below: 0.55em, sticky: true, heading-text(13pt, 450, it))
   } else {
     // H4+: nur fett, linksbündig.
-    block(width: 100%, above: 1.0em, below: 0.3em, heading-text(12pt, "bold", it))
+    block(width: 100%, above: 1.05em, below: 0.45em, sticky: true, heading-text(12pt, "bold", it))
   }
 }
 

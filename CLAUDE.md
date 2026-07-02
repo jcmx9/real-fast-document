@@ -243,10 +243,26 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 - **H2 / H3** = subsections (serif, no line). **H4+** = bold, left-aligned only.
 - **Visual language:** all headings **serif** (`Source Serif 4`), `luma(8%)`, left-aligned
   (`justify: false`), **no accent bars**; only **H1** carries a hairline (`luma(60%)`) right below.
-  Every heading uses space-above > space-below (binds to following text). Header **and** footer
+  Every heading uses space-above > space-below so it binds to the following text — but the `below`
+  is sized ~`above`/2 (H1 2.0/0.6, H2 1.5/0.7, H3 1.25/0.55, H4 1.05/0.45 em) so the body no longer
+  hugs the heading. **All above/below em are 12pt-em** (resolved against the body size at block
+  creation, *not* the heading size) — so the rhythm is level-independent; edit the four block()
+  calls in the `#show heading` rule. Header **and** footer
   text are Sans (`Source Sans 3`). Fonts come from `body-font`/`heading-font`/`code-font`. Unordered
   lists use one small drawn square marker at **all** levels; ordered lists keep numbers; task items
   use a checkbox glyph (☐ open, ☒ done, via Noto). Blockquotes are indented both sides + italic.
+- **Page-break hygiene (widows/orphans, sticky headings, unbreakable figures):**
+  - **Headings never sit alone at a page foot.** Typst sets `sticky: true` on heading blocks *by
+    default* — but our `#show heading` rule builds its **own** `block(...)`, which **drops** that
+    default. So every heading block here must set `sticky: true` explicitly (all four levels do);
+    omitting it silently re-introduces orphaned headings. Verified via A/B (same doc, `sticky` on
+    vs off): off strands the heading at the page foot, on pushes it to the next page.
+  - **Figure + caption stay together** — the `#show figure` rule sets `breakable: false`, so an
+    image and its (bottom) caption never split across a page; if both don't fit, the whole figure
+    moves to the next page. (Don't set `breakable: true` unless a figure must span pages.)
+  - **Widows/orphans** are discouraged via `#set text(costs: (orphan: 200%, widow: 200%))` —
+    Schusterjunge = lone first line at a page foot, Hurenkind = lone last line at a page head;
+    2× the default cost makes Typst pull an extra line rather than leave one stranded.
 - **Running header** (`doc-header`): `header:` fixed text wins; else the active **H1** chapter;
   before the first chapter the `title:` (if set), else empty.
 - **Conditional TOC / structured mode**: when `#H1 + #H2 > 5` (`auto-structured()`) the doc renders
