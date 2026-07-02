@@ -158,11 +158,14 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     (`open`/`xdg-open`/`Start-Process`); set `RFD_NO_OPEN=1` to suppress (batch/cron).
   - **Skip reporting:** the template marks each stripped remote image with an invisible
     `<rfd-remote-skip>` metadatum; after compiling, `build.sh`/`convert.ps1` run a **second
-    `typst query`** pass (same inputs) to count them and print a `N Remote-Bild(er) übersprungen`
-    summary. `rfd-convert.sh` greps that summary out of each build's output and folds the total
-    into its system notification (so GUI right-click users notice). The summary line is the parse
-    contract — don't reword it without updating the grep. (Cost: two Typst passes per build;
-    negligible for small docs.)
+    `typst eval` pass** — `typst eval --in template.typ 'query(<rfd-remote-skip>).len()'` with the
+    same inputs — to count them and print a `N Remote-Bild(er) übersprungen` summary. (`typst query`
+    is **deprecated since Typst 0.15**; `eval` with `query(...).len()` returns the count directly.
+    The Typst `query` *function* used inside `template.typ`'s show rules is unaffected — only the
+    CLI subcommand is deprecated.) `rfd-convert.sh` greps that summary out of each build's output
+    and folds the total into its system notification (so GUI right-click users notice). The summary
+    line is the parse contract — don't reword it without updating the grep. (Cost: two Typst passes
+    per build; negligible for small docs.)
 - **Install / bootstrap** (separate from conversion):
   - `scripts/bootstrap.sh` / `scripts/bootstrap.ps1` are the curl|bash / irm|iex one-liners:
     require git, clone/pull into `~/.local/share/real-fast-document` (Windows

@@ -6,6 +6,13 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+### Fixed
+- **Typst 0.15 deprecation warning** — the remote-image skip counter used the deprecated
+  `typst query` subcommand (`warning: the 'typst query' subcommand is deprecated`). `build.sh` and
+  `convert.ps1` now count via `typst eval --in template.typ 'query(<rfd-remote-skip>).len()'`,
+  which returns the number directly. The Typst `query` *function* inside `template.typ` is
+  unaffected — only the CLI subcommand was deprecated.
+
 ## [26.7.4] - 2026-07-02
 
 ### Fixed
