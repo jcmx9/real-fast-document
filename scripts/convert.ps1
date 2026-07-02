@@ -218,11 +218,13 @@ function Convert-One {
     if ($LASTEXITCODE) { throw "typst-Fehler ($LASTEXITCODE)" }
 
     # Uebersprungene Remote-Bilder zaehlen: das Template markiert jedes gestrippte
-    # Bild mit einem unsichtbaren Metadatum <rfd-remote-skip>; per typst query
-    # auslesen (gleiche Inputs, damit die Kompilierung identisch ist).
-    $q = & typst query $Template '<rfd-remote-skip>' `
-      --font-path $FontDir --ignore-system-fonts --root $Root --field value @inputs 2>$null
-    $stripped = ([regex]::Matches(($q -join ''), 'rfd-remote-skip')).Count
+    # Bild mit einem unsichtbaren Metadatum <rfd-remote-skip>; per typst eval
+    # auszaehlen (typst query ist ab Typst 0.15 deprecated). Gleiche Inputs, damit
+    # die Kompilierung identisch ist; query(...).len() liefert direkt die Zahl.
+    $q = & typst eval --in $Template 'query(<rfd-remote-skip>).len()' `
+      --font-path $FontDir --ignore-system-fonts --root $Root @inputs 2>$null
+    $stripped = 0
+    [void][int]::TryParse((($q -join '').Trim()), [ref]$stripped)
 
     Write-Host "OK  $outPdf" -ForegroundColor Green
     if ($stripped -gt 0) {

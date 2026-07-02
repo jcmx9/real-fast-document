@@ -237,11 +237,11 @@ typst_inputs=(
   "${typst_inputs[@]}"
 
 # Übersprungene Remote-Bilder zählen: das Template markiert jedes gestrippte
-# Bild mit einem unsichtbaren Metadatum <rfd-remote-skip>; per `typst query`
-# auslesen (gleiche Inputs, damit die Kompilierung identisch ist).
-stripped="$("${typst_bin}" query template.typ "<rfd-remote-skip>" \
-  "${font_arg[@]}" --root / --field value "${typst_inputs[@]}" 2>/dev/null \
-  | grep -o 'rfd-remote-skip' | wc -l | tr -d ' ' || true)"
+# Bild mit einem unsichtbaren Metadatum <rfd-remote-skip>; per `typst eval`
+# auszählen (`typst query` ist ab Typst 0.15 deprecated). Gleiche Inputs, damit
+# die Kompilierung identisch ist; `query(...).len()` liefert direkt die Zahl.
+stripped="$("${typst_bin}" eval --in template.typ 'query(<rfd-remote-skip>).len()' \
+  "${font_arg[@]}" --root / "${typst_inputs[@]}" 2>/dev/null || true)"
 
 echo "✓ ${out} erzeugt (PDF/A-3b)"
 if [[ "${stripped:-0}" -gt 0 ]]; then
