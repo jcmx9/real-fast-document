@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.4] - 2026-07-02
+
+### Fixed
+- **Windows absolute paths in Typst inputs** — follow-up to 26.7.3: converting `\` to `/` was not
+  enough. Typst resolves `--input` paths through its virtual filesystem **relative to `--root`**,
+  which also rejects a drive letter (`error: path contains invalid component "C:"`). `convert.ps1`
+  now strips the leading drive (`C:\Users\x` → `/Users/x`) via the new `ConvertTo-TypstPath`,
+  making the four internally-resolved inputs (`source`, `attach`, `docdir`, `logo`) root-relative
+  — mirroring `build.sh`'s `--root /` + POSIX-absolute paths. Assumes source and install share one
+  drive (a single `--root` cannot span two).
+
 ## [26.7.3] - 2026-07-02
 
 ### Fixed

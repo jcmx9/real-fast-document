@@ -41,6 +41,23 @@ function ConvertTo-YamlBool {
   return $null
 }
 
+# Einen Windows-Pfad in einen Typst-tauglichen Pfad wandeln. Typst loest die
+# --input-Pfade (read/image/pdf.attach/docdir) INTERN ueber sein virtuelles
+# Dateisystem RELATIV zu --root auf. Zwei Regeln gelten dort:
+#   1. keine Backslashes            -> '\' zu '/'
+#   2. kein Laufwerksbuchstabe      -> fuehrendes 'C:' entfernen, sodass der
+#      ("path contains invalid          Pfad wurzel-relativ mit '/' beginnt
+#       component `C:`")                 ('C:\Users\x' -> '/Users/x')
+# Das spiegelt build.sh (macOS/Linux: --root / + '/'-absolute Pfade). --root ist
+# das Laufwerks-Wurzelverzeichnis (siehe $Root), daher gilt die Annahme, dass
+# Quelle UND Installpfad auf demselben Laufwerk liegen. Reine CLI-fs-Argumente
+# (Template, Ausgabe, --root, --font-path) sind NICHT betroffen.
+function ConvertTo-TypstPath {
+  param([string]$Path)
+  if (-not $Path) { return '' }
+  return ($Path -replace '\\', '/') -replace '^[A-Za-z]:', ''
+}
+
 # Preprocessing (spiegelt scripts/build.sh): Frontmatter fuer Typst entfernen,
 # loose Task-Listen zu tight normalisieren (cmarker 0.1.9 crasht sonst; Upstream-Fix in SabrinaJewson/cmarker.typ#71, noch nicht > 0.1.9 released) und
 # Pandoc-Definitionslisten in HTML <dl> (Block-Form, damit Inline-Markdown in
@@ -168,16 +185,13 @@ function Convert-One {
   # sonst Basisname; doctitle = sichtbarer Titel (nur aus title:). --root deckt
   # das Laufwerk ab, damit absolute Pfade (Quelle, Anhang, Bilder) lesbar sind.
   $titleMeta = if ($fmTitle) { $fmTitle } else { $base }
-  # Pfad-Inputs, die Typst INTERN als Pfade aufloest (read/image/pdf.attach und
-  # die docdir-Verkettung), muessen Forward-Slashes verwenden: Typst lehnt
-  # Backslashes in seinem virtuellen Pfadsystem ab ("path must not contain a
-  # backslash"). Windows-Resolve-Path liefert '\', also hier '\' -> '/' ersetzen.
-  # Die reinen CLI-fs-Argumente (Template, Ausgabe, --root, --font-path) sind
-  # davon NICHT betroffen und bleiben unveraendert.
-  $srcFwd       = $Src       -replace '\\', '/'
-  $renderFwd    = $renderTmp -replace '\\', '/'
-  $srcDirFwd    = $srcDir    -replace '\\', '/'
-  $logoFwd      = if ($logoArg) { $logoArg -replace '\\', '/' } else { '' }
+  # Pfad-Inputs, die Typst INTERN aufloest (read/image/pdf.attach + docdir),
+  # in wurzel-relative Typst-Pfade wandeln (Backslashes -> '/', Laufwerk weg);
+  # siehe ConvertTo-TypstPath. Die CLI-fs-Argumente bleiben unveraendert.
+  $srcFwd       = ConvertTo-TypstPath $Src
+  $renderFwd    = ConvertTo-TypstPath $renderTmp
+  $srcDirFwd    = ConvertTo-TypstPath $srcDir
+  $logoFwd      = ConvertTo-TypstPath $logoArg
   $inputs = @(
     '--input', "filename=$outName",
     '--input', "title=$titleMeta",
