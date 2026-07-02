@@ -12,6 +12,10 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   `convert.ps1` now count via `typst eval --in template.typ 'query(<rfd-remote-skip>).len()'`,
   which returns the number directly. The Typst `query` *function* inside `template.typ` is
   unaffected — only the CLI subcommand was deprecated.
+- **Mojibake umlauts on Windows** — `convert.ps1` read the source Markdown with `Get-Content`
+  (no `-Encoding`), which on Windows PowerShell 5.1 decodes as CP1252 and mangled UTF-8 umlauts
+  (`ä` → `Ã¤`) into the rendered PDF. It now reads via `[IO.File]::ReadAllLines` with UTF-8
+  (BOM auto-detected), matching the BOM-less UTF-8 the render temp is written with.
 
 ## [26.7.4] - 2026-07-02
 

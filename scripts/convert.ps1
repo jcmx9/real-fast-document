@@ -121,7 +121,11 @@ function Convert-One {
 
   $srcDir = Split-Path -Parent $Src
   $base   = [IO.Path]::GetFileNameWithoutExtension($Src)
-  $lines  = Get-Content -LiteralPath $Src
+  # UTF-8 explizit lesen: Windows PowerShell 5.1 liest Get-Content sonst in der
+  # ANSI-Codepage (CP1252) und verstuemmelt UTF-8-Umlaute (ae/oe/ue/ss -> Mojibake).
+  # ReadAllLines mit UTF8Encoding erkennt/entfernt ein evtl. BOM automatisch und
+  # passt so zum BOM-losen UTF-8-Schreiben des Render-Temps (siehe WriteAllText).
+  $lines  = [IO.File]::ReadAllLines($Src, (New-Object Text.UTF8Encoding $false))
 
   # Optionalen YAML-Frontmatter (fuehrender ---...---) parsen: title/date/lang/toc/
   # h1-break/print_filename/header/watermark. Bool-Schluessel werden YAML-1.1-konform gelesen

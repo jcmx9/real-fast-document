@@ -198,6 +198,14 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     and can yield a stray typographic quote that PowerShell treats as a string delimiter,
     breaking the parse (`Send to` then silently produces no PDF). Comments transliterate
     (`ae`/`ue`/`oe`); keep all `.ps1` content ASCII (`grep -nP '[^\x00-\x7F]'`).
+  - **Read the Markdown *source* as UTF-8 explicitly.** Windows PowerShell 5.1's `Get-Content`
+    (no `-Encoding`) decodes in the ANSI code page (CP1252), so a UTF-8 `.md` with umlauts becomes
+    mojibake (`ä` → `Ã¤`) that then flows into the render temp and the PDF. `convert.ps1` reads via
+    `[IO.File]::ReadAllLines($Src, (New-Object Text.UTF8Encoding $false))` — auto-detects/strips a
+    BOM and matches the BOM-less UTF-8 the temp is written with. (This is about *content* files, not
+    the ASCII rule above, which is about the *script* files themselves.) The body flows through the
+    render **file** (UTF-8, safe); only the frontmatter values go via `--input` argv, which Windows
+    passes as UTF-16 (unaffected). `build.sh` reads UTF-8 natively.
   - **`Invoke-WebRequest -OutFile` treats its path as a wildcard pattern.** A font name with
     brackets (`NotoEmoji[wght].ttf`) is read as a char class and the download aborts with
     "resolved wildcard path does not specify a file". `install.ps1` escapes the target via
