@@ -200,14 +200,19 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     "resolved wildcard path does not specify a file". `install.ps1` escapes the target via
     `[Management.Automation.WildcardPattern]::Escape(...)`; don't pass an unescaped bracketed
     path to `-OutFile`. (bash `curl -o` is unaffected — it writes the literal name.)
-  - **Typst `--input` paths that the template resolves internally must use forward slashes.**
-    Typst's virtual path system rejects backslashes (`error: path must not contain a backslash`),
-    but `Resolve-Path`/`Split-Path` on Windows yield `\`. So `convert.ps1` normalizes the four
-    path-valued inputs — `source` (`read`), `attach` (`pdf.attach`), `docdir` (relative-image
-    resolution), `logo` (`image`) — via `-replace '\\','/'` before passing them. The **CLI
-    filesystem args** (`$Template`, output, `--root`, `--font-path`) are the OS fs layer, accept
-    backslashes, and are left untouched. `build.sh` is unaffected (POSIX paths are already
-    forward-slashed). Non-path inputs (title, date, lang, …) need no normalization.
+  - **Typst `--input` paths that the template resolves internally must be root-relative, not
+    absolute Windows paths.** Typst resolves `read`/`image`/`pdf.attach`/`docdir` paths through
+    its **virtual filesystem relative to `--root`**, which enforces two rules a Windows absolute
+    path breaks: no backslashes (`error: path must not contain a backslash`) **and** no drive
+    letter (`error: path contains invalid component "C:"`). So `convert.ps1`'s `ConvertTo-TypstPath`
+    turns `C:\Users\x` into `/Users/x` (`-replace '\\','/'` then strip the leading `[A-Za-z]:`)
+    for the four path-valued inputs — `source` (`read`), `attach` (`pdf.attach`), `docdir`
+    (relative-image resolution), `logo` (`image`). This mirrors `build.sh`, which passes `--root /`
+    plus `/`-absolute POSIX paths (root-relative already). Because `--root` = the drive root
+    (`$Root`), this assumes **source and install live on the same drive** (documented; a single
+    `--root` cannot span two drives). The **CLI filesystem args** (`$Template`, output, `--root`,
+    `--font-path`) go through the OS fs layer, accept backslashes/drive letters, and are left
+    untouched. `build.sh` is unaffected; non-path inputs (title, date, lang, …) need no transform.
 
 ### Heading / document model (encoded in template.typ)
 
