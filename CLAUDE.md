@@ -290,6 +290,20 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   centered/bold header, left body, zebra `fill`. Emitting a `table` inside `#show table:`
   recurses → guard on a field the rebuild sets but cmarker never does: `if it.fill != none {
   it } else { …rebuild… }`. `it.columns` is an int from cmarker (`(1fr,)*n` needs that count).
+  The rebuild spreads `..it.children` **as-is** — cmarker already wraps the first row in a real
+  `table.header` (with `repeat: true`), so the **header row repeats on page breaks automatically**;
+  do **not** re-wrap the first cells in another `table.header` (Typst errors: *header within another
+  header*). The rebuilt table is wrapped in a `block(above/below, breakable: true)` for symmetric
+  spacing while still letting long tables break across pages (with the repeating header).
+- **Non-breaking spaces** — `template.typ` inserts NBSP so common pairs don't break across a line:
+  German abbreviations via literal `#show "z. B.": [z.~B.]` rules (the replacement contains `~`/NBSP,
+  not a plain space, so it can't re-match → no recursion), and number + unit/percent/currency via
+  two `#show regex(...): it => it.text.replace(" ", "\u{00A0}")` rules (Typst's regex crate has **no
+  lookaround**, so match the whole pair and swap its one space). Letter units carry a trailing `\b`
+  so `5 Meter` isn't touched; symbol units (`%`/`€`/`£`/`$`) omit `\b`. Verify a change with the
+  visible-marker trick: swap `\u{00A0}`/`~` for `X`, render, and check where `X` lands (an NBSP is
+  invisible, and `mutool`/text-extractors normalize it back to a space, so a raw text dump won't
+  show it). `#show regex(...)` needs a **colon** (`: it => …`), not `=>`.
 
 ## Release flow
 

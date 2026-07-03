@@ -252,12 +252,13 @@ Body text with **emphasis** and a footnote.[^1]
 | Headings | **Source Serif 4**, `luma(8%)`, left-aligned, no bars; **only H1** carries a fine hairline right below, all others are set apart by size/spacing |
 | Watermark | optional (`watermark:`): diagonal, letter-spaced, bold, light gray (single-channel gray → clean K in print), **beneath** everything |
 | Body text | Source Sans 3, 12 pt, justified with hyphenation, `luma(13%)` |
-| Tables | full width; header centered + bold with a line below; light row zebra, vertical separators, no horizontal row lines |
+| Tables | full width; header centered + bold with a line below; light row zebra, vertical separators, no horizontal row lines; **header row repeats** across page breaks |
 | Code | Source Code Pro, 10 pt, with syntax highlighting |
 | Lists | unordered: small square at **all** levels; ordered: numbers; tasks (`- [ ]`): box ☐ open / ☒ done |
 | Images | local: numbered figure with caption; remote (`http(s)`, `//host`, `data:`) removed automatically offline |
 | Quotes | indented on both sides (narrower than the text block) + italic |
 | Emoji/symbols | per-glyph fallback: Noto Emoji + Noto Sans Symbols 2 (monochrome, only for characters without a Source glyph) |
+| Break protection | headings never alone at a page foot (sticky); figure + caption stay together; orphans/widows/runts avoided (`costs`); **non-breaking spaces** in German abbreviations (z. B., d. h., u. a., …) and between number + unit/percent/currency (12 pt, 5 %, 1.234,56 €) |
 
 ### Typography (font sizes)
 

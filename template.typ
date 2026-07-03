@@ -32,7 +32,12 @@
     it
   } else {
     let n = if type(it.columns) == int { it.columns } else { it.columns.len() }
-    table(
+    // cmarker liefert die Kopfzeile bereits als table.header (Default repeat:true) –
+    // in ..it.children enthalten, wird also weitergereicht und wiederholt sich bei
+    // Seitenumbruch am Kopf der Folgeseite. Symmetrischer Abstand ober-/unterhalb
+    // (etwas mehr als der Absatzabstand); breakable:true, damit lange Tabellen
+    // samt wiederholtem Kopf über Seiten umbrechen dürfen.
+    block(above: 1.2em, below: 1.4em, breakable: true, table(
       columns: (1fr,) * n,
       align: (_, y) => if y == 0 { center } else { left },
       // Leichter Zeilen-Hintergrundwechsel (Zebra); zugleich der Guard-Marker
@@ -45,7 +50,7 @@
         top: if y == 1 { 0.7pt + luma(45%) } else { 0pt },
       ),
       ..it.children,
-    )
+    ))
   }
 }
 #show table.cell.where(y: 0): strong
@@ -276,6 +281,27 @@
 #set text(font: body-font, size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%),
   costs: (orphan: 200%, widow: 200%, runt: 200%))
 #set par(justify: true, leading: 0.8em, spacing: 1.1em)
+
+// Geschützte Leerzeichen (NBSP): verhindern hässliche Zeilenumbrüche mitten in
+// deutschen Abkürzungen, Einheiten, Prozent- und Währungsangaben.
+// (a) Deutsche Abkürzungen – literale Ersetzung; das Ergebnis enthält NBSP (~)
+//     statt eines normalen Leerzeichens, daher keine Rekursion der Show-Regel.
+#show "z. B.": [z.~B.]
+#show "u. a.": [u.~a.]
+#show "d. h.": [d.~h.]
+#show "u. Ä.": [u.~Ä.]
+#show "o. Ä.": [o.~Ä.]
+#show "u. U.": [u.~U.]
+#show "z. T.": [z.~T.]
+#show "i. d. R.": [i.~d.~R.]
+#show "s. o.": [s.~o.]
+#show "s. u.": [s.~u.]
+// (b) Zahl + Einheit/Prozent/Währung – das trennende Leerzeichen wird geschützt.
+//     Typsts Regex (Rust regex-Crate) kennt kein Lookaround -> den ganzen Treffer
+//     matchen und das eine Leerzeichen durch NBSP ersetzen. Buchstaben-Einheiten
+//     mit \b abgrenzen (kein Treffer in „5 Meter"); Symbol-Einheiten ohne \b.
+#show regex("[0-9] (pt|px|mm|cm|km|kg|mg|MB|GB|KB|TB|ms|dpi|ppi|°C)\b"): it => it.text.replace(" ", "\u{00A0}")
+#show regex("[0-9] (%|€|£|\\$)"): it => it.text.replace(" ", "\u{00A0}")
 
 // Ungeordnete Listen: auf ALLEN Ebenen derselbe Marker – ein kleines Quadrat
 // (statt der ebenenabhängigen Standardzeichen •/‣/–). Als Typst-Form gezeichnet

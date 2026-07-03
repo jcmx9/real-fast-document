@@ -27,11 +27,19 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   so an indented continuation line escaped the `<dd>` and rendered as body text flush left. Both
   now fold continuation lines into the description, so wrapped lines stay indented under the term.
 
+### Added
+- **Non-breaking spaces** — the template inserts NBSP so common pairs no longer break across a line:
+  German abbreviations (`z. B.`, `d. h.`, `u. a.`, `i. d. R.`, …) and number + unit/percent/currency
+  (`12 pt`, `5 %`, `1.234,56 €`, `10 MB`, …). Letter units use a `\b` boundary so `5 Meter` stays
+  untouched, and a value with no space (`2$`) is left alone.
+
 ### Changed
 - **Typographic vertical rhythm reworked** — heading spacing revised so subheadings no longer hug
   their body text: `below` is now ~`above`/2 at every level (H1 2.0/0.6, H2 1.5/0.7, H3 1.25/0.55,
   H4 1.05/0.45 em) while keeping space-above > space-below. Widows/orphans/runts are discouraged via
-  `#set text(costs: (orphan: 200%, widow: 200%, runt: 200%))`, and figures gain symmetric spacing.
+  `#set text(costs: (orphan: 200%, widow: 200%, runt: 200%))`; figures and tables gain symmetric
+  above/below spacing. (Table **header rows already repeat** across page breaks — cmarker emits a
+  real `table.header`; the full-width rebuild preserves it.)
 - **Idempotent font/package fetching** — re-running the installer (the normal update path) no
   longer re-downloads what is already present. `fetch-fonts.sh` skips when all target files exist;
   `fetch-typst-packages.sh` skips per package when `vendor/<name>/typst.toml` already carries the
