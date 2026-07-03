@@ -140,7 +140,9 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   frontmatter, (2) normalizes **loose task lists to tight** — cmarker 0.1.9 **crashes** (`wasm unreachable`; upstream #71, fixed, pending release) on task items separated by blank lines — and (3) converts Pandoc-style
   definition lists (`Term` / `: def`) to HTML `<dl>`. The `<dl>` uses **block form** (a blank
   line after `<dd>`) so inline markdown in a definition renders — inline `<dd>x `code` y</dd>`
-  would show literal backticks. The temp copy is rendered; the **original** `.md` is embedded
+  would show literal backticks. **Multi-line definitions** (a `: def` line plus indented Pandoc
+  continuation lines) are folded into one `<dd>` — otherwise the continuation escapes the `<dd>`
+  and renders as body text flush left instead of indented under the term. The temp copy is rendered; the **original** `.md` is embedded
   (`--input attach`) so the attachment keeps the real name and untouched content.
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the
   conversion entry points. They parse the frontmatter, preprocess to a temp file, resolve the

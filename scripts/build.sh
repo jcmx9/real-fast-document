@@ -149,12 +149,21 @@ END {
         if (is_blank(L[i]) || L[i] ~ /^:/ || i+1 > n || L[i+1] !~ /^:[ \t]+/) break
         term = L[i]
         def = L[i+1]; sub(/^:[ \t]+/, "", def)
+        k = i + 2
+        # Pandoc-Fortsetzungszeilen der Definition (eingerückt, nicht-leer, kein
+        # neuer ":"-Eintrag) an die Definition anhängen -> EINE Zeile im <dd>.
+        # Ohne das landet die 2. Beschreibungszeile als Fließtext am linken Rand.
+        while (k <= n && !is_blank(L[k]) && L[k] ~ /^[ \t]+/ && L[k] !~ /^[ \t]*:[ \t]+/) {
+          cont = L[k]; sub(/^[ \t]+/, "", cont)
+          def = def " " cont
+          k++
+        }
         print "<dt>" term "</dt>"
         print "<dd>"
         print ""
         print def
         print "</dd>"
-        i += 2
+        i = k
         j = i; while (j <= n && is_blank(L[j])) j++          # Leerzeilen zwischen Paaren
         if (j <= n && L[j] !~ /^:/ && j+1 <= n && L[j+1] ~ /^:[ \t]+/) i = j
       }

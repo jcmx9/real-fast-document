@@ -91,8 +91,16 @@ function ConvertTo-RenderMarkdown {
             -or ($i + 1 -ge $n) -or ($L[$i + 1] -notmatch '^:[ \t]+')) { break }
         $term = $L[$i]
         $def  = $L[$i + 1] -replace '^:[ \t]+', ''
+        $k = $i + 2
+        # Pandoc-Fortsetzungszeilen der Definition (eingerueckt, nicht-leer, kein
+        # neuer ':'-Eintrag) anhaengen -> EINE Zeile im <dd>. Ohne das landet die
+        # 2. Beschreibungszeile als Fliesstext am linken Rand.
+        while ($k -lt $n -and -not (& $isBlank $L[$k]) -and $L[$k] -match '^[ \t]+' -and $L[$k] -notmatch '^[ \t]*:[ \t]+') {
+          $def = $def + ' ' + ($L[$k] -replace '^[ \t]+', '')
+          $k++
+        }
         $out.Add("<dt>$term</dt>"); $out.Add('<dd>'); $out.Add(''); $out.Add($def); $out.Add('</dd>')
-        $i += 2
+        $i = $k
         $j = $i; while ($j -lt $n -and (& $isBlank $L[$j])) { $j++ }
         if ($j -lt $n -and $L[$j] -notmatch '^:' -and ($j + 1 -lt $n) -and $L[$j + 1] -match '^:[ \t]+') { $i = $j }
       }

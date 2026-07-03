@@ -271,8 +271,10 @@
 // costs: Schusterjungen (orphan – erste Absatzzeile allein am Seitenfuß) und
 // Hurenkinder (widow – letzte Absatzzeile allein am Seitenkopf) werden über den
 // Default hinaus verteuert, sodass Typst sie vermeidet (eine Zeile mitnimmt).
+// runt = einzelnes kurzes Wort allein auf der letzten Absatzzeile (im Blocksatz
+// unschön) – ebenfalls verteuert, damit Typst umbricht/trennt statt es stehen zu lassen.
 #set text(font: body-font, size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%),
-  costs: (orphan: 200%, widow: 200%))
+  costs: (orphan: 200%, widow: 200%, runt: 200%))
 #set par(justify: true, leading: 0.8em, spacing: 1.1em)
 
 // Ungeordnete Listen: auf ALLEN Ebenen derselbe Marker – ein kleines Quadrat

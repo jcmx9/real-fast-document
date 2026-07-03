@@ -22,12 +22,16 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 - **Figure captions splitting across pages** — the `#show figure` rule now sets `breakable: false`,
   so an image and its caption always stay on one page (the whole figure moves to the next page if
   needed); a caption never lands alone on the following page.
+- **Multi-line definition descriptions broke to the left margin** — the Pandoc-deflist
+  preprocessing (`build.sh` awk / `convert.ps1`) captured only the first line of a `: definition`,
+  so an indented continuation line escaped the `<dd>` and rendered as body text flush left. Both
+  now fold continuation lines into the description, so wrapped lines stay indented under the term.
 
 ### Changed
 - **Typographic vertical rhythm reworked** — heading spacing revised so subheadings no longer hug
   their body text: `below` is now ~`above`/2 at every level (H1 2.0/0.6, H2 1.5/0.7, H3 1.25/0.55,
-  H4 1.05/0.45 em) while keeping space-above > space-below. Widows/orphans are discouraged via
-  `#set text(costs: (orphan: 200%, widow: 200%))`, and figures gain symmetric above/below spacing.
+  H4 1.05/0.45 em) while keeping space-above > space-below. Widows/orphans/runts are discouraged via
+  `#set text(costs: (orphan: 200%, widow: 200%, runt: 200%))`, and figures gain symmetric spacing.
 - **Idempotent font/package fetching** — re-running the installer (the normal update path) no
   longer re-downloads what is already present. `fetch-fonts.sh` skips when all target files exist;
   `fetch-typst-packages.sh` skips per package when `vendor/<name>/typst.toml` already carries the
