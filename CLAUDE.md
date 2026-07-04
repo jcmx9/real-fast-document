@@ -304,6 +304,20 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   visible-marker trick: swap `\u{00A0}`/`~` for `X`, render, and check where `X` lands (an NBSP is
   invisible, and `mutool`/text-extractors normalize it back to a space, so a raw text dump won't
   show it). `#show regex(...)` needs a **colon** (`: it => …`), not `=>`.
+  - **Code/`raw` is excluded from all of the above.** The NBSP rules match **every** text run,
+    including inside `raw`/code — so without a guard a code sample (`x = 5 % 2`, `12 pt`) renders a
+    space that is really a U+00A0, and copy-pasting it out of the PDF breaks the code. Typst has **no
+    "not in raw" selector**, so a `#show raw: it => { … it }` wrapper re-runs two inner regex rules
+    that shove an invisible `box()` atom **between the protected number/abbreviation and its next
+    char**: `[0-9] \S` (covers unit **and** symbol/percent/currency) and `[A-Za-zÄÖÜäöü]\. \S`
+    (covers every abbreviation — each protected space there sits behind `x.`). The visible text (with
+    a **normal** space) is unchanged; the outer regex/string rules just no longer find a contiguous
+    match, so they don't fire. Non-obvious traps found the hard way: (a) the box must sit **inside**
+    the match with the neighbouring chars **re-emitted** (`slice…#box()#slice`) — a trailing box, an
+    identity return, or a different-selector rule all let the outer rule re-match across the element
+    boundary; (b) it must be a **regex** neutralizer, not `#show " "` (a content-literal space gets
+    trimmed). Verify with the visible-marker trick on a **highlighted** code block (swap NBSP→`¤`):
+    `¤` must appear in body prose but **never** inside a code block.
 
 ## Release flow
 

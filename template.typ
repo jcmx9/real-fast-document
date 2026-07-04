@@ -303,6 +303,25 @@
 #show regex("[0-9] (pt|px|mm|cm|km|kg|mg|MB|GB|KB|TB|ms|dpi|ppi|°C)\b"): it => it.text.replace(" ", "\u{00A0}")
 #show regex("[0-9] (%|€|£|\\$)"): it => it.text.replace(" ", "\u{00A0}")
 
+// Code/`raw` von den NBSP-Regeln oben ausnehmen. Sonst würde ein Space in einem
+// Code-Beispiel (etwa `x = 5 % 2` oder `12 pt`) zu NBSP – im PDF unsichtbar, aber
+// beim Copy-Paste bricht der eingefügte U+00A0 den Code (Shell/Python/JS). Typst
+// hat keinen „nicht in raw"-Selektor; die NBSP-Regeln oben greifen auf JEDEN Text.
+// Lösung: innerhalb von raw ein unsichtbares Atom (box()) zwischen die geschützte
+// Zahl/Abkürzung und ihr Folgezeichen schieben. Der sichtbare Text (mit normalem
+// Space) bleibt exakt erhalten, aber die äußeren Regex-/String-Regeln finden kein
+// zusammenhängendes Muster mehr und feuern nicht. Zwei Anker decken alles ab:
+//   (1) Zahl + Space  -> bricht Einheiten- UND Symbol-/Prozent-/Währungsregel,
+//   (2) Buchstabe. + Space  -> bricht alle Abkürzungen (jeder geschützte Space
+//       dort steht hinter „x."). Die box() wird jeweils HINTER den Space (vor das
+//       Folgezeichen) gesetzt; Nachbarzeichen werden mit re-emittiert, damit die
+//       äußere Regel den Treffer nicht doch über die Elementgrenze zusammenzieht.
+#show raw: it => {
+  show regex("[0-9] \S"): r => [#r.text.slice(0, 2)#box()#r.text.slice(2)]
+  show regex("[A-Za-zÄÖÜäöü]\. \S"): r => [#r.text.slice(0, 3)#box()#r.text.slice(3)]
+  it
+}
+
 // Ungeordnete Listen: auf ALLEN Ebenen derselbe Marker – ein kleines Quadrat
 // (statt der ebenenabhängigen Standardzeichen •/‣/–). Als Typst-Form gezeichnet
 // (font-unabhängig, exakte Größe/Farbe), leicht angehoben zur optischen Mitte.

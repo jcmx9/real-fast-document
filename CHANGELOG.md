@@ -6,6 +6,8 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.5] - 2026-07-04
+
 ### Fixed
 - **Typst 0.15 deprecation warning** — the remote-image skip counter used the deprecated
   `typst query` subcommand (`warning: the 'typst query' subcommand is deprecated`). `build.sh` and
@@ -31,7 +33,9 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 - **Non-breaking spaces** — the template inserts NBSP so common pairs no longer break across a line:
   German abbreviations (`z. B.`, `d. h.`, `u. a.`, `i. d. R.`, …) and number + unit/percent/currency
   (`12 pt`, `5 %`, `1.234,56 €`, `10 MB`, …). Letter units use a `\b` boundary so `5 Meter` stays
-  untouched, and a value with no space (`2$`) is left alone.
+  untouched, and a value with no space (`2$`) is left alone. **Code/`raw` is excluded** — a `#show
+  raw` rule decouples the protected pairs there so a code sample (e.g. `x = 5 % 2` or `12 pt`) keeps
+  a real space and copy-pastes cleanly, instead of a rendered NBSP silently breaking the code.
 
 ### Changed
 - **Typographic vertical rhythm reworked** — heading spacing revised so subheadings no longer hug
