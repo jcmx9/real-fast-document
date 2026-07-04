@@ -59,6 +59,18 @@ typst compile template.typ --root / --font-path fonts --ignore-system-fonts \
 The simplest path is just `RFD_NO_OPEN=1 bash scripts/build.sh SRC.md` for the PDF, then render
 that PDF's pages separately if you need PNGs.
 
+**Verifying a `template.typ` change (the standard loop):**
+1. `RFD_NO_OPEN=1 bash scripts/build.sh example.md /tmp/ex.pdf` — `example.md` is the regression
+   probe; a clean build (`✓ … PDF/A-3b`) already rules out compile errors and missing-glyph aborts.
+2. Find the page that exercises what you touched and eyeball it:
+   `mutool draw -F png -r 130 -o /tmp/p{page}.png /tmp/ex.pdf N`, then Read the PNG.
+3. **For any change to the NBSP / text-substitution show rules, a text dump is useless** —
+   `mutool`/`pdftotext` **normalize U+00A0 back to a plain space**, so an extracted-text diff can't
+   tell you whether a rule fired. Use the **visible-marker trick**: temporarily swap the rule's
+   `\u{00A0}`/`~` for a visible glyph (e.g. `¤`), render, and read where the marker lands — it must
+   appear in body prose but **never** inside a code block (the `#show raw` guard, see below). Revert
+   the marker before committing.
+
 `mutool extract FILE.pdf` (mupdf) pulls the embedded Markdown back out; check PDF/A
 conformance with `strings FILE.pdf | grep pdfaid` (Typst 0.15 compresses object streams,
 so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confirm attachments).
