@@ -6,6 +6,8 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.5] - 2026-07-04
+
 ### Fixed
 - **Typst 0.15 deprecation warning** — the remote-image skip counter used the deprecated
   `typst query` subcommand (`warning: the 'typst query' subcommand is deprecated`). `build.sh` and
@@ -16,8 +18,32 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   (no `-Encoding`), which on Windows PowerShell 5.1 decodes as CP1252 and mangled UTF-8 umlauts
   (`ä` → `Ã¤`) into the rendered PDF. It now reads via `[IO.File]::ReadAllLines` with UTF-8
   (BOM auto-detected), matching the BOM-less UTF-8 the render temp is written with.
+- **Orphaned headings at the page foot** — the custom `#show heading` rule built its own block,
+  dropping Typst's default heading `sticky`, so a heading could sit alone at the bottom of a page.
+  All heading levels now set `sticky: true`, keeping the heading with its following content.
+- **Figure captions splitting across pages** — the `#show figure` rule now sets `breakable: false`,
+  so an image and its caption always stay on one page (the whole figure moves to the next page if
+  needed); a caption never lands alone on the following page.
+- **Multi-line definition descriptions broke to the left margin** — the Pandoc-deflist
+  preprocessing (`build.sh` awk / `convert.ps1`) captured only the first line of a `: definition`,
+  so an indented continuation line escaped the `<dd>` and rendered as body text flush left. Both
+  now fold continuation lines into the description, so wrapped lines stay indented under the term.
+
+### Added
+- **Non-breaking spaces** — the template inserts NBSP so common pairs no longer break across a line:
+  German abbreviations (`z. B.`, `d. h.`, `u. a.`, `i. d. R.`, …) and number + unit/percent/currency
+  (`12 pt`, `5 %`, `1.234,56 €`, `10 MB`, …). Letter units use a `\b` boundary so `5 Meter` stays
+  untouched, and a value with no space (`2$`) is left alone. **Code/`raw` is excluded** — a `#show
+  raw` rule decouples the protected pairs there so a code sample (e.g. `x = 5 % 2` or `12 pt`) keeps
+  a real space and copy-pastes cleanly, instead of a rendered NBSP silently breaking the code.
 
 ### Changed
+- **Typographic vertical rhythm reworked** — heading spacing revised so subheadings no longer hug
+  their body text: `below` is now ~`above`/2 at every level (H1 2.0/0.6, H2 1.5/0.7, H3 1.25/0.55,
+  H4 1.05/0.45 em) while keeping space-above > space-below. Widows/orphans/runts are discouraged via
+  `#set text(costs: (orphan: 200%, widow: 200%, runt: 200%))`; figures and tables gain symmetric
+  above/below spacing. (Table **header rows already repeat** across page breaks — cmarker emits a
+  real `table.header`; the full-width rebuild preserves it.)
 - **Idempotent font/package fetching** — re-running the installer (the normal update path) no
   longer re-downloads what is already present. `fetch-fonts.sh` skips when all target files exist;
   `fetch-typst-packages.sh` skips per package when `vendor/<name>/typst.toml` already carries the

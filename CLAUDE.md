@@ -140,7 +140,9 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   frontmatter, (2) normalizes **loose task lists to tight** — cmarker 0.1.9 **crashes** (`wasm unreachable`; upstream #71, fixed, pending release) on task items separated by blank lines — and (3) converts Pandoc-style
   definition lists (`Term` / `: def`) to HTML `<dl>`. The `<dl>` uses **block form** (a blank
   line after `<dd>`) so inline markdown in a definition renders — inline `<dd>x `code` y</dd>`
-  would show literal backticks. The temp copy is rendered; the **original** `.md` is embedded
+  would show literal backticks. **Multi-line definitions** (a `: def` line plus indented Pandoc
+  continuation lines) are folded into one `<dd>` — otherwise the continuation escapes the `<dd>`
+  and renders as body text flush left instead of indented under the term. The temp copy is rendered; the **original** `.md` is embedded
   (`--input attach`) so the attachment keeps the real name and untouched content.
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the
   conversion entry points. They parse the frontmatter, preprocess to a temp file, resolve the
@@ -243,10 +245,26 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 - **H2 / H3** = subsections (serif, no line). **H4+** = bold, left-aligned only.
 - **Visual language:** all headings **serif** (`Source Serif 4`), `luma(8%)`, left-aligned
   (`justify: false`), **no accent bars**; only **H1** carries a hairline (`luma(60%)`) right below.
-  Every heading uses space-above > space-below (binds to following text). Header **and** footer
+  Every heading uses space-above > space-below so it binds to the following text — but the `below`
+  is sized ~`above`/2 (H1 2.0/0.6, H2 1.5/0.7, H3 1.25/0.55, H4 1.05/0.45 em) so the body no longer
+  hugs the heading. **All above/below em are 12pt-em** (resolved against the body size at block
+  creation, *not* the heading size) — so the rhythm is level-independent; edit the four block()
+  calls in the `#show heading` rule. Header **and** footer
   text are Sans (`Source Sans 3`). Fonts come from `body-font`/`heading-font`/`code-font`. Unordered
   lists use one small drawn square marker at **all** levels; ordered lists keep numbers; task items
   use a checkbox glyph (☐ open, ☒ done, via Noto). Blockquotes are indented both sides + italic.
+- **Page-break hygiene (widows/orphans, sticky headings, unbreakable figures):**
+  - **Headings never sit alone at a page foot.** Typst sets `sticky: true` on heading blocks *by
+    default* — but our `#show heading` rule builds its **own** `block(...)`, which **drops** that
+    default. So every heading block here must set `sticky: true` explicitly (all four levels do);
+    omitting it silently re-introduces orphaned headings. Verified via A/B (same doc, `sticky` on
+    vs off): off strands the heading at the page foot, on pushes it to the next page.
+  - **Figure + caption stay together** — the `#show figure` rule sets `breakable: false`, so an
+    image and its (bottom) caption never split across a page; if both don't fit, the whole figure
+    moves to the next page. (Don't set `breakable: true` unless a figure must span pages.)
+  - **Widows/orphans** are discouraged via `#set text(costs: (orphan: 200%, widow: 200%))` —
+    Schusterjunge = lone first line at a page foot, Hurenkind = lone last line at a page head;
+    2× the default cost makes Typst pull an extra line rather than leave one stranded.
 - **Running header** (`doc-header`): `header:` fixed text wins; else the active **H1** chapter;
   before the first chapter the `title:` (if set), else empty.
 - **Conditional TOC / structured mode**: when `#H1 + #H2 > 5` (`auto-structured()`) the doc renders
@@ -272,6 +290,34 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   centered/bold header, left body, zebra `fill`. Emitting a `table` inside `#show table:`
   recurses → guard on a field the rebuild sets but cmarker never does: `if it.fill != none {
   it } else { …rebuild… }`. `it.columns` is an int from cmarker (`(1fr,)*n` needs that count).
+  The rebuild spreads `..it.children` **as-is** — cmarker already wraps the first row in a real
+  `table.header` (with `repeat: true`), so the **header row repeats on page breaks automatically**;
+  do **not** re-wrap the first cells in another `table.header` (Typst errors: *header within another
+  header*). The rebuilt table is wrapped in a `block(above/below, breakable: true)` for symmetric
+  spacing while still letting long tables break across pages (with the repeating header).
+- **Non-breaking spaces** — `template.typ` inserts NBSP so common pairs don't break across a line:
+  German abbreviations via literal `#show "z. B.": [z.~B.]` rules (the replacement contains `~`/NBSP,
+  not a plain space, so it can't re-match → no recursion), and number + unit/percent/currency via
+  two `#show regex(...): it => it.text.replace(" ", "\u{00A0}")` rules (Typst's regex crate has **no
+  lookaround**, so match the whole pair and swap its one space). Letter units carry a trailing `\b`
+  so `5 Meter` isn't touched; symbol units (`%`/`€`/`£`/`$`) omit `\b`. Verify a change with the
+  visible-marker trick: swap `\u{00A0}`/`~` for `X`, render, and check where `X` lands (an NBSP is
+  invisible, and `mutool`/text-extractors normalize it back to a space, so a raw text dump won't
+  show it). `#show regex(...)` needs a **colon** (`: it => …`), not `=>`.
+  - **Code/`raw` is excluded from all of the above.** The NBSP rules match **every** text run,
+    including inside `raw`/code — so without a guard a code sample (`x = 5 % 2`, `12 pt`) renders a
+    space that is really a U+00A0, and copy-pasting it out of the PDF breaks the code. Typst has **no
+    "not in raw" selector**, so a `#show raw: it => { … it }` wrapper re-runs two inner regex rules
+    that shove an invisible `box()` atom **between the protected number/abbreviation and its next
+    char**: `[0-9] \S` (covers unit **and** symbol/percent/currency) and `[A-Za-zÄÖÜäöü]\. \S`
+    (covers every abbreviation — each protected space there sits behind `x.`). The visible text (with
+    a **normal** space) is unchanged; the outer regex/string rules just no longer find a contiguous
+    match, so they don't fire. Non-obvious traps found the hard way: (a) the box must sit **inside**
+    the match with the neighbouring chars **re-emitted** (`slice…#box()#slice`) — a trailing box, an
+    identity return, or a different-selector rule all let the outer rule re-match across the element
+    boundary; (b) it must be a **regex** neutralizer, not `#show " "` (a content-literal space gets
+    trimmed). Verify with the visible-marker trick on a **highlighted** code block (swap NBSP→`¤`):
+    `¤` must appear in body prose but **never** inside a code block.
 
 ## Release flow
 

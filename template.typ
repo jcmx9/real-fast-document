@@ -32,7 +32,12 @@
     it
   } else {
     let n = if type(it.columns) == int { it.columns } else { it.columns.len() }
-    table(
+    // cmarker liefert die Kopfzeile bereits als table.header (Default repeat:true) –
+    // in ..it.children enthalten, wird also weitergereicht und wiederholt sich bei
+    // Seitenumbruch am Kopf der Folgeseite. Symmetrischer Abstand ober-/unterhalb
+    // (etwas mehr als der Absatzabstand); breakable:true, damit lange Tabellen
+    // samt wiederholtem Kopf über Seiten umbrechen dürfen.
+    block(above: 1.2em, below: 1.4em, breakable: true, table(
       columns: (1fr,) * n,
       align: (_, y) => if y == 0 { center } else { left },
       // Leichter Zeilen-Hintergrundwechsel (Zebra); zugleich der Guard-Marker
@@ -45,7 +50,7 @@
         top: if y == 1 { 0.7pt + luma(45%) } else { 0pt },
       ),
       ..it.children,
-    )
+    ))
   }
 }
 #show table.cell.where(y: 0): strong
@@ -53,7 +58,10 @@
 #show figure.where(kind: image): set figure.caption(position: bottom)
 // Bildunterschrift kleiner als Fließtext, mit etwas mehr Abstand unter der Abbildung.
 #show figure.caption: set text(size: 10pt)
-#show figure: it => block(below: 1.8em, it)
+// breakable: false hält Abbildung UND Unterschrift zusammen auf einer Seite –
+// passt beides nicht mehr aufs Blatt, wandert die ganze Figure auf die nächste
+// Seite (die Unterschrift landet damit nie allein auf der Folgeseite).
+#show figure: it => block(above: 1.4em, below: 1.6em, breakable: false, it)
 
 // ---------------------------------------------------------------------------
 // Laufzeit-Eingaben (via `typst compile --input ...`)
@@ -265,8 +273,54 @@
 // ---------------------------------------------------------------------------
 // Fließtext, Überschriften, Code
 // ---------------------------------------------------------------------------
-#set text(font: body-font, size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%))
+// costs: Schusterjungen (orphan – erste Absatzzeile allein am Seitenfuß) und
+// Hurenkinder (widow – letzte Absatzzeile allein am Seitenkopf) werden über den
+// Default hinaus verteuert, sodass Typst sie vermeidet (eine Zeile mitnimmt).
+// runt = einzelnes kurzes Wort allein auf der letzten Absatzzeile (im Blocksatz
+// unschön) – ebenfalls verteuert, damit Typst umbricht/trennt statt es stehen zu lassen.
+#set text(font: body-font, size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%),
+  costs: (orphan: 200%, widow: 200%, runt: 200%))
 #set par(justify: true, leading: 0.8em, spacing: 1.1em)
+
+// Geschützte Leerzeichen (NBSP): verhindern hässliche Zeilenumbrüche mitten in
+// deutschen Abkürzungen, Einheiten, Prozent- und Währungsangaben.
+// (a) Deutsche Abkürzungen – literale Ersetzung; das Ergebnis enthält NBSP (~)
+//     statt eines normalen Leerzeichens, daher keine Rekursion der Show-Regel.
+#show "z. B.": [z.~B.]
+#show "u. a.": [u.~a.]
+#show "d. h.": [d.~h.]
+#show "u. Ä.": [u.~Ä.]
+#show "o. Ä.": [o.~Ä.]
+#show "u. U.": [u.~U.]
+#show "z. T.": [z.~T.]
+#show "i. d. R.": [i.~d.~R.]
+#show "s. o.": [s.~o.]
+#show "s. u.": [s.~u.]
+// (b) Zahl + Einheit/Prozent/Währung – das trennende Leerzeichen wird geschützt.
+//     Typsts Regex (Rust regex-Crate) kennt kein Lookaround -> den ganzen Treffer
+//     matchen und das eine Leerzeichen durch NBSP ersetzen. Buchstaben-Einheiten
+//     mit \b abgrenzen (kein Treffer in „5 Meter"); Symbol-Einheiten ohne \b.
+#show regex("[0-9] (pt|px|mm|cm|km|kg|mg|MB|GB|KB|TB|ms|dpi|ppi|°C)\b"): it => it.text.replace(" ", "\u{00A0}")
+#show regex("[0-9] (%|€|£|\\$)"): it => it.text.replace(" ", "\u{00A0}")
+
+// Code/`raw` von den NBSP-Regeln oben ausnehmen. Sonst würde ein Space in einem
+// Code-Beispiel (etwa `x = 5 % 2` oder `12 pt`) zu NBSP – im PDF unsichtbar, aber
+// beim Copy-Paste bricht der eingefügte U+00A0 den Code (Shell/Python/JS). Typst
+// hat keinen „nicht in raw"-Selektor; die NBSP-Regeln oben greifen auf JEDEN Text.
+// Lösung: innerhalb von raw ein unsichtbares Atom (box()) zwischen die geschützte
+// Zahl/Abkürzung und ihr Folgezeichen schieben. Der sichtbare Text (mit normalem
+// Space) bleibt exakt erhalten, aber die äußeren Regex-/String-Regeln finden kein
+// zusammenhängendes Muster mehr und feuern nicht. Zwei Anker decken alles ab:
+//   (1) Zahl + Space  -> bricht Einheiten- UND Symbol-/Prozent-/Währungsregel,
+//   (2) Buchstabe. + Space  -> bricht alle Abkürzungen (jeder geschützte Space
+//       dort steht hinter „x."). Die box() wird jeweils HINTER den Space (vor das
+//       Folgezeichen) gesetzt; Nachbarzeichen werden mit re-emittiert, damit die
+//       äußere Regel den Treffer nicht doch über die Elementgrenze zusammenzieht.
+#show raw: it => {
+  show regex("[0-9] \S"): r => [#r.text.slice(0, 2)#box()#r.text.slice(2)]
+  show regex("[A-Za-zÄÖÜäöü]\. \S"): r => [#r.text.slice(0, 3)#box()#r.text.slice(3)]
+  it
+}
 
 // Ungeordnete Listen: auf ALLEN Ebenen derselbe Marker – ein kleines Quadrat
 // (statt der ebenenabhängigen Standardzeichen •/‣/–). Als Typst-Form gezeichnet
@@ -304,18 +358,21 @@
     // par(spacing) im Block klein setzen – sonst liegt zwischen Text und Linie
     // der Default-Absatzabstand (1.1em) und die Linie sitzt zu tief.
     context { if want-break() { pagebreak(weak: true) } }
-    block(width: 100%, above: 1.8em, below: 0.5em, {
+    // sticky: true bindet die Überschrift an den Folgeinhalt -> nie allein am
+    // Seitenfuß. Alle Ebenen: Abstand-oben > Abstand-unten (bindet nach unten),
+    // aber below groß genug, dass der Text nicht klebt (~above/2).
+    block(width: 100%, above: 2.0em, below: 0.6em, sticky: true, {
       set par(spacing: 2pt)
       heading-text(18pt, 450, it)
       line(length: 100%, stroke: hairline-stroke)
     })
   } else if it.level == 2 {
-    block(width: 100%, above: 1.4em, below: 0.4em, heading-text(15pt, 450, it))
+    block(width: 100%, above: 1.5em, below: 0.7em, sticky: true, heading-text(15pt, 450, it))
   } else if it.level == 3 {
-    block(width: 100%, above: 1.2em, below: 0.35em, heading-text(13pt, 450, it))
+    block(width: 100%, above: 1.25em, below: 0.55em, sticky: true, heading-text(13pt, 450, it))
   } else {
     // H4+: nur fett, linksbündig.
-    block(width: 100%, above: 1.0em, below: 0.3em, heading-text(12pt, "bold", it))
+    block(width: 100%, above: 1.05em, below: 0.45em, sticky: true, heading-text(12pt, "bold", it))
   }
 }
 
