@@ -141,10 +141,21 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\real-fast-document"  # Windows
 bash scripts/build.sh                 # example.md  -> example.pdf
 bash scripts/build.sh dokument.md     # dokument.md -> dokument.pdf
 bash scripts/build.sh in.md out.pdf   # explizite Ausgabe
+bash scripts/build.sh --help          # Optionen + Frontmatter-Schlüssel anzeigen
+bash scripts/build.sh --version       # rf-document- und Typst-Version anzeigen
 ```
 
 Ohne zweites Argument landet die Ausgabe neben der Quelle. Ist im Frontmatter ein `date`
 gesetzt, bekommt die Datei automatisch einen ISO-Präfix (`2026-06-19_dokument.pdf`).
+
+Der globale Befehl versteht dieselben Optionen: `rf-document --help` bzw. `rf-document --version`
+(`-h` / `-V` als Kurzform). Unter Windows zusätzlich als PowerShell-Switch: `rf-document -Help`
+bzw. `rf-document -Version`.
+
+| Option | Beschreibung |
+|--------|--------------|
+| `--version`, `-V` | rf-document- und Typst-Version ausgeben und beenden |
+| `--help`, `-h` | Hilfe (Optionen, Frontmatter-Schlüssel, Umgebungsvariablen) ausgeben und beenden |
 
 Die erzeugte PDF wird nach erfolgreichem Build automatisch im Standardprogramm geöffnet
 (Terminal und Rechtsklick, alle drei Systeme). Für Batch-/Cron-Läufe lässt sich das mit

@@ -28,6 +28,61 @@ resolve_from_pwd() {
 # Typst-Binary überschreibbar (z. B. zum Testen einer bestimmten Version).
 typst_bin="${TYPST:-typst}"
 
+# ---------------------------------------------------------------------------
+# CLI-Flags: --help / --version (vor dem Typst-Check, damit --help auch ohne
+# installiertes typst funktioniert). Flags dürfen vor den Positionsargumenten
+# stehen; der Rest wird als [SOURCE.md] [OUTPUT.pdf] weitergereicht.
+# ---------------------------------------------------------------------------
+rfd_version="$(cat "${root_dir}/VERSION" 2>/dev/null || printf 'unknown')"
+
+print_version() {
+  printf 'rf-document %s\n' "${rfd_version}"
+  # Typst-Version mit ausgeben (Pflicht >= 0.15) – nur wenn auffindbar.
+  if command -v "${typst_bin}" >/dev/null 2>&1; then
+    "${typst_bin}" --version 2>/dev/null || true
+  fi
+}
+
+print_help() {
+  cat <<EOF
+rf-document ${rfd_version} — Markdown -> Corporate-PDF/A-3b (via Typst, kein Pandoc)
+
+Usage:
+  rf-document [OPTIONS] [SOURCE.md] [OUTPUT.pdf]
+  bash scripts/build.sh [OPTIONS] [SOURCE.md] [OUTPUT.pdf]
+
+Arguments:
+  SOURCE.md    Zu rendernde Markdown-Quelle (Default: example.md)
+  OUTPUT.pdf   Ausgabepfad (Default: neben der Quelle; ein 'date:' im Frontmatter
+               stellt das ISO-Datum voran, z. B. 2026-06-19_SOURCE.pdf)
+
+Options:
+  -V, --version   rf-document- und Typst-Version ausgeben und beenden
+  -h, --help      Diese Hilfe ausgeben und beenden
+
+Optionale YAML-Frontmatter-Schlüssel:
+  title, date, toc, h1-break, print_filename, lang, header, watermark
+
+Environment:
+  RFD_NO_OPEN=1   Das PDF nach dem Build nicht öffnen (Batch/Cron)
+  TYPST=/pfad     Bestimmtes typst-Binary verwenden (>= 0.15 erforderlich)
+EOF
+}
+
+positional=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help)    print_help; exit 0 ;;
+    -V|--version) print_version; exit 0 ;;
+    --)           shift; while [ $# -gt 0 ]; do positional+=("$1"); shift; done; break ;;
+    -*)           printf 'Error: unbekannte Option %s\n' "$1" >&2
+                  printf "Aufruf: rf-document --help\n" >&2; exit 2 ;;
+    *)            positional+=("$1"); shift ;;
+  esac
+done
+# Positionsargumente wiederherstellen (set-u-sicher, auch für bash 3.2/macOS).
+if [ "${#positional[@]}" -gt 0 ]; then set -- "${positional[@]}"; else set --; fi
+
 # Variable Fonts brauchen Typst >= 0.15.
 ver="$("${typst_bin}" --version | awk '{print $2}')"
 ver_major="${ver%%.*}"

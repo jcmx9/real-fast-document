@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.6] - 2026-07-05
+
+### Added
+- **`--help` / `--version` flags** — `build.sh` (and thus the global `rf-document` command) now
+  parse `-h`/`--help` and `-V`/`--version` before any positional argument: `--version` prints the
+  rf-document version (from `VERSION`) plus the detected Typst version, `--help` prints usage,
+  options, the frontmatter keys, and the `RFD_NO_OPEN`/`TYPST` environment variables. An unknown
+  `-`-option now exits `2` with a hint instead of being mistaken for a source path. `convert.ps1`
+  mirrors this for Windows with native `-Version`/`-Help` switches (plus best-effort `--version`/
+  `--help`); no-arg now builds `example.md` there too, matching `build.sh`.
+
 ## [26.7.5] - 2026-07-04
 
 ### Fixed
