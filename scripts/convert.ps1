@@ -14,7 +14,9 @@
 #>
 [CmdletBinding()]
 param(
-  [Parameter(Mandatory = $true, ValueFromRemainingArguments = $true)]
+  [switch]$Version,
+  [switch]$Help,
+  [Parameter(ValueFromRemainingArguments = $true)]
   [string[]]$Path
 )
 
@@ -28,6 +30,59 @@ $FontDir     = Join-Path $InstallRoot 'fonts'
 # vendor/, fonts/ und template stets lesbar; die Quelle sollte auf demselben
 # Laufwerk liegen (Normalfall unter Windows).
 $Root        = [IO.Path]::GetPathRoot($InstallRoot)
+
+# ---------------------------------------------------------------------------
+# CLI-Flags: -Version / -Help (PowerShell-nativ) sowie zusaetzlich die POSIX-
+# Formen --version/-V und --help/-h, damit 'rf-document --version' plattform-
+# gleich wie unter macOS/Linux funktioniert (spiegelt scripts/build.sh).
+# ---------------------------------------------------------------------------
+$RfdVersion = (Get-Content -LiteralPath (Join-Path $InstallRoot 'VERSION') -ErrorAction SilentlyContinue |
+  Select-Object -First 1)
+if (-not $RfdVersion) { $RfdVersion = 'unknown' }
+
+function Show-RfdHelp {
+  Write-Host @"
+rf-document $RfdVersion - Markdown -> Corporate PDF/A-3b (via Typst, kein Pandoc)
+
+Usage:
+  rf-document [OPTIONS] [SOURCE.md ...]
+
+Arguments:
+  SOURCE.md    Zu rendernde Markdown-Quelle(n) (Default: example.md). Die PDF
+               landet neben der Quelle; ein 'date:' im Frontmatter stellt das
+               ISO-Datum voran (z.B. 2026-06-19_SOURCE.pdf).
+
+Options:
+  -Version, --version   rf-document- und Typst-Version ausgeben und beenden
+  -Help,    --help      Diese Hilfe ausgeben und beenden
+
+Optionale YAML-Frontmatter-Schluessel:
+  title, date, toc, h1-break, print_filename, lang, header, watermark
+
+Environment:
+  RFD_NO_OPEN=1   Das PDF nach dem Build nicht oeffnen (Batch/Cron)
+"@
+}
+
+# POSIX-Formen aus den Restargumenten herausfiltern (die PS-Switches -Version/
+# -Help binden bereits selbst).
+if ($Path) {
+  if (($Path -contains '--version') -or ($Path -contains '-V')) { $Version = $true }
+  if (($Path -contains '--help')    -or ($Path -contains '-h')) { $Help    = $true }
+  $Path = @($Path | Where-Object { $_ -notin @('--version', '-V', '--help', '-h') })
+}
+
+if ($Version) {
+  Write-Host "rf-document $RfdVersion"
+  if (Get-Command 'typst' -ErrorAction SilentlyContinue) { & typst --version }
+  exit 0
+}
+if ($Help) { Show-RfdHelp; exit 0 }
+
+# Ohne Argument: example.md aus dem Installpfad bauen (Paritaet zu build.sh).
+if (-not $Path -or $Path.Count -eq 0) {
+  $Path = @(Join-Path $InstallRoot 'example.md')
+}
 
 # Einen YAML-Skalar zu 'true'/'false' normalisieren (YAML-1.1-Boolean-Menge,
 # Obsidian-kompatibel; Superset von YAML 1.2). Akzeptiert true/false/yes/no/on/

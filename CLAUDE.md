@@ -23,6 +23,8 @@ Markdown → Typst (template.typ → cmarker.render, mitex) → PDF/A-3b
 bash scripts/build.sh                 # build example.md → example.pdf (next to source)
 bash scripts/build.sh SRC.md          # → SRC.pdf  (or DATE_SRC.pdf if frontmatter has date:)
 bash scripts/build.sh SRC.md OUT.pdf  # explicit output
+bash scripts/build.sh --help          # usage, options, frontmatter keys, env vars (also -h)
+bash scripts/build.sh --version       # rf-document version + Typst version (also -V)
 RFD_NO_OPEN=1 bash scripts/build.sh SRC.md   # suppress the auto-open (build.sh opens the PDF by default)
 bash scripts/fetch-fonts.sh           # download bundled fonts into ./fonts (idempotent: skips if all present; --force to re-fetch)
 bash scripts/fetch-typst-packages.sh  # vendor cmarker + mitex into ./vendor (idempotent: skips if vendored at the pinned version; --force)
@@ -170,6 +172,16 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     Without this, `rf-document foo.md` from any other directory failed with "file not found".
   - **Auto-open:** after a successful build both scripts open the PDF in the default viewer
     (`open`/`xdg-open`/`Start-Process`); set `RFD_NO_OPEN=1` to suppress (batch/cron).
+  - **`--help` / `--version`:** `build.sh` parses `-h`/`--help` and `-V`/`--version` in a small
+    loop **before** the Typst-version check (so `--help` works without typst) and before the
+    positional `[SOURCE] [OUTPUT]`; the surviving positionals are restored via
+    `if ((${#positional[@]})) then set -- …`. `--version` prints `rf-document <VERSION>` + the
+    typst version. `convert.ps1` mirrors it with PowerShell-native `[switch]$Version`/`$Help`
+    **plus** a scan of the remaining args for the POSIX `--version`/`--help` forms. **Windows trap:**
+    do **not** advertise `-V`/`-h` as PS switches — under `[CmdletBinding()]` the common `-Verbose`
+    param makes `-V` an **ambiguous prefix** (binding error before any script code runs); only the
+    full `-Version`/`-Help` switches and the double-dash `--version`/`--help` are safe there. Keep
+    the flag list in sync across `build.sh`, `convert.ps1`, and **both** READMEs' options tables.
   - **Skip reporting:** the template marks each stripped remote image with an invisible
     `<rfd-remote-skip>` metadatum; after compiling, `build.sh`/`convert.ps1` run a **second
     `typst eval` pass** — `typst eval --in template.typ 'query(<rfd-remote-skip>).len()'` with the
