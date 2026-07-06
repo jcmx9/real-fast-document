@@ -155,7 +155,10 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 - **Optional YAML frontmatter** (parsed by `build.sh`/`convert.ps1`, then passed via `--input`):
   `title:` → centered title block + running-header title (from page 1) + PDF/A metadata title;
   `date:` (ISO) → ISO-prefixes the output file (`2026-06-19_name.pdf`) **and** shows a
-  `lang`-localized date in the footer right; `toc:`/`h1-break:` true|false override the `> 5`
+  `lang`-localized date in the footer right; `isodate_praefix:` true|false controls **only** the
+  filename prefix (default: on when `date:` is set — `false` drops the prefix but keeps the footer
+  date; a filename-only knob, never passed to `template.typ`); `toc:`/`h1-break:` true|false
+  override the `> 5`
   automatism; `print_filename:` true|false toggles the footer-left name (→ `showname` input);
   `lang:` sets the document language / date format (default `de`); `header:` → fixed header text
   (from page 1, overrides the running header); `watermark:` → diagonal page-background watermark.

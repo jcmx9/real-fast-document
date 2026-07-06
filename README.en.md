@@ -146,7 +146,8 @@ bash scripts/build.sh --version       # show rf-document and Typst version
 ```
 
 Without a second argument the output lands next to the source. If a `date` is set in the
-frontmatter, the file automatically gets an ISO prefix (`2026-06-19_document.pdf`).
+frontmatter, the file automatically gets an ISO prefix (`2026-06-19_document.pdf`);
+`isodate_praefix: false` disables that prefix (the date stays in the footer).
 
 The global command understands the same options: `rf-document --help` or `rf-document --version`
 (`-h` / `-V` as short forms). On Windows also as a PowerShell switch: `rf-document -Help` or
@@ -178,6 +179,7 @@ A YAML block at the start of the file controls individual documents. All keys ar
 ---
 title: "My Document"    # centered title block on top + title in the header from page 1
 date: 2026-06-19        # ISO date: filename prefix + date bottom right (per language)
+isodate_praefix: false  # disable the ISO filename prefix (default: on when date is set)
 toc: true               # force (true) / suppress (false) the table of contents
 h1-break: false         # force / suppress the chapter page break (before each # H1)
 print_filename: false   # hide the filename bottom left (default: true)
@@ -191,6 +193,7 @@ watermark: "DRAFT"      # diagonal watermark beneath everything
 |-----|--------|--------|
 | `title` | text | **Document title**: centered title block on top, additionally in the header from page 1, and the PDF/A metadata title. Without `title` the metadata title stays the filename and there is no title block. |
 | `date` | ISO date | Set → output file gets the ISO prefix `YYYY-MM-DD_name.pdf` **and** the date appears bottom right, localized per `lang` (de "19. Juni 2026", en "June 19, 2026"). The footer then becomes 3-column (name · page centered · date). |
+| `isodate_praefix` | `true` / `false` | Controls only the ISO prefix on the **filename**. Without it a set `date` prefixes automatically (backward-compatible); `false` disables the prefix without touching the date in the footer. No effect without `date`. |
 | `toc` | `true` / `false` | Force / suppress the table of contents. Without it the structure automatism applies (see below). |
 | `h1-break` | `true` / `false` | Force / suppress the chapter page break (before each `# H1`). Without it the same automatism applies, independently of `toc`. |
 | `print_filename` | `true` / `false` | Show the filename bottom left. Default `true`. |
@@ -209,7 +212,7 @@ a new page. With **five or fewer** it stays *compact* — no TOC, chapters run i
 `h1-break` toggle these two effects **individually and independently** (`true` forces, `false`
 suppresses).
 
-The boolean keys (`toc`, `h1-break`, `print_filename`) accept all YAML 1.1 spellings, regardless
+The boolean keys (`isodate_praefix`, `toc`, `h1-break`, `print_filename`) accept all YAML 1.1 spellings, regardless
 of case: `true`/`false`, `yes`/`no`, `on`/`off` (as well as `"true"` in quotes). An unrecognized
 value is ignored with a warning and the default applies.
 

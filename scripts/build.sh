@@ -54,14 +54,15 @@ Usage:
 Arguments:
   SOURCE.md    Zu rendernde Markdown-Quelle (Default: example.md)
   OUTPUT.pdf   Ausgabepfad (Default: neben der Quelle; ein 'date:' im Frontmatter
-               stellt das ISO-Datum voran, z. B. 2026-06-19_SOURCE.pdf)
+               stellt das ISO-Datum voran, z. B. 2026-06-19_SOURCE.pdf –
+               abschaltbar mit 'isodate_praefix: false')
 
 Options:
   -V, --version   rf-document- und Typst-Version ausgeben und beenden
   -h, --help      Diese Hilfe ausgeben und beenden
 
 Optionale YAML-Frontmatter-Schlüssel:
-  title, date, toc, h1-break, print_filename, lang, header, watermark
+  title, date, isodate_praefix, toc, h1-break, print_filename, lang, header, watermark
 
 Environment:
   RFD_NO_OPEN=1   Das PDF nach dem Build nicht öffnen (Batch/Cron)
@@ -105,8 +106,8 @@ cleanup() { rm -f "${render_tmp}"; }
 trap cleanup EXIT
 
 # ---------------------------------------------------------------------------
-# Optionalen YAML-Frontmatter (führender ---...---) parsen: title/date/toc/
-# h1-break/print_filename/lang/header/watermark, CRLF-tolerant. Bool-Schlüssel YAML-1.1
+# Optionalen YAML-Frontmatter (führender ---...---) parsen: title/date/isodate_praefix/
+# toc/h1-break/print_filename/lang/header/watermark, CRLF-tolerant. Bool-Schlüssel YAML-1.1
 # gelesen (siehe yaml_bool); ein erkannter Schlüssel mit ungültigem Wert warnt
 # und behält den Default.
 # ---------------------------------------------------------------------------
@@ -132,6 +133,7 @@ yaml_str() {
 }
 
 fm_date=""
+fm_isodate_praefix=""
 fm_toc="auto"
 fm_break="auto"
 fm_showname="true"
@@ -145,6 +147,11 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
     case "${line}" in
       date:*)
         fm_date="$(yaml_str "${line#date:}")"
+        ;;
+      isodate_praefix:*)
+        b="$(yaml_bool "${line#isodate_praefix:}")"
+        if [[ -n "${b}" ]]; then fm_isodate_praefix="${b}"
+        else echo "Warnung: ungültiger Wert für 'isodate_praefix' im Frontmatter: '${line#isodate_praefix:}' – ignoriert (true/false)." >&2; fi
         ;;
       lang:*)
         v="$(yaml_str "${line#lang:}")"
@@ -240,7 +247,8 @@ END {
 
 # ---------------------------------------------------------------------------
 # Ausgabepfad: explizites zweites Argument gewinnt (relativ zum Aufruf-Verz.).
-# Sonst NEBEN der Quelle; bei gesetztem Datum mit ISO-Präfix (sortierbar).
+# Sonst NEBEN der Quelle; bei gesetztem Datum mit ISO-Präfix (sortierbar), außer
+# 'isodate_praefix: false' schaltet das Präfix ab (Datum bleibt in der Fußzeile).
 # ---------------------------------------------------------------------------
 src_dir="$(cd "$(dirname "${src}")" && pwd)"
 src_abs="${src_dir}/$(basename "${src}")"
@@ -249,7 +257,7 @@ if [[ -n "${2:-}" ]]; then
     /*) out="${2}" ;;
     *)  out="${orig_pwd}/${2}" ;;
   esac
-elif [[ -n "${fm_date}" ]]; then
+elif [[ -n "${fm_date}" && "${fm_isodate_praefix}" != "false" ]]; then
   out="${src_dir}/${fm_date}_${base}.pdf"
 else
   out="${src_dir}/${base}.pdf"

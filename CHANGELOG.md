@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.8] - 2026-07-06
+
+### Added
+- **`isodate_praefix` frontmatter key (`true` / `false`)** to control the ISO date prefix on the
+  output **filename** independently of the footer date. Backward-compatible: without the key a set
+  `date:` still prefixes the filename automatically (`2026-06-19_name.pdf`); `isodate_praefix: false`
+  suppresses only the filename prefix while the localized date stays in the footer. No effect when
+  `date:` is unset. Parsed YAML-1.1-tolerant like the other boolean keys (`build.sh` `yaml_bool`,
+  `convert.ps1` `ConvertTo-YamlBool`) with the same invalid-value warning; help texts and both
+  READMEs updated.
+
 ## [26.7.7] - 2026-07-06
 
 ### Changed

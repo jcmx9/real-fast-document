@@ -50,14 +50,15 @@ Usage:
 Arguments:
   SOURCE.md    Zu rendernde Markdown-Quelle(n) (Default: example.md). Die PDF
                landet neben der Quelle; ein 'date:' im Frontmatter stellt das
-               ISO-Datum voran (z.B. 2026-06-19_SOURCE.pdf).
+               ISO-Datum voran (z.B. 2026-06-19_SOURCE.pdf) - abschaltbar mit
+               'isodate_praefix: false'.
 
 Options:
   -Version, --version   rf-document- und Typst-Version ausgeben und beenden
   -Help,    --help      Diese Hilfe ausgeben und beenden
 
 Optionale YAML-Frontmatter-Schluessel:
-  title, date, toc, h1-break, print_filename, lang, header, watermark
+  title, date, isodate_praefix, toc, h1-break, print_filename, lang, header, watermark
 
 Environment:
   RFD_NO_OPEN=1   Das PDF nach dem Build nicht oeffnen (Batch/Cron)
@@ -190,17 +191,21 @@ function Convert-One {
   # passt so zum BOM-losen UTF-8-Schreiben des Render-Temps (siehe WriteAllText).
   $lines  = [IO.File]::ReadAllLines($Src, (New-Object Text.UTF8Encoding $false))
 
-  # Optionalen YAML-Frontmatter (fuehrender ---...---) parsen: title/date/lang/toc/
-  # h1-break/print_filename/header/watermark. Bool-Schluessel werden YAML-1.1-konform gelesen
+  # Optionalen YAML-Frontmatter (fuehrender ---...---) parsen: title/date/isodate_praefix/
+  # lang/toc/h1-break/print_filename/header/watermark. Bool-Schluessel werden YAML-1.1-konform gelesen
   # (siehe ConvertTo-YamlBool); ein erkannter Schluessel mit ungueltigem Wert
   # warnt und behaelt den Default.
-  $fmDate = ''; $fmToc = 'auto'; $fmBreak = 'auto'; $fmShowname = 'true'; $fmLang = 'de'
+  $fmDate = ''; $fmIsodatePraefix = ''; $fmToc = 'auto'; $fmBreak = 'auto'; $fmShowname = 'true'; $fmLang = 'de'
   $fmHeader = ''; $fmWatermark = ''; $fmTitle = ''
   if ($lines.Count -gt 0 -and $lines[0].Trim() -eq '---') {
     for ($i = 1; $i -lt $lines.Count; $i++) {
       if ($lines[$i].Trim() -eq '---') { break }
       if ($lines[$i] -match '^date:\s*(.+?)\s*$') {
         $fmDate = $Matches[1].Trim('"', "'")
+      }
+      elseif ($lines[$i] -match '^isodate_praefix:\s*(.+?)\s*$') {
+        $b = ConvertTo-YamlBool $Matches[1]
+        if ($b) { $fmIsodatePraefix = $b } else { Write-Warning "Ungueltiger Wert fuer 'isodate_praefix': '$($Matches[1])' - ignoriert (true/false)." }
       }
       elseif ($lines[$i] -match '^lang:\s*(.+?)\s*$') {
         $fmLang = $Matches[1].Trim('"', "'")
@@ -230,7 +235,8 @@ function Convert-One {
   }
 
   # Ausgabename: bei gesetztem Datum ISO-Praefix (sortierbar), sonst Basename.
-  $outName = if ($fmDate) { "$($fmDate)_$base.pdf" } else { "$base.pdf" }
+  # 'isodate_praefix: false' schaltet das Praefix ab (Datum bleibt in der Fusszeile).
+  $outName = if ($fmDate -and $fmIsodatePraefix -ne 'false') { "$($fmDate)_$base.pdf" } else { "$base.pdf" }
   $outPdf  = Join-Path $srcDir $outName
 
   # Vorverarbeitete Render-Quelle (temporaer, dot-praefixiert im Quellverzeichnis);

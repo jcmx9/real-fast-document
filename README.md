@@ -146,7 +146,8 @@ bash scripts/build.sh --version       # rf-document- und Typst-Version anzeigen
 ```
 
 Ohne zweites Argument landet die Ausgabe neben der Quelle. Ist im Frontmatter ein `date`
-gesetzt, bekommt die Datei automatisch einen ISO-Präfix (`2026-06-19_dokument.pdf`).
+gesetzt, bekommt die Datei automatisch einen ISO-Präfix (`2026-06-19_dokument.pdf`);
+`isodate_praefix: false` schaltet dieses Präfix ab (das Datum bleibt in der Fußzeile).
 
 Der globale Befehl versteht dieselben Optionen: `rf-document --help` bzw. `rf-document --version`
 (`-h` / `-V` als Kurzform). Unter Windows zusätzlich als PowerShell-Switch: `rf-document -Help`
@@ -178,6 +179,7 @@ Ein YAML-Block am Dateianfang steuert einzelne Dokumente. Alle Schlüssel sind o
 ---
 title: "Mein Dokument"  # Titelblock oben + Titel in der Kopfzeile ab Seite 1
 date: 2026-06-19        # ISO-Datum: Präfix am Dateinamen + Datum unten rechts (nach Sprache)
+isodate_praefix: false  # ISO-Präfix am Dateinamen abschalten (Default: an, wenn date gesetzt)
 toc: true               # Inhaltsverzeichnis erzwingen (true) / unterdrücken (false)
 h1-break: false         # Kapitel-Seitenumbruch (vor jedem # H1) erzwingen / unterdrücken
 print_filename: false   # Dateiname unten links ausblenden (Default: true)
@@ -191,6 +193,7 @@ watermark: "ENTWURF"    # diagonales Wasserzeichen unter allem
 |-----------|-------|---------|
 | `title` | Text | **Dokumenttitel**: zentrierter Titelblock oben, zusätzlich in der Kopfzeile ab Seite 1, und PDF/A-Metadatentitel. Ohne `title` bleibt der Metadatentitel der Dateiname und es gibt keinen Titelblock. |
 | `date` | ISO-Datum | Gesetzt → Ausgabedatei erhält den ISO-Präfix `JJJJ-MM-TT_name.pdf` **und** das Datum erscheint unten rechts, lokalisiert nach `lang` (de „19. Juni 2026", en „June 19, 2026"). Die Fußzeile wird dann 3-spaltig (Name · Seite mittig · Datum). |
+| `isodate_praefix` | `true` / `false` | Steuert nur den ISO-Präfix am **Dateinamen**. Ohne Angabe präfixt ein gesetztes `date` automatisch (rückwärtskompatibel); `false` schaltet das Präfix ab, ohne das Datum in der Fußzeile zu berühren. Ohne `date` wirkungslos. |
 | `toc` | `true` / `false` | Inhaltsverzeichnis erzwingen / unterdrücken. Ohne Angabe greift der Struktur-Automatismus (siehe unten). |
 | `h1-break` | `true` / `false` | Kapitel-Seitenumbruch (vor jedem `# H1`) erzwingen / unterdrücken. Ohne Angabe greift derselbe Automatismus, unabhängig von `toc`. |
 | `print_filename` | `true` / `false` | Dateiname unten links anzeigen. Default `true`. |
@@ -209,7 +212,7 @@ Modus*: ein Inhaltsverzeichnis (nur H1 + H2) erscheint nach dem Titel **und** je
 Verzeichnis, die Kapitel laufen im Fluss. `toc` und `h1-break` schalten diese beiden Effekte
 **einzeln und unabhängig** (`true` erzwingt, `false` unterdrückt).
 
-Die Boolean-Schlüssel (`toc`, `h1-break`, `print_filename`) akzeptieren alle
+Die Boolean-Schlüssel (`isodate_praefix`, `toc`, `h1-break`, `print_filename`) akzeptieren alle
 YAML-1.1-Schreibweisen, unabhängig von Groß-/Kleinschreibung: `true`/`false`, `yes`/`no`,
 `on`/`off` (sowie `"true"` in Anführungszeichen). Ein nicht erkannter Wert wird mit einer
 Warnung ignoriert und der Default greift.
