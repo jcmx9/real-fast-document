@@ -265,7 +265,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Überschriften | **Source Serif 4**, `luma(8%)`, linksbündig, ohne Balken; **nur H1** trägt eine feine Hairline dicht darunter, alle anderen grenzen sich über Größe/Abstand ab |
 | Wasserzeichen | optional (`watermark:`): diagonal, gespreizt, fett, hellgrau (Einkanal-Grau → sauberes K im Druck), **unter** allem |
 | Fließtext | Source Sans 3, 12 pt, Blocksatz mit Silbentrennung, `luma(13%)` |
-| Tabellen | volle Breite; Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien; **Kopfzeile wiederholt sich** bei Seitenumbruch |
+| Tabellen | volle Breite, **Spalten anteilig nach Inhaltsbreite** (schmale Spalten bleiben schmal, textreiche bekommen mehr Platz); Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien; **Kopfzeile wiederholt sich** bei Seitenumbruch |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
 | Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): Kästchen ☐ offen / ☒ erledigt |
 | Bilder | lokal: nummerierte Abbildung mit Untertitel; remote (`http(s)`, `//host`, `data:`) offline automatisch entfernt |

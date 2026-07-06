@@ -32,25 +32,53 @@
     it
   } else {
     let n = if type(it.columns) == int { it.columns } else { it.columns.len() }
+    // Zellinhalte flach sammeln (Kopfzeile aus table.header auspacken) – nur zum
+    // Messen der natürlichen Spaltenbreite, das Rendering nutzt weiter ..it.children.
+    let cell-body = c => if c.func() == table.cell { c.body } else { c }
+    let bodies = ()
+    for c in it.children {
+      if c.func() == table.header {
+        for hc in c.children { bodies.push(cell-body(hc)) }
+      } else {
+        bodies.push(cell-body(c))
+      }
+    }
     // cmarker liefert die Kopfzeile bereits als table.header (Default repeat:true) –
     // in ..it.children enthalten, wird also weitergereicht und wiederholt sich bei
     // Seitenumbruch am Kopf der Folgeseite. Symmetrischer Abstand ober-/unterhalb
     // (etwas mehr als der Absatzabstand); breakable:true, damit lange Tabellen
     // samt wiederholtem Kopf über Seiten umbrechen dürfen.
-    block(above: 1.2em, below: 1.4em, breakable: true, table(
-      columns: (1fr,) * n,
-      align: (_, y) => if y == 0 { center } else { left },
-      // Leichter Zeilen-Hintergrundwechsel (Zebra); zugleich der Guard-Marker
-      // (fill ist eine Funktion != none).
-      fill: (_, y) => if y > 0 and calc.even(y) { luma(96%) } else { none },
-      // Nur senkrechte Trennlinien (innen) und eine Linie unter der Kopfzeile –
-      // keine waagerechten Zeilenlinien.
-      stroke: (x, y) => (
-        left: if x > 0 { 0.4pt + luma(80%) } else { 0pt },
-        top: if y == 1 { 0.7pt + luma(45%) } else { 0pt },
-      ),
-      ..it.children,
-    ))
+    block(above: 1.2em, below: 1.4em, breakable: true, layout(size => {
+      // Volle Breite, aber Spalten anteilig nach Inhaltsbedarf: je Spalte die
+      // natürliche Max-Breite messen (+ Zell-Innenabstand), auf die Satzbreite
+      // gedeckelt, damit eine textreiche Spalte die schmalen nicht auf null drückt.
+      // Daraus fr-Gewichte -> Tabelle füllt aus, breite Inhalte bekommen mehr Platz.
+      let widths = (0pt,) * n
+      for (i, body) in bodies.enumerate() {
+        let col = calc.rem(i, n)
+        let m = calc.min(measure(body).width, size.width)
+        if m > widths.at(col) { widths.at(col) = m }
+      }
+      // + ~1em Padding-Ausgleich (measure kennt den Zell-inset nicht), sonst
+      // wirken kurze Spalten relativ zu schmal.
+      let widths = widths.map(w => w + 12pt)
+      let total = widths.sum()
+      let cols = if total == 0pt { (1fr,) * n } else { widths.map(w => w / total * 1fr) }
+      table(
+        columns: cols,
+        align: (_, y) => if y == 0 { center } else { left },
+        // Leichter Zeilen-Hintergrundwechsel (Zebra); zugleich der Guard-Marker
+        // (fill ist eine Funktion != none).
+        fill: (_, y) => if y > 0 and calc.even(y) { luma(96%) } else { none },
+        // Nur senkrechte Trennlinien (innen) und eine Linie unter der Kopfzeile –
+        // keine waagerechten Zeilenlinien.
+        stroke: (x, y) => (
+          left: if x > 0 { 0.4pt + luma(80%) } else { 0pt },
+          top: if y == 1 { 0.7pt + luma(45%) } else { 0pt },
+        ),
+        ..it.children,
+      )
+    }))
   }
 }
 #show table.cell.where(y: 0): strong

@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.7] - 2026-07-06
+
+### Changed
+- **Table columns are now sized proportionally to content** instead of every column getting an
+  equal `1fr` share. The `#show table` rule flattens the cell bodies, `measure`s each column's
+  natural max width inside a `layout(…)` (capped at the text width so one text-heavy column can't
+  crush the narrow ones, plus a small inset compensation), and turns those widths into `fr`
+  weights. Tables still fill the full text width, but narrow columns (e.g. short keys) stay narrow
+  while text-heavy columns get more room. Header/zebra/border styling and the repeating header row
+  are unchanged.
+
 ## [26.7.6] - 2026-07-05
 
 ### Added

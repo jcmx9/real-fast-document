@@ -17,6 +17,23 @@ The pipeline turns a Markdown file into a corporate-styled **PDF/A-3b**, entirel
 Markdown → Typst (template.typ → cmarker.render, mitex) → PDF/A-3b
 ```
 
+## Where to look (wegweiser)
+
+This file is long and dense; jump by task instead of reading top-to-bottom:
+
+- **Changing layout / typography / headings / TOC / watermark** → *Architecture › Heading /
+  document model* and the `#set`/`#show` rules in `template.typ`.
+- **Touching a `#show` rule (tables, NBSP, raw/code guard)** → *Architecture › Typst show-rule
+  traps* first — these cost real debugging and have non-obvious recursion pitfalls.
+- **Build flags, frontmatter keys, preprocessing, remote-image skip** → *Architecture*
+  (`build.sh`/`convert.ps1` sections) and *Commands*.
+- **Install / bootstrap / right-click / `rf-document` CLI / GUI-PATH** → *Architecture ›
+  Install / bootstrap*.
+- **Verifying a change (PNG render, NBSP visible-marker trick)** → *Commands*.
+- **Windows `.ps1` gotchas (ASCII-only, UTF-8 read, Typst path normalization)** →
+  *Architecture › Install / bootstrap* and the `convert.ps1` notes.
+- **Releasing (branch flow, CalVer, README parity)** → *Release flow*.
+
 ## Commands
 
 ```bash
@@ -310,14 +327,24 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
 - `outline(title: [..])` renders its title as a *heading*, which re-triggers the heading
   show rule → recursion. Use `outline(title: none)` and render the "Inhalt" label as plain
   text.
-- The **full-width table** show rule rebuilds the table (`columns: (1fr,)*n`) to stretch it,
-  centered/bold header, left body, zebra `fill`. Emitting a `table` inside `#show table:`
-  recurses → guard on a field the rebuild sets but cmarker never does: `if it.fill != none {
-  it } else { …rebuild… }`. `it.columns` is an int from cmarker (`(1fr,)*n` needs that count).
-  The rebuild spreads `..it.children` **as-is** — cmarker already wraps the first row in a real
+- The **full-width table** show rule rebuilds the table to fill the text block **with columns
+  sized proportionally to content** (not `(1fr,)*n`, which stretches every column equally): it
+  flattens the cell bodies (unwrapping the `table.header` — see below), then inside a
+  `layout(size => …)` **`measure`s each column's natural max width**, caps it at the text width
+  (`size.width`) so one text-heavy column can't crush the narrow ones to zero, adds ~12pt of
+  inset compensation (`measure` doesn't know the cell inset), and turns those widths into
+  `fr` weights (`w / total * 1fr`). Result: the table still fills the width, but narrow columns
+  stay narrow and wide content gets more room. Header centered/bold, body left, zebra `fill`.
+  Emitting a `table` inside `#show table:` recurses → guard on a field the rebuild sets but
+  cmarker never does: `if it.fill != none { it } else { …rebuild… }` (the guard is a **field
+  check**, so it survives the `layout`/`context` boundary — unlike the built-in heading
+  recursion guard). `it.columns` is an int from cmarker (needs that count `n`). The rebuild
+  spreads `..it.children` **as-is** — cmarker already wraps the first row in a real
   `table.header` (with `repeat: true`), so the **header row repeats on page breaks automatically**;
   do **not** re-wrap the first cells in another `table.header` (Typst errors: *header within another
-  header*). The rebuilt table is wrapped in a `block(above/below, breakable: true)` for symmetric
+  header*). For measuring only, the header is unwrapped (`c.func() == table.header` → its
+  `.children`) and each cell's `.body` is pulled out (`c.func() == table.cell ? c.body : c`).
+  The rebuilt table is wrapped in a `block(above/below, breakable: true)` for symmetric
   spacing while still letting long tables break across pages (with the repeating header).
 - **Non-breaking spaces** — `template.typ` inserts NBSP so common pairs don't break across a line:
   German abbreviations via literal `#show "z. B.": [z.~B.]` rules (the replacement contains `~`/NBSP,
