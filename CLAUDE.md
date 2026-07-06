@@ -17,6 +17,13 @@ The pipeline turns a Markdown file into a corporate-styled **PDF/A-3b**, entirel
 Markdown → Typst (template.typ → cmarker.render, mitex) → PDF/A-3b
 ```
 
+> **⚠️ Develop in the repo, never in the install path.** The development repo is
+> `~/GitHub/real-fast-document` (keeps `main` + `dev`). `~/.local/share/real-fast-document`
+> is a *separate* bootstrap **installation** (only `main`, plus `bin/`/`vendor/` install
+> artifacts). All edits, branches, commits, and PRs happen in the `~/GitHub/` repo. Confirm
+> before committing: `git -C <dir> remote -v` and the **presence of `bin/rfd-tools.env`** marks
+> the install path — if you see it, you are in the wrong place. See *Release flow* for the full note.
+
 ## Where to look (wegweiser)
 
 This file is long and dense; jump by task instead of reading top-to-bottom:
