@@ -114,7 +114,7 @@
 // Frontmatter-gesteuert (von build.sh/convert.ps1 aus dem YAML-Block gereicht):
 #let date-iso   = sys.inputs.at("date", default: "")       // ISO-Wert oder leer
 #let toc-mode   = sys.inputs.at("toc", default: "auto")    // "true" | "false" | "auto"
-#let break-mode = sys.inputs.at("h1-break", default: "auto")
+#let break-mode = sys.inputs.at("h1_break", default: "auto")
 #let show-name  = sys.inputs.at("showname", default: "true") != "false"
 // Kopfzeile (Vorrang von oben):
 //   header: "Text"  -> fester Kopfzeilentext, ab Seite 1
@@ -306,9 +306,9 @@
 // Default hinaus verteuert, sodass Typst sie vermeidet (eine Zeile mitnimmt).
 // runt = einzelnes kurzes Wort allein auf der letzten Absatzzeile (im Blocksatz
 // unschön) – ebenfalls verteuert, damit Typst umbricht/trennt statt es stehen zu lassen.
-#set text(font: body-font, size: 12pt, lang: doc-lang, hyphenate: true, fill: luma(13%),
+#set text(font: body-font, size: 11pt, lang: doc-lang, hyphenate: true, fill: luma(13%),
   costs: (orphan: 200%, widow: 200%, runt: 200%))
-#set par(justify: true, leading: 0.8em, spacing: 1.1em)
+#set par(justify: true, leading: 0.85em, spacing: 1.1em)
 
 // Geschützte Leerzeichen (NBSP): verhindern hässliche Zeilenumbrüche mitten in
 // deutschen Abkürzungen, Einheiten, Prozent- und Währungsangaben.
@@ -369,7 +369,7 @@
   font: heading-font, weight: weight, fill: heading-color, size: size, body,
 )
 
-// Strukturmodus-Steuerung: Frontmatter (toc/h1-break) übersteuert den
+// Strukturmodus-Steuerung: Frontmatter (toc/h1_break) übersteuert den
 // Automatismus (#H1 + #H2) > 5. Drei Zustände je Schlüssel: true|false|auto.
 // Die Helfer enthalten nur `query` (kein `it`) -> keine Rekursion der Show-Regel.
 #let auto-structured() = query(heading).filter(h => h.level == 1 or h.level == 2).len() > 5
@@ -382,7 +382,7 @@
 #show heading: it => {
   set par(justify: false)
   if it.level == 1 {
-    // Kapitel: Umbruch davor (h1-break), Serif, feine Linie DICHT darunter.
+    // Kapitel: Umbruch davor (h1_break), Serif, feine Linie DICHT darunter.
     // par(spacing) im Block klein setzen – sonst liegt zwischen Text und Linie
     // der Default-Absatzabstand (1.1em) und die Linie sitzt zu tief.
     context { if want-break() { pagebreak(weak: true) } }
@@ -391,16 +391,15 @@
     // aber below groß genug, dass der Text nicht klebt (~above/2).
     block(width: 100%, above: 2.0em, below: 0.6em, sticky: true, {
       set par(spacing: 2pt)
-      heading-text(18pt, 450, it)
+      heading-text(16pt, 450, it)
       line(length: 100%, stroke: hairline-stroke)
     })
   } else if it.level == 2 {
-    block(width: 100%, above: 1.5em, below: 0.7em, sticky: true, heading-text(15pt, 450, it))
-  } else if it.level == 3 {
-    block(width: 100%, above: 1.25em, below: 0.55em, sticky: true, heading-text(13pt, 450, it))
+    block(width: 100%, above: 1.5em, below: 0.7em, sticky: true, heading-text(14pt, 450, it))
   } else {
-    // H4+: nur fett, linksbündig.
-    block(width: 100%, above: 1.05em, below: 0.45em, sticky: true, heading-text(12pt, "bold", it))
+    // H3 und tiefer: Body-Größe (11pt), Serif; nur Gewicht 450 setzt sie vom
+    // Fließtext ab. Kein H4-Sonderfall mehr – H4+ rendert identisch zu H3.
+    block(width: 100%, above: 1.25em, below: 0.55em, sticky: true, heading-text(11pt, 450, it))
   }
 }
 

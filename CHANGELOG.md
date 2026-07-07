@@ -6,6 +6,22 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.9] - 2026-07-07
+
+### Changed
+- **Typography retune.** Body text drops from 12 pt to **11 pt** with a slightly airier line spacing
+  (`leading` 0.8 em → **0.85 em**). Heading sizes in the `#show heading` rule: **H1** 18 pt → 16 pt
+  (keeps its hairline + chapter page break), **H2** 15 pt → 14 pt, **H3** 13 pt → **11 pt** (= body
+  size). **H4 and deeper no longer have a separate bold branch** — they now render identically to H3
+  (11 pt, serif, `wght` 450); the merged block covers all levels ≥ 3. H3+ are set apart from body
+  text only by the serif face and weight. Both READMEs' typography tables and `example.md` (its H4
+  example became an H3, so the regression probe now exercises the H3 level) were updated to match.
+- **The `h1-break` frontmatter key was renamed to `h1_break`** to match the underscore style of the
+  other boolean keys (`isodate_praefix`, `print_filename`). The `--input` name and every reference in
+  `template.typ`, `build.sh`, `convert.ps1`, `example.md`, and both READMEs were updated in lockstep.
+  **Breaking:** documents using `h1-break:` must switch to `h1_break:` — the old spelling is no longer
+  recognized (it is silently ignored, falling back to the `> 5` automatism).
+
 ## [26.7.8] - 2026-07-06
 
 ### Added

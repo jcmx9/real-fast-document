@@ -58,7 +58,7 @@ Options:
   -Help,    --help      Diese Hilfe ausgeben und beenden
 
 Optionale YAML-Frontmatter-Schluessel:
-  title, date, isodate_praefix, toc, h1-break, print_filename, lang, header, watermark
+  title, date, isodate_praefix, toc, h1_break, print_filename, lang, header, watermark
 
 Environment:
   RFD_NO_OPEN=1   Das PDF nach dem Build nicht oeffnen (Batch/Cron)
@@ -192,7 +192,7 @@ function Convert-One {
   $lines  = [IO.File]::ReadAllLines($Src, (New-Object Text.UTF8Encoding $false))
 
   # Optionalen YAML-Frontmatter (fuehrender ---...---) parsen: title/date/isodate_praefix/
-  # lang/toc/h1-break/print_filename/header/watermark. Bool-Schluessel werden YAML-1.1-konform gelesen
+  # lang/toc/h1_break/print_filename/header/watermark. Bool-Schluessel werden YAML-1.1-konform gelesen
   # (siehe ConvertTo-YamlBool); ein erkannter Schluessel mit ungueltigem Wert
   # warnt und behaelt den Default.
   $fmDate = ''; $fmIsodatePraefix = ''; $fmToc = 'auto'; $fmBreak = 'auto'; $fmShowname = 'true'; $fmLang = 'de'
@@ -220,9 +220,9 @@ function Convert-One {
         $b = ConvertTo-YamlBool $Matches[1]
         if ($b) { $fmToc = $b } else { Write-Warning "Ungueltiger Wert fuer 'toc': '$($Matches[1])' - ignoriert (true/false)." }
       }
-      elseif ($lines[$i] -match '^h1-break:\s*(.+?)\s*$') {
+      elseif ($lines[$i] -match '^h1_break:\s*(.+?)\s*$') {
         $b = ConvertTo-YamlBool $Matches[1]
-        if ($b) { $fmBreak = $b } else { Write-Warning "Ungueltiger Wert fuer 'h1-break': '$($Matches[1])' - ignoriert (true/false)." }
+        if ($b) { $fmBreak = $b } else { Write-Warning "Ungueltiger Wert fuer 'h1_break': '$($Matches[1])' - ignoriert (true/false)." }
       }
       elseif ($lines[$i] -match '^title:\s*(.+?)\s*$') {
         $fmTitle = $Matches[1].Trim('"', "'")
@@ -275,7 +275,7 @@ function Convert-One {
     '--input', "docdir=$srcDirFwd",
     '--input', "date=$fmDate",
     '--input', "toc=$fmToc",
-    '--input', "h1-break=$fmBreak",
+    '--input', "h1_break=$fmBreak",
     '--input', "showname=$fmShowname",
     '--input', "lang=$fmLang",
     '--input', "header=$fmHeader",

@@ -181,7 +181,7 @@ title: "My Document"    # centered title block on top + title in the header from
 date: 2026-06-19        # ISO date: filename prefix + date bottom right (per language)
 isodate_praefix: false  # disable the ISO filename prefix (default: on when date is set)
 toc: true               # force (true) / suppress (false) the table of contents
-h1-break: false         # force / suppress the chapter page break (before each # H1)
+h1_break: false         # force / suppress the chapter page break (before each # H1)
 print_filename: false   # hide the filename bottom left (default: true)
 lang: de                # document language (date format); default de
 header: "Confidential"  # fixed header text from page 1 (overrides the running header)
@@ -195,7 +195,7 @@ watermark: "DRAFT"      # diagonal watermark beneath everything
 | `date` | ISO date | Set → output file gets the ISO prefix `YYYY-MM-DD_name.pdf` **and** the date appears bottom right, localized per `lang` (de "19. Juni 2026", en "June 19, 2026"). The footer then becomes 3-column (name · page centered · date). |
 | `isodate_praefix` | `true` / `false` | Controls only the ISO prefix on the **filename**. Without it a set `date` prefixes automatically (backward-compatible); `false` disables the prefix without touching the date in the footer. No effect without `date`. |
 | `toc` | `true` / `false` | Force / suppress the table of contents. Without it the structure automatism applies (see below). |
-| `h1-break` | `true` / `false` | Force / suppress the chapter page break (before each `# H1`). Without it the same automatism applies, independently of `toc`. |
+| `h1_break` | `true` / `false` | Force / suppress the chapter page break (before each `# H1`). Without it the same automatism applies, independently of `toc`. |
 | `print_filename` | `true` / `false` | Show the filename bottom left. Default `true`. |
 | `lang` | language code | Document language and date format (`de`, `en`, …). Default `de`. |
 | `header` | text | Fixed header text from **page 1**; overrides the running header (and the title in the header). |
@@ -209,10 +209,10 @@ watermark: "DRAFT"      # diagonal watermark beneath everything
 With **more than five** chapter/subsection headings the document switches to *structured mode*:
 a table of contents (H1 + H2 only) appears after the title **and** each chapter (`# H1`) starts on
 a new page. With **five or fewer** it stays *compact* — no TOC, chapters run inline. `toc` and
-`h1-break` toggle these two effects **individually and independently** (`true` forces, `false`
+`h1_break` toggle these two effects **individually and independently** (`true` forces, `false`
 suppresses).
 
-The boolean keys (`isodate_praefix`, `toc`, `h1-break`, `print_filename`) accept all YAML 1.1 spellings, regardless
+The boolean keys (`isodate_praefix`, `toc`, `h1_break`, `print_filename`) accept all YAML 1.1 spellings, regardless
 of case: `true`/`false`, `yes`/`no`, `on`/`off` (as well as `"true"` in quotes). An unrecognized
 value is ignored with a warning and the default applies.
 
@@ -229,8 +229,8 @@ protocol-relative `//host`, `data:`) cannot be loaded offline — Typst delibera
 access — and are therefore dropped automatically; the build reports how many images were skipped.
 
 The **document title** comes from the frontmatter (`title:`), not from the Markdown. `# H1` is the
-top-level **chapter** (fine line, page break with `h1-break`, runs in the header); `## H2` and
-`### H3` are subsections, and from `#### H4` on only bold and left-aligned.
+top-level **chapter** (fine line, page break with `h1_break`, runs in the header); `## H2` and
+`### H3` are subsections; `#### H4` and deeper are set identically to `### H3` at body size.
 
 ```markdown
 ---
@@ -257,15 +257,15 @@ Body text with **emphasis** and a footnote.[^1]
 | Margins | left 30 mm · top/bottom/right 20 mm each |
 | PDF standard | PDF/A-3b, fonts embedded, source as attachment |
 | **Title** | from `title:` — centered on top (serif) + in the header from page 1; not a heading, not in the TOC |
-| **H1** | **Chapter** (serif, fine line right below); starts on a new page with `h1-break` and runs in the header |
-| **H2 / H3** | subsections (serif, no line); from **H4** on only bold + left-aligned |
+| **H1** | **Chapter** (serif, fine line right below); starts on a new page with `h1_break` and runs in the header |
+| **H2 / H3** | subsections (serif, no line); **H4** and deeper identical to H3 at body size |
 | Header | `header:` fixed text · else active H1 chapter · before the 1st chapter the title. Text in **sans** |
-| **TOC** | conditional: from `#H1 + #H2 > 5` → table of contents (H1 + H2 only) + chapter per new page; overridable via `toc`/`h1-break` |
+| **TOC** | conditional: from `#H1 + #H2 > 5` → table of contents (H1 + H2 only) + chapter per new page; overridable via `toc`/`h1_break` |
 | Header right | logo (`logo.svg` → `.png` → `.jpg`), height 13 mm — **optional** |
 | Footer | **sans**; without date: name left · page right. With date: name left · page centered · date right |
 | Headings | **Source Serif 4**, `luma(8%)`, left-aligned, no bars; **only H1** carries a fine hairline right below, all others are set apart by size/spacing |
 | Watermark | optional (`watermark:`): diagonal, letter-spaced, bold, light gray (single-channel gray → clean K in print), **beneath** everything |
-| Body text | Source Sans 3, 12 pt, justified with hyphenation, `luma(13%)` |
+| Body text | Source Sans 3, 11 pt, justified with hyphenation (line spacing 0.85em), `luma(13%)` |
 | Tables | full width, **columns sized proportionally to content** (narrow columns stay narrow, text-heavy ones get more room); header centered + bold with a line below; light row zebra, vertical separators, no horizontal row lines; **header row repeats** across page breaks |
 | Code | Source Code Pro, 10 pt, with syntax highlighting |
 | Lists | unordered: small square at **all** levels; ordered: numbers; tasks (`- [ ]`): box ☐ open / ☒ done |
@@ -278,11 +278,11 @@ Body text with **emphasis** and a footnote.[^1]
 
 | Element | Font | Size |
 |---------|------|------|
-| Body text | Source Sans 3 | 12 pt |
+| Body text | Source Sans 3 | 11 pt, line spacing 0.85em |
 | Title (`title:`) | Source Serif 4 semibold | 21 pt, centered |
-| Chapter (H1) | Source Serif 4 Book (`wght` 450) | 18 pt, fine line below |
-| H2 / H3 | Source Serif 4 Book (`wght` 450) | 15 / 13 pt, no line |
-| H4+ | Source Serif 4 bold | 12 pt, left-aligned |
+| Chapter (H1) | Source Serif 4 Book (`wght` 450) | 16 pt, fine line below |
+| H2 / H3 | Source Serif 4 Book (`wght` 450) | 14 / 11 pt, no line |
+| H4+ | identical to H3 (`wght` 450) | 11 pt, left-aligned |
 | TOC title "Inhalt" | Source Serif 4 semibold | 16 pt |
 | TOC entries (H1 + H2) | Source Sans 3 (`wght` 450) | 12 pt, uniform line spacing |
 | Header (text) | Source Sans 3 (`wght` 450) | 13 pt |

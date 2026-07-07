@@ -1,7 +1,7 @@
 ---
 date: 2026-07-01
 toc: true
-h1-break: true
+h1_break: true
 print_filename: true
 lang: de
 title: "Beispiel: von Markdown zu PDF/A"
@@ -68,7 +68,7 @@ Nummerierte und verschachtelte Listen werden sauber gesetzt und korrekt eingerü
 2. Optional einen Frontmatter ergänzen:
    - `date` für Datum in der Fußzeile **und** einen ISO-Präfix am Dateinamen,
    - `toc` für das Inhaltsverzeichnis,
-   - `h1-break` für den Kapitelumbruch,
+   - `h1_break` für den Kapitelumbruch,
      - und tiefere Ebenen behalten denselben Marker.
 3. Bauen lassen — fertig.
 
@@ -184,13 +184,13 @@ Die Ebenen haben feste Rollen:
 - Der **Titel** kommt aus dem Frontmatter (`title:`) — zentriert oben, zusätzlich in der Kopfzeile
   ab Seite 1. Er ist kein Heading und erscheint nicht im Inhaltsverzeichnis; der PDF-Metadatentitel
   entspricht `title:` (ersatzweise dem Dateinamen).
-- **H1** ist ein **Kapitel**: trägt eine feine Linie, beginnt bei `h1-break` auf einer neuen Seite
+- **H1** ist ein **Kapitel**: trägt eine feine Linie, beginnt bei `h1_break` auf einer neuen Seite
   und läuft oben im Seitenkopf mit — sofern kein fester `header` gesetzt ist.
-- **H2** und **H3** sind Unterabschnitte; ab **H4** wird nur noch fett und linksbündig gesetzt.
+- **H2** und **H3** sind Unterabschnitte; **H4** und tiefer werden identisch zu **H3** in Body-Größe gesetzt.
 
-#### Ein H4-Unterabschnitt
+### Ein H3-Unterabschnitt
 
-Die vierte Ebene erscheint nur noch fett und linksbündig — ohne eigene Größe oder Linie.
+Die dritte Ebene und tiefer teilen sich denselben Schnitt in Body-Größe (Serif, `wght` 450) — ohne eigene Linie.
 
 Ab mehr als fünf H1-/H2-Überschriften schaltet das Dokument automatisch in den strukturierten
 Modus (Inhaltsverzeichnis voran, jedes Kapitel auf neuer Seite) — hier zusätzlich per Frontmatter
