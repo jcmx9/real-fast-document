@@ -75,7 +75,7 @@ tighten task lists, deflists → `<dl>`) into a temp file, then compile `templat
 typst compile template.typ --root / --font-path fonts --ignore-system-fonts \
   --input source=RENDER.md --input attach=SRC.md --input docdir=SRC_DIR \
   --input filename=OUT.pdf --input title=SRC --input doctitle= --input logo=logo.svg \
-  --input date= --input toc=auto --input "h1-break=auto" --input showname=true --input lang=de \
+  --input date= --input toc=auto --input "h1_break=auto" --input showname=true --input lang=de \
   --input header= --input watermark= \
   --format png --ppi 120 preview-{p}.png
 # then open / Read the preview-*.png, then clean up scratch files
@@ -145,7 +145,7 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   rules, TOC, footnotes) **and** renders the body. It is a **plain Typst file** now (not a
   Pandoc template): after all `#set`/`#show` rules it calls `#cmarker.render(read(source), …)`.
   Runtime values (`filename`, `title` [metadata], `doctitle` [visible title], `logo`, `source`,
-  `attach`, `docdir`, plus the frontmatter-derived `date`, `toc`, `h1-break`, `showname`, `lang`,
+  `attach`, `docdir`, plus the frontmatter-derived `date`, `toc`, `h1_break`, `showname`, `lang`,
   `header`, `watermark`) are passed as `typst --input` and read via `sys.inputs`.
   - The **cmarker call** uses `h1-level: 1` (markdown `#` → Typst level-1 heading, styled as a
     *chapter*) and `set-document-title: false` (the PDF/A metadata title comes from `--input title`
@@ -164,7 +164,7 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   `date:` (ISO) → ISO-prefixes the output file (`2026-06-19_name.pdf`) **and** shows a
   `lang`-localized date in the footer right; `isodate_praefix:` true|false controls **only** the
   filename prefix (default: on when `date:` is set — `false` drops the prefix but keeps the footer
-  date; a filename-only knob, never passed to `template.typ`); `toc:`/`h1-break:` true|false
+  date; a filename-only knob, never passed to `template.typ`); `toc:`/`h1_break:` true|false
   override the `> 5`
   automatism; `print_filename:` true|false toggles the footer-left name (→ `showname` input);
   `lang:` sets the document language / date format (default `de`); `header:` → fixed header text
@@ -292,15 +292,17 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   metadata title. Optional — without it there's no title block and the metadata title is the `.md`
   basename.
 - **H1 = chapter** — the top content heading: serif, a fine full-width hairline right below it, a
-  page break before it (`h1-break`), and the active H1 threaded into the running header.
-- **H2 / H3** = subsections (serif, no line). **H4+** = bold, left-aligned only.
+  page break before it (`h1_break`), and the active H1 threaded into the running header.
+- **H2 / H3** = subsections (serif, no line). **H4 and deeper render identically to H3** (body size
+  11pt, `wght` 450, left-aligned) — there is no separate bold H4 branch anymore.
 - **Visual language:** all headings **serif** (`Source Serif 4`), `luma(8%)`, left-aligned
   (`justify: false`), **no accent bars**; only **H1** carries a hairline (`luma(60%)`) right below.
   Every heading uses space-above > space-below so it binds to the following text — but the `below`
-  is sized ~`above`/2 (H1 2.0/0.6, H2 1.5/0.7, H3 1.25/0.55, H4 1.05/0.45 em) so the body no longer
-  hugs the heading. **All above/below em are 12pt-em** (resolved against the body size at block
-  creation, *not* the heading size) — so the rhythm is level-independent; edit the four block()
-  calls in the `#show heading` rule. Header **and** footer
+  is sized ~`above`/2 (H1 2.0/0.6, H2 1.5/0.7, H3+ 1.25/0.55 em) so the body no longer
+  hugs the heading. **All above/below em are body-size-em (11pt)** (resolved against the body size at
+  block creation, *not* the heading size) — so the rhythm is level-independent; edit the three block()
+  calls in the `#show heading` rule (H1, H2, H3+). Sizes: H1 16pt, H2 14pt, H3+ 11pt (= body); body
+  text is 11pt with `leading: 0.85em`. Header **and** footer
   text are Sans (`Source Sans 3`). Fonts come from `body-font`/`heading-font`/`code-font`. Unordered
   lists use one small drawn square marker at **all** levels; ordered lists keep numbers; task items
   use a checkbox glyph (☐ open, ☒ done, via Noto). Blockquotes are indented both sides + italic.
@@ -320,7 +322,7 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   before the first chapter the `title:` (if set), else empty.
 - **Conditional TOC / structured mode**: when `#H1 + #H2 > 5` (`auto-structured()`) the doc renders
   a TOC (**H1 + H2 only**, `outline(depth: 2)`) after the title and breaks each **H1** to a new
-  page. `toc`/`h1-break` override each independently via `want-toc()`/`want-break()`. The title
+  page. `toc`/`h1_break` override each independently via `want-toc()`/`want-break()`. The title
   block + TOC are a **preamble emitted BEFORE `cmarker.render`** (no longer inside the heading show
   rule). Edit the helpers, not scattered `> 5` literals.
 - **Watermark** (`watermark:` frontmatter): a diagonal (-45°), letter-spaced, bold, light-gray page

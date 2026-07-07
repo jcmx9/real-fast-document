@@ -62,7 +62,7 @@ Options:
   -h, --help      Diese Hilfe ausgeben und beenden
 
 Optionale YAML-Frontmatter-Schlüssel:
-  title, date, isodate_praefix, toc, h1-break, print_filename, lang, header, watermark
+  title, date, isodate_praefix, toc, h1_break, print_filename, lang, header, watermark
 
 Environment:
   RFD_NO_OPEN=1   Das PDF nach dem Build nicht öffnen (Batch/Cron)
@@ -107,7 +107,7 @@ trap cleanup EXIT
 
 # ---------------------------------------------------------------------------
 # Optionalen YAML-Frontmatter (führender ---...---) parsen: title/date/isodate_praefix/
-# toc/h1-break/print_filename/lang/header/watermark, CRLF-tolerant. Bool-Schlüssel YAML-1.1
+# toc/h1_break/print_filename/lang/header/watermark, CRLF-tolerant. Bool-Schlüssel YAML-1.1
 # gelesen (siehe yaml_bool); ein erkannter Schlüssel mit ungültigem Wert warnt
 # und behält den Default.
 # ---------------------------------------------------------------------------
@@ -168,10 +168,10 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
         if [[ -n "${b}" ]]; then fm_toc="${b}"
         else echo "Warnung: ungültiger Wert für 'toc' im Frontmatter: '${line#toc:}' – ignoriert (true/false)." >&2; fi
         ;;
-      h1-break:*)
-        b="$(yaml_bool "${line#h1-break:}")"
+      h1_break:*)
+        b="$(yaml_bool "${line#h1_break:}")"
         if [[ -n "${b}" ]]; then fm_break="${b}"
-        else echo "Warnung: ungültiger Wert für 'h1-break' im Frontmatter: '${line#h1-break:}' – ignoriert (true/false)." >&2; fi
+        else echo "Warnung: ungültiger Wert für 'h1_break' im Frontmatter: '${line#h1_break:}' – ignoriert (true/false)." >&2; fi
         ;;
       title:*)
         fm_title="$(yaml_str "${line#title:}")"
@@ -294,7 +294,7 @@ typst_inputs=(
   --input "docdir=${src_dir}"
   --input "date=${fm_date}"
   --input "toc=${fm_toc}"
-  --input "h1-break=${fm_break}"
+  --input "h1_break=${fm_break}"
   --input "showname=${fm_showname}"
   --input "lang=${fm_lang}"
   --input "header=${fm_header}"
