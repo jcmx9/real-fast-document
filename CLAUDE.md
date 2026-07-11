@@ -401,8 +401,24 @@ When scripting a merge+tag+release, **verify the merge landed in `main` before t
 mergeability; a `set -e`-less script will otherwise tag the wrong commit). Poll
 `gh pr view N --json mergeable` until `MERGEABLE` first.
 
+Full release once the feature PR (with the `VERSION` bump + CHANGELOG entry) is open — copy-paste
+sequence (`V` = the CalVer in `VERSION`, `N` = PR number):
+
+```bash
+until [ "$(gh pr view N --json mergeable -q .mergeable)" = MERGEABLE ]; do sleep 3; done
+gh pr merge N --squash --delete-branch
+git checkout main && git pull origin main --ff-only          # tag the squash commit
+git tag -a "v${V}" -m "Release ${V}" && git push origin "v${V}"
+git checkout dev && git merge --ff-only main && git push origin dev && git checkout main
+RFD_NO_OPEN=1 bash scripts/build.sh README.md /tmp/README.pdf # dogfood release asset
+gh release create "v${V}" /tmp/README.pdf#README.pdf --title "v${V}" --notes "…CHANGELOG excerpt…"
+```
+
 The README is dogfooded: `bash scripts/build.sh README.md README.pdf` renders it through
 the pipeline, and that PDF is attached to GitHub releases as an asset (it is not committed).
+The English README builds identically (`bash scripts/build.sh README.en.md README.en.pdf`) and can
+ride along as a parallel asset for parity; both `README.pdf` and `README.en.pdf` are `*.pdf`
+git-ignored local artifacts (never committed), so a stray `README.en.pdf` in the root is expected.
 `README.md` and `README.en.md` must stay in parity (same structure, sections, version) — a
 change to one must land in the other in the same PR; both build cleanly through the pipeline.
 `assets/pipeline.svg` is the pipeline diagram both READMEs embed (the only tracked non-root
