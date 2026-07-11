@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.10] - 2026-07-11
+
+### Changed
+- **`CLAUDE.md`: documented the full-release command sequence** (mergeability poll → squash-merge →
+  tag the squash commit → fast-forward `dev` → build the README asset → `gh release create`) as a
+  copy-paste block in the *Release flow* section, and **clarified the README release assets** — the
+  English README builds through the same pipeline (`build.sh README.en.md README.en.pdf`) and can ride
+  along as a parallel asset for parity; both `README.pdf` and `README.en.pdf` are `*.pdf` git-ignored
+  local artifacts, so a stray `README.en.pdf` in the root is expected. Documentation only; no pipeline
+  or output change.
+
 ## [26.7.9] - 2026-07-07
 
 ### Changed
