@@ -161,8 +161,10 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
     on disk are found.
 - **Optional YAML frontmatter** (parsed by `build.sh`/`convert.ps1`, then passed via `--input`):
   `title:` → centered title block + running-header title (from page 1) + PDF/A metadata title;
-  `date:` (ISO) → ISO-prefixes the output file (`2026-06-19_name.pdf`) **and** shows a
-  `lang`-localized date in the footer right; `isodate_praefix:` true|false controls **only** the
+  `date:` (ISO) → ISO-prefixes the output file (`2026-06-19_name.pdf`), shows a
+  `lang`-localized date in the footer right, **and** pins the PDF metadata date (`CreateDate`/
+  `ModifyDate`) via `#set document(date: <datetime>)` — see *Reproducible metadata date* below;
+  `isodate_praefix:` true|false controls **only** the
   filename prefix (default: on when `date:` is set — `false` drops the prefix but keeps the footer
   date; a filename-only knob, never passed to `template.typ`); `toc:`/`h1_break:` true|false
   override the `> 5`
@@ -176,6 +178,18 @@ the install path was verified, and it caught real bugs. Windows `.ps1` can only 
   default. Typst does not localize month names (`[month repr:long]` is English only) → a manual
   `months-de` array lives in `template.typ`; `fmt-date` validates the ISO string defensively
   because an invalid `datetime`/`int()` *panics* and aborts the whole build.
+- **Reproducible metadata date.** By default Typst (`document.date: auto`) writes the *build moment*
+  (date **and** wall-clock time) into the PDF `CreateDate`/`ModifyDate` — so the same source produced
+  a different PDF every run. `template.typ` computes `doc-date`: the frontmatter `date:` parsed to a
+  `datetime` (same defensive ISO split as `fmt-date`) when valid, else `auto`. `#set document(date:
+  doc-date)` pins the metadata to the document date. **`date: none` is not an option** — PDF/A-3b
+  *requires* a creation date and Typst aborts (`hint: set the date of the document`). For the
+  date-less case, `build.sh`/`convert.ps1` export **`SOURCE_DATE_EPOCH`** (from the **source file's
+  mtime**, unless the caller already set it) — Typst honours it for `auto`, so even date-less builds
+  carry the source's last-modified time, not "now". **Known limit:** full byte-reproducibility still
+  fails because Typst 0.15 emits a **random Document/Instance ID (UUID)** per build (base64 in the XMP
+  and trailer `/ID`); the timestamp is fixed, the doc ID is not, and Typst 0.15 exposes no knob for
+  it. Verify with `exiftool -CreateDate FILE.pdf` (not a text dump).
 - **Build-time Markdown preprocessing** (`build.sh` awk / `convert.ps1` native, kept in sync):
   before Typst sees the source it produces a **temp render copy** that (1) strips the YAML
   frontmatter, (2) normalizes **loose task lists to tight** — cmarker 0.1.9 **crashes** (`wasm unreachable`; upstream #71, fixed, pending release) on task items separated by blank lines — and (3) converts Pandoc-style

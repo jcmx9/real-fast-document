@@ -282,6 +282,16 @@ function Convert-One {
     '--input', "watermark=$fmWatermark"
   )
 
+  # Reproduzierbarer Metadaten-Zeitstempel: ohne Frontmatter-date: nutzt das Template
+  # date: auto -> Typst schriebe sonst den Build-Zeitpunkt in CreateDate/ModifyDate.
+  # SOURCE_DATE_EPOCH (Quell-mtime) macht das deterministisch = letzte Aenderungszeit
+  # der Quelle statt "jetzt"; Typst respektiert die Variable fuer date: auto. Ist ein
+  # date: gesetzt, pinnt das Template direkt. Ein vom Aufrufer gesetzter Wert gewinnt.
+  if (-not $env:SOURCE_DATE_EPOCH) {
+    $mtimeUtc = (Get-Item -LiteralPath $Src).LastWriteTimeUtc
+    $env:SOURCE_DATE_EPOCH = [string]([DateTimeOffset]$mtimeUtc).ToUnixTimeSeconds()
+  }
+
   try {
     & typst compile $Template $outPdf `
       --font-path $FontDir --ignore-system-fonts `
