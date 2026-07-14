@@ -192,7 +192,7 @@ watermark: "DRAFT"      # diagonal watermark beneath everything
 | Key | Values | Effect |
 |-----|--------|--------|
 | `title` | text | **Document title**: centered title block on top, additionally in the header from page 1, and the PDF/A metadata title. Without `title` the metadata title stays the filename and there is no title block. |
-| `date` | ISO date | Set → output file gets the ISO prefix `YYYY-MM-DD_name.pdf` **and** the date appears bottom right, localized per `lang` (de "19. Juni 2026", en "June 19, 2026"). The footer then becomes 3-column (name · page centered · date). |
+| `date` | ISO date | Set → output file gets the ISO prefix `YYYY-MM-DD_name.pdf`, the date appears bottom right, localized per `lang` (de "19. Juni 2026", en "June 19, 2026"), **and** it is set as the reproducible PDF metadata date (`CreateDate`). The footer then becomes 3-column (name · page centered · date). Without `date` the metadata date carries the **source file's modification time** (not the build moment); a set `SOURCE_DATE_EPOCH` wins. |
 | `isodate_praefix` | `true` / `false` | Controls only the ISO prefix on the **filename**. Without it a set `date` prefixes automatically (backward-compatible); `false` disables the prefix without touching the date in the footer. No effect without `date`. |
 | `toc` | `true` / `false` | Force / suppress the table of contents. Without it the structure automatism applies (see below). |
 | `h1_break` | `true` / `false` | Force / suppress the chapter page break (before each `# H1`). Without it the same automatism applies, independently of `toc`. |

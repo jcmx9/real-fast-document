@@ -126,7 +126,24 @@
 #let watermark-text = sys.inputs.at("watermark", default: "")
 
 // PDF-/PDF-A-Metadaten: Titel ist für PDF/A Pflicht.
-#set document(title: doc-title)
+// Datum: standardmäßig würde Typst (date: auto) den *Build-Zeitpunkt* inkl.
+// Uhrzeit in CreateDate/ModifyDate schreiben -> nicht reproduzierbar. Stattdessen
+// ans Frontmatter date: pinnen (trägt das Dokumentdatum, byte-stabil bzgl. des
+// Zeitstempels). Ohne gültiges date: bleibt es auto -- PDF/A-3b verlangt ZWINGEND
+// ein Datum (date: none bricht den Export ab), aber build.sh setzt dann
+// SOURCE_DATE_EPOCH aus der Quell-mtime, sodass auch auto stabil statt "jetzt" ist.
+// Defensive ISO-Zerlegung wie in fmt-date.
+#let doc-date = {
+  let s = date-iso.trim()
+  if s == "" or s.match(regex("^\d{1,4}-\d{1,2}-\d{1,2}$")) == none {
+    auto
+  } else {
+    let p = s.split("-").map(int)
+    let (y, m, d) = (p.at(0), p.at(1), p.at(2))
+    if m < 1 or m > 12 or d < 1 or d > 31 { auto } else { datetime(year: y, month: m, day: d) }
+  }
+}
+#set document(title: doc-title, date: doc-date)
 
 // PDF/A-3b erlaubt eingebettete Dateien: Original-Markdown als Anhang beilegen.
 #if attach-path != none {

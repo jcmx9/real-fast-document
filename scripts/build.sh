@@ -301,6 +301,17 @@ typst_inputs=(
   --input "watermark=${fm_watermark}"
 )
 
+# Reproduzierbarer Metadaten-Zeitstempel: ohne Frontmatter-date: nutzt das Template
+# date: auto -> Typst schriebe sonst den *Build-Zeitpunkt* in CreateDate/ModifyDate.
+# SOURCE_DATE_EPOCH (Quell-mtime) macht das deterministisch = letzte Änderungszeit
+# der Quelle statt "jetzt"; Typst respektiert die Variable für date: auto. Ist ein
+# date: gesetzt, pinnt das Template direkt und ignoriert dies. Ein vom Aufrufer
+# gesetzter Wert gewinnt. stat: BSD/macOS (-f %m) mit GNU/Linux-Fallback (-c %Y).
+if [[ -z "${SOURCE_DATE_EPOCH:-}" ]]; then
+  SOURCE_DATE_EPOCH="$(stat -f %m "${src}" 2>/dev/null || stat -c %Y "${src}" 2>/dev/null || echo 0)"
+fi
+export SOURCE_DATE_EPOCH
+
 # Markdown -> PDF/A-3b (Template ruft cmarker auf der vorverarbeiteten Quelle).
 "${typst_bin}" compile template.typ "${out}" \
   "${font_arg[@]}" \

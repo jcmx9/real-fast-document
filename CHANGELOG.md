@@ -6,6 +6,23 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.11] - 2026-07-14
+
+### Changed
+- **PDF metadata date is now reproducible instead of the build clock.** Typst's default
+  (`document.date: auto`) stamped the *build moment* — date **and** wall-clock time — into the PDF
+  `CreateDate`/`ModifyDate`, so the same source produced a different file (and a surprising build time
+  in the viewer's document-properties panel) on every run. `template.typ` now pins
+  `#set document(date: …)` to the frontmatter `date:` when set; for date-less documents
+  `build.sh`/`convert.ps1` export `SOURCE_DATE_EPOCH` from the **source file's modification time** (a
+  caller-set value wins), which Typst honours for `auto`. The metadata date therefore reflects the
+  document date (or the source's last edit), never the build moment. PDF/A-3b stays valid (`date:
+  none` is not usable — PDF/A requires a creation date and Typst aborts without one).
+
+### Known limitation
+- Builds are still **not byte-identical**: Typst 0.15 emits a random Document/Instance ID (UUID) per
+  build. The timestamp is now fixed; the document ID is not, and Typst 0.15 offers no way to pin it.
+
 ## [26.7.10] - 2026-07-11
 
 ### Changed
