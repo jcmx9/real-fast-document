@@ -6,6 +6,24 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.7.12] - 2026-07-22
+
+### Fixed
+- **`build.sh` broke every build on Linux** (regression introduced with the `SOURCE_DATE_EPOCH`
+  work in 26.7.11). The mtime probe ran BSD `stat -f %m` first; on GNU/Linux `stat -f` means
+  *file-system status* and prints a multi-line blob **with exit 0**, so the `||` fallback never
+  fired and that blob was fed to Typst as the creation timestamp — aborting the build. Now GNU
+  `stat -c %Y` is tried first (fails cleanly on BSD → falls back to `stat -f %m`) and the result is
+  validated as digits-only. macOS was unaffected. Caught by the new CI on its first green-up.
+
+### Added
+- **CI (`.github/workflows/ci.yml`)** — on push/PR to `main`/`dev`, a Linux runner installs Typst
+  `0.15.0`, fetches the bundled fonts, vendors cmarker + mitex, `shellcheck`s all shell scripts, then
+  builds `example.md`, `README.md` and `README.en.md` and asserts each output is PDF/A part 3. A clean
+  run proves no compile error, no missing-glyph abort, and PDF/A-3b conformance; the README builds also
+  cover the date-less `SOURCE_DATE_EPOCH` metadata path. Visual/layout regressions are still out of
+  scope (they need the manual PNG check). A CI badge was added to both READMEs.
+
 ## [26.7.11] - 2026-07-14
 
 ### Changed

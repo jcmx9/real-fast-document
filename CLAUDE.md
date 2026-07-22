@@ -60,7 +60,13 @@ TYPST=/path/to/typst bash scripts/build.sh ...       # override the typst binary
 shellcheck scripts/build.sh scripts/fetch-fonts.sh scripts/fetch-typst-packages.sh scripts/install.sh scripts/bootstrap.sh scripts/rfd-convert.sh
 ```
 
-There is **no test suite**. Verification is **visual**: render pages to PNG and inspect them.
+There is **no unit-test suite**; local verification is **visual** (render pages to PNG and inspect).
+But **CI does gate builds**: `.github/workflows/ci.yml` (push/PR on `main`/`dev`) installs Typst
+`0.15.0` on Linux, fetches fonts + vendors the packages, `shellcheck`s the scripts, then builds
+`example.md`, `README.md` **and** `README.en.md` and asserts each is PDF/A part 3. A clean CI run
+already proves no compile error, no missing-glyph abort, and PDF/A-3b conformance — the README builds
+also exercise the date-less `SOURCE_DATE_EPOCH` metadata path. CI can't catch *visual* regressions
+(layout, spacing) — those still need the PNG eyeball loop below.
 There is **one** render fixture in the root: `example.md` (the default build target). It is a
 full showcase and doubles as the regression probe for every supported element — structured/TOC
 mode (`#H2 + #H3 > 5`), task lists, tables, math, the emoji/symbol glyph fallback, a local
@@ -101,10 +107,12 @@ that PDF's pages separately if you need PNGs.
 conformance with `strings FILE.pdf | grep pdfaid` (Typst 0.15 compresses object streams,
 so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confirm attachments).
 
-There is no Linux/Windows runner here (this is macOS). The **Linux installer** can be
-validated for real in Docker (mount read-only, copy inside, run `install.sh`): this is how
-the install path was verified, and it caught real bugs. Windows `.ps1` can only be reviewed
-(the `mcr.microsoft.com/powershell` image crashes under qemu on arm64).
+Locally this is macOS (no Linux/Windows runner); **CI runs the Linux build** (see `ci.yml` above),
+but not the **installer** — the **Linux installer** can be validated for real in Docker (mount
+read-only, copy inside, run `install.sh`): this is how the install path was verified, and it caught
+real bugs. Windows `.ps1` can only be reviewed (the `mcr.microsoft.com/powershell` image crashes
+under qemu on arm64), so `convert.ps1`/`install.ps1` changes are never executed anywhere — CI builds
+via `build.sh` only.
 
 ## Requirements & environment gotchas
 

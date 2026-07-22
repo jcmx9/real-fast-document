@@ -306,9 +306,15 @@ typst_inputs=(
 # SOURCE_DATE_EPOCH (Quell-mtime) macht das deterministisch = letzte Änderungszeit
 # der Quelle statt "jetzt"; Typst respektiert die Variable für date: auto. Ist ein
 # date: gesetzt, pinnt das Template direkt und ignoriert dies. Ein vom Aufrufer
-# gesetzter Wert gewinnt. stat: BSD/macOS (-f %m) mit GNU/Linux-Fallback (-c %Y).
+# gesetzter Wert gewinnt. stat unterscheidet sich zwischen GNU und BSD, und die
+# Flags kollidieren: GNU 'stat -f' bedeutet *Dateisystem-Status* (liefert für eine
+# gültige Datei einen mehrzeiligen Blob mit Exit 0!), BSD 'stat -f %m' die mtime.
+# Daher GNU (-c %Y) ZUERST versuchen (schlägt auf BSD sauber fehl -> Fallback auf
+# BSD -f %m); Ergebnis defensiv auf reine Ziffern prüfen, sonst 0.
 if [[ -z "${SOURCE_DATE_EPOCH:-}" ]]; then
-  SOURCE_DATE_EPOCH="$(stat -f %m "${src}" 2>/dev/null || stat -c %Y "${src}" 2>/dev/null || echo 0)"
+  src_epoch="$(stat -c %Y "${src}" 2>/dev/null || stat -f %m "${src}" 2>/dev/null || echo 0)"
+  [[ "${src_epoch}" =~ ^[0-9]+$ ]] || src_epoch=0
+  SOURCE_DATE_EPOCH="${src_epoch}"
 fi
 export SOURCE_DATE_EPOCH
 
