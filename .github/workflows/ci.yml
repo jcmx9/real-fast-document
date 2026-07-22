@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TYPST_VERSION: "0.15.0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Typst ${{ env.TYPST_VERSION }}
+        run: |
+          set -euo pipefail
+          asset="typst-x86_64-unknown-linux-musl"
+          url="https://github.com/typst/typst/releases/download/v${TYPST_VERSION}/${asset}.tar.xz"
+          curl -fsSL "$url" | tar -xJ
+          echo "${PWD}/${asset}" >> "$GITHUB_PATH"
+
+      - name: Verify Typst >= 0.15
+        run: typst --version
+
+      - name: Lint shell scripts
+        run: |
+          shellcheck scripts/build.sh scripts/rfd-convert.sh scripts/install.sh \
+            scripts/bootstrap.sh scripts/fetch-fonts.sh scripts/fetch-typst-packages.sh
+
+      - name: Fetch bundled fonts
+        run: bash scripts/fetch-fonts.sh
+
+      - name: Vendor Typst packages (cmarker + mitex)
+        run: bash scripts/fetch-typst-packages.sh
+
+      # example.md exercises the date-set metadata path (frontmatter date:),
+      # the README builds exercise the date-less / SOURCE_DATE_EPOCH mtime path.
+      # A clean exit already rules out compile errors and missing-glyph aborts
+      # (PDF/A-3b hard-errors on any glyph absent from all bundled fonts).
+      - name: Build example.md (regression probe, date-set path)
+        run: RFD_NO_OPEN=1 bash scripts/build.sh example.md /tmp/example.pdf
+
+      - name: Build README.md (dogfood, date-less mtime path)
+        run: RFD_NO_OPEN=1 bash scripts/build.sh README.md /tmp/README.pdf
+
+      - name: Build README.en.md (dogfood, parity)
+        run: RFD_NO_OPEN=1 bash scripts/build.sh README.en.md /tmp/README.en.pdf
+
+      - name: Assert PDF/A-3b conformance markers
+        run: |
+          set -euo pipefail
+          for f in /tmp/example.pdf /tmp/README.pdf /tmp/README.en.pdf; do
+            if ! strings "$f" | grep -q 'pdfaid'; then
+              echo "::error::$f carries no PDF/A (pdfaid) marker"
+              exit 1
+            fi
+            if ! strings "$f" | grep -q 'part>3</pdfaid:part'; then
+              echo "::error::$f is not PDF/A part 3 (a-3b)"
+              exit 1
+            fi
+          done
+          echo "All builds are PDF/A-3b."

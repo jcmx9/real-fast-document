@@ -2,6 +2,8 @@
 
 **Deutsch** · [English](README.en.md)
 
+[![CI](https://github.com/jcmx9/real-fast-document/actions/workflows/ci.yml/badge.svg)](https://github.com/jcmx9/real-fast-document/actions/workflows/ci.yml)
+
 > Aus einer Markdown-Datei ein archivfähiges, einheitlich gestaltetes **PDF/A-3b** —
 > ohne Textverarbeitung, ohne manuelles Layout.
 

@@ -2,6 +2,8 @@
 
 [Deutsch](README.md) · **English**
 
+[![CI](https://github.com/jcmx9/real-fast-document/actions/workflows/ci.yml/badge.svg)](https://github.com/jcmx9/real-fast-document/actions/workflows/ci.yml)
+
 > Turn a Markdown file into an archival, consistently styled **PDF/A-3b** —
 > no word processor, no manual layout.
 

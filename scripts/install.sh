@@ -261,7 +261,9 @@ uninstall_linux() {
   local desktop="${XDG_DATA_HOME:-${HOME}/.local/share}/applications/real-fast-document.desktop"
   if [[ -f "${desktop}" ]]; then
     rm -f "${desktop}"
-    command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$(dirname "${desktop}")" >/dev/null 2>&1 || true
+    if command -v update-desktop-database >/dev/null 2>&1; then
+      update-desktop-database "$(dirname "${desktop}")" >/dev/null 2>&1 || true
+    fi
     ok ".desktop entfernt"
   else
     log "Kein .desktop vorhanden"
