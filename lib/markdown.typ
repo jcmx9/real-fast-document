@@ -178,8 +178,11 @@
   let task = text.slice(0, dash.start).trim()
   let owner = text.slice(dash.end).trim()
   let due = ""
-  let m = owner.match(regex("^(.*?),?\s+(?:bis|due|by)\s+(.*)$"))
-  if m != none { (owner, due) = (m.captures.at(0).trim(), m.captures.at(1).trim()) }
+  // "Name, bis Datum" oder nur "bis Datum" (Termin ohne Zuständigkeit)
+  let m = owner.match(regex("^(?:(.*?),?\s+)?(?:bis|due|by)\s+(.*)$"))
+  if m != none {
+    (owner, due) = (if m.captures.at(0) == none { "" } else { m.captures.at(0).trim() }, m.captures.at(1).trim())
+  }
   (task: task, owner: owner, due: due)
 }
 #let attr(s) = s.replace("\"", "'")

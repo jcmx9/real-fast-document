@@ -279,7 +279,7 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   code by splitting on backticks). The custom tags are rendered by the `html:` callbacks of
   `cmarker.render`: `rfd-alert` builds the box; `rfd-task` returns a `metadata` value and
   `rfd-tasks` collects them from its body (`body.children.filter(c => c.func() == metadata)`) into
-  a fixed-width table that reuses `rfd-table-fill`/`rfd-table-stroke` (the `fill` function is also
+  a table with Typst `auto` columns and `table-text` (like every table) that reuses `rfd-table-fill`/`rfd-table-stroke` (the `fill` function is also
   the guard that keeps the general `#show table` rebuild away). cmarker runs with
   **`smart-punctuation: false`**: typed quotes stay exact (the automatic replacement put English
   “…” into German text); `--`/`...` therefore stay as typed too. The **original** `.md`

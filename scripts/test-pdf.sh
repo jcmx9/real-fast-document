@@ -226,6 +226,12 @@ test_fixtures() {
       awk 'NR == 1 { a = $1 } { d = $1 - a; if (d < 0) d = -d; if (d > 0.5) bad = 1 } END { print bad + 0 }')"
     [[ "${edges}" == 0 ]] || die "tables-showcase.md: Quartalszahlen nicht rechtsbündig"
   fi
+  # Aufgaben-Kapitel: Wer/Bis-Varianten, Termin ohne Namen (due/by), Checkliste,
+  # lose Liste, Strich-Varianten, gemischte Liste bleibt Liste.
+  expect tables-showcase.md "${text}" "Kick-off-Protokoll verschicken" "KW 44" "17 Oct" "Friday" \
+    "Impressum aktualisieren" "Dritte Aufgabe" "Geviertstrich" "Ein Gedankenstrich – im Aufgabentext" \
+    "Schriftwahl offen – Anna Beispiel, bis 09.11." "Aufgabe 12"
+  reject tables-showcase.md "${text}" "due 17 Oct" "by Friday" ", bis 19.10." "— Ben Probe" "[ ]" "[x]"
   ok tables-showcase.md
 
   # Bilder: Breite aus {width=…}, Remote-Bild übersprungen, Bildunterschrift.

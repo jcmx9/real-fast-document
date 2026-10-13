@@ -667,9 +667,9 @@
 
 // Aufgabentabelle (reine Aufgabenliste, aus lib/markdown.typ als <rfd-tasks>
 // mit <rfd-task done owner due>). Jede <rfd-task> liefert ein Metadatum; die
-// Tabelle sammelt sie ein. Spalten fest: Aufgabe 56 %, Wer 20 %, Bis 14 %,
-// Status 10 % (zentriert); eine überall leere Spalte entfällt und ihr Anteil
-// geht an die Aufgabenspalte.
+// Tabelle sammelt sie ein. Gestaltet wie alle Tabellen: Typsts auto-Spalten
+// (so breit wie der Inhalt), Tabellenschrift table-text, Kopf zentriert, Status
+// zentriert. Eine überall leere Spalte (Wer/Bis) entfällt.
 #let rfd-task(attrs, body) = metadata((
   done: attrs.at("done", default: "false") == "true",
   owner: attrs.at("owner", default: ""),
@@ -679,26 +679,24 @@
 #let rfd-tasks(attrs, body) = {
   let children = if body.func() == metadata { (body,) } else if body.has("children") { body.children } else { () }
   let tasks = children.filter(c => c.func() == metadata).map(c => c.value)
-  let cols = ((key: "task", width: 56%),)
-  if tasks.any(t => t.owner != "") { cols.push((key: "owner", width: 20%)) }
-  if tasks.any(t => t.due != "") { cols.push((key: "due", width: 14%)) }
-  cols.push((key: "status", width: 10%))
-  let rest = 100% - cols.map(c => c.width).sum()
-  cols.at(0).width += rest
+  let cols = ("task",)
+  if tasks.any(t => t.owner != "") { cols.push("owner") }
+  if tasks.any(t => t.due != "") { cols.push("due") }
+  cols.push("status")
   let status-x = cols.len() - 1
   let cell(t, key) = if key == "task" { t.body } else if key == "status" { task-box(t.done) } else { t.at(key) }
   set par(justify: false)
   set text(..table-text)
   show raw: set text(size: 8.5pt)
   block(above: 1.2em, below: 1.4em, breakable: true, table(
-    columns: cols.map(c => c.width),
-    align: (x, y) => if x == status-x { center + horizon } else { left + horizon },
+    columns: (auto,) * cols.len(),
+    align: (x, y) => if y == 0 or x == status-x { center + horizon } else { left + horizon },
     fill: rfd-table-fill,
     stroke: rfd-table-stroke,
-    table.header(..cols.map(c => label-text(c.key))),
+    table.header(..cols.map(label-text)),
     ..tasks.map(t => cols.map(c => {
       set par(spacing: 0pt)
-      cell(t, c.key)
+      cell(t, c)
     })).flatten(),
   ))
 }

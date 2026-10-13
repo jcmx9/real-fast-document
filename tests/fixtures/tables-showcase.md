@@ -123,6 +123,89 @@ Einheiten mit geschützten Leerzeichen, Dezimalstellen, kleine Zahlen.
 | Adresse | https://www.example.com/ein/sehr/langer/pfad/zu/einer/unterseite?mit=parametern&und=noch=mehr |
 | E-Mail | projektleitung.relaunch-2026@beispiel-agentur.example |
 
+# Aufgaben
+
+Listen, die nur aus Aufgaben bestehen, werden zu Tabellen. Wer und bis wann stehen hinter einem
+Gedankenstrich: `Aufgabe – Name, bis Datum`.
+
+## Vollständig (Wer und Bis)
+
+Verschiedene Datumsformen, erledigte und offene Aufgaben, Auszeichnung im Aufgabentext.
+
+- [x] Kick-off-Protokoll verschicken – Anna Beispiel, bis 19.10.
+- [ ] Sitemap-Entwurf mit **allen Unterseiten** erstellen – Ben Probe, bis 24.10.2026
+- [ ] Zugänge für `staging.example.com` bereitstellen – IT-Abteilung, bis KW 44
+- [ ] Bildrechte klären (siehe [Projektseite](https://github.com/jcmx9/real-fast-document)) – Anna Beispiel, bis Freitag
+- [x] Budget freigeben – Kundin, bis 30.10.
+
+## Nur Zuständigkeit
+
+- [ ] Logo in allen Formaten liefern – Kundin
+- [x] Farbwerte prüfen – Ben Probe
+- [ ] Texte für die Startseite schreiben – Anna Beispiel
+
+## Nur Termin (englische Schlüsselwörter)
+
+Ohne Namen, aber mit Termin – `due` und `by` funktionieren wie `bis`.
+
+- [ ] Draft the sitemap – due 17 Oct
+- [ ] Share the access – by Friday
+- [x] Send the minutes – due 12 Oct
+
+## Checkliste ohne Namen und Termine
+
+- [ ] Impressum aktualisieren
+- [x] Datenschutzerklärung prüfen
+- [ ] Cookie-Banner testen
+- [x] Favicon austauschen
+
+## Lose Liste mit Leerzeilen
+
+- [ ] Erste Aufgabe – Anna Beispiel, bis 02.11.
+
+- [x] Zweite Aufgabe – Ben Probe, bis 03.11.
+
+- [ ] Dritte Aufgabe – Kundin, bis 04.11.
+
+## Lange Aufgabentexte
+
+- [ ] Alle Bestandsseiten inventarisieren, nach Seitenaufrufen der letzten zwölf Monate sortieren und für jede Seite entscheiden, ob sie übernommen, zusammengelegt oder gelöscht wird – Ben Probe, bis 06.11.
+- [ ] Weiterleitungen für entfallende Adressen anlegen, damit Suchmaschinen und Lesezeichen weiter funktionieren – IT-Abteilung, bis Go-live
+- [x] Kurzbriefing – Anna Beispiel, bis 20.10.
+
+## Gedankenstrich-Varianten
+
+Halbgeviertstrich, Geviertstrich und Bindestrich trennen gleichermaßen – jeweils der letzte zählt.
+
+- [ ] Halbgeviertstrich – Anna Beispiel, bis 10.11.
+- [ ] Geviertstrich — Ben Probe, bis 11.11.
+- [ ] Bindestrich - Kundin, bis 12.11.
+- [ ] Ein Gedankenstrich – im Aufgabentext – Anna Beispiel, bis 13.11.
+
+## Gemischte Liste (bleibt eine Liste)
+
+Sobald ein normaler Punkt dabei ist, bleibt es eine Liste; die Kästchen stehen bündig mit den Punkten.
+
+- Ergebnis des Workshops
+- [x] Farbwelt festgelegt
+- [ ] Schriftwahl offen – Anna Beispiel, bis 09.11.
+- Nächster Termin folgt
+
+## Viele Aufgaben
+
+- [x] Aufgabe 1 – Anna Beispiel, bis 01.10.
+- [x] Aufgabe 2 – Ben Probe, bis 02.10.
+- [x] Aufgabe 3 – Kundin, bis 05.10.
+- [x] Aufgabe 4 – Anna Beispiel, bis 06.10.
+- [ ] Aufgabe 5 – Ben Probe, bis 07.10.
+- [ ] Aufgabe 6 – IT-Abteilung, bis 08.10.
+- [ ] Aufgabe 7 – Anna Beispiel, bis 09.10.
+- [ ] Aufgabe 8 – Kundin, bis 12.10.
+- [ ] Aufgabe 9 – Ben Probe, bis 13.10.
+- [ ] Aufgabe 10 – Anna Beispiel, bis 14.10.
+- [ ] Aufgabe 11 – IT-Abteilung, bis 15.10.
+- [ ] Aufgabe 12 – Kundin, bis 16.10.
+
 # Lange Tabelle
 
 Über eine Seite hinaus; die Kopfzeile wiederholt sich auf der Folgeseite.
