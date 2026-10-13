@@ -22,13 +22,9 @@ The Typst packages **cmarker** (Markdown → Typst), **mitex** (math) and **mmdr
 placed into the project offline by the installer (`vendor/`, `fonts/`) — no registry access at
 build time.
 
-## Installation
+## Installation & update
 
-### Quick install (one command)
-
-The only prerequisite is **git**. The bootstrap clones the project into
-`~/.local/share/real-fast-document` (Windows: `%LOCALAPPDATA%\real-fast-document`), installs
-typst, downloads fonts + Typst packages and sets up the right-click integration.
+The only prerequisite is **git**. **One command installs — the same command updates.**
 
 **macOS / Linux:**
 
@@ -42,97 +38,40 @@ curl -fsSL https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scrip
 irm https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.ps1 | iex
 ```
 
-typst comes via the system package manager (Homebrew / apt / dnf / pacman / winget). If it is
+On the first run the command clones the project into `~/.local/share/real-fast-document`
+(Windows: `%LOCALAPPDATA%\real-fast-document`), installs typst, downloads fonts and Typst
+packages and sets up the right-click entry and the terminal command `rf-document`. Every further
+run updates the installation (`git pull --ff-only`, then the same setup; fonts and packages that
+are already present are not downloaded again).
+
+typst comes from the system package manager (Homebrew / apt / dnf / pacman / winget). If it is
 missing there or older than 0.15 (common on Linux), the installer downloads the official typst
 binary into `./bin` and uses it automatically.
 
-### Manual
+### Manual (for development)
 
 ```bash
-# 1. typst (Homebrew; on Linux alternatively apt/dnf/pacman)
-brew install typst                             # Windows: winget install --id Typst.Typst -e
-
-# 2. Clone the repository
 git clone https://github.com/jcmx9/real-fast-document.git
 cd real-fast-document
-
-# 3. macOS / Linux: fonts + Typst packages + right-click integration
-bash scripts/install.sh
-#    (or assets only: bash scripts/fetch-fonts.sh && bash scripts/fetch-typst-packages.sh)
-
-# 3. Windows: fonts + Typst packages + "Send to" shortcut
-./scripts/install.ps1
+bash scripts/install.sh      # Windows: ./scripts/install.ps1
 ```
-
-`install.sh` / `install.ps1` are idempotent and can be controlled individually:
-
-```bash
-bash scripts/install.sh             # tool + fonts + packages + right-click integration
-bash scripts/install.sh --uninstall # remove only the right-click integration
-```
-
-```powershell
-./scripts/install.ps1             # tools + fonts + packages + "Send to" shortcut
-./scripts/install.ps1 -Tools      # only typst via winget
-./scripts/install.ps1 -Fonts      # only load fonts into the project (./fonts)
-./scripts/install.ps1 -Packages   # only load Typst packages (./vendor)
-./scripts/install.ps1 -SendTo     # only create the shortcut
-./scripts/install.ps1 -Uninstall  # remove the shortcut
-```
-
-## Update
-
-**Easiest way:** run the same bootstrap one-liner again — it detects the existing installation
-and updates it (`git pull --ff-only` + installer).
-
-**macOS / Linux:**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.sh | bash
-```
-
-**Windows (PowerShell):**
-
-```powershell
-irm https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.ps1 | iex
-```
-
-Alternatively, manually in the install folder:
-
-```bash
-cd ~/.local/share/real-fast-document   # or the chosen install path
-git pull --ff-only                     # fetch the latest version
-bash scripts/install.sh                # refresh fonts/packages/integration if needed
-```
-
-On Windows, after `git pull --ff-only` re-run `./scripts/install.ps1` if needed.
 
 ## Uninstall
 
-Remove the integration (right-click entry, the global `rf-document` command, and the
-PATH helper file):
+One command removes the right-click entry, the terminal command `rf-document` **and** the install
+folder (program, fonts, packages, logo — back up a custom logo first). typst stays, it belongs to
+the package manager.
 
 **macOS / Linux:**
 
 ```bash
-bash scripts/install.sh --uninstall
+curl -fsSL https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.sh | bash -s -- --uninstall
 ```
 
 **Windows (PowerShell):**
 
 ```powershell
-./scripts/install.ps1 -Uninstall
-```
-
-The install folder (program, fonts, packages, logo) is left in place. To remove everything,
-delete it as well:
-
-```bash
-rm -rf ~/.local/share/real-fast-document                           # macOS / Linux
-```
-
-```powershell
-Remove-Item -Recurse -Force "$env:LOCALAPPDATA\real-fast-document"  # Windows
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.ps1))) -Uninstall
 ```
 
 ## Usage
