@@ -9,6 +9,13 @@ parent `~/GitHub/CLAUDE.md` (uv/ruff/mypy/pytest) do **not** apply here. What do
 from that file: GitHub Flow branching, CalVer versioning, and Conventional Commits
 (English, no AI co-author trailers). Author identity in this repo is `jcmx9`.
 
+**Language split — bilingual by rule, not by accident.** Script *comments* and every *user-facing
+CLI string* are **German**: `build.sh`'s `--help` text, its errors (`Error: Typst >= 0.15 nötig`),
+the `N Remote-Bild(er) übersprungen` summary, the comments in `template.typ` and the `.ps1` files
+(there transliterated to ASCII, see below). **English** are commits, PR titles, `CHANGELOG.md` and
+this file. `README.md` is German, `README.en.md` its English parity twin. Match the file you are
+editing — a new English error string in `build.sh` breaks the user-facing consistency.
+
 The pipeline turns a Markdown file into a corporate-styled **PDF/A-3b**, entirely in Typst
 (**no Pandoc**): `template.typ` is a plain Typst file that renders the body itself via the
 **cmarker** package (with **mitex** for math).
@@ -56,7 +63,9 @@ bash scripts/install.sh               # set up tool + fonts + packages + right-c
 bash scripts/install.sh --uninstall   # remove the right-click integration + rf-document
 rf-document SRC.md                    # global CLI after install (wrapper → build.sh)
 TYPST=/path/to/typst bash scripts/build.sh ...       # override the typst binary (e.g. to test a version)
-# Lint ALL shell scripts (PowerShell has no runner here — review only):
+# Lint ALL shell scripts (PowerShell has no runner here — review only).
+# This list is duplicated in ci.yml's "Lint shell scripts" step (same six scripts, different order):
+# a NEW script must be added to BOTH, otherwise it is never linted anywhere.
 shellcheck scripts/build.sh scripts/fetch-fonts.sh scripts/fetch-typst-packages.sh scripts/install.sh scripts/bootstrap.sh scripts/rfd-convert.sh
 ```
 
@@ -275,6 +284,11 @@ via `build.sh` only.
   - `install.sh` shell notes: never hardcode `sudo` (use the `run_priv` helper — works as root
     or without sudo); avoid `trap … RETURN` referencing a local under `set -u` (it fires
     unbound — use explicit cleanup).
+  - **Line endings are enforced per file type by `.gitattributes` — and `.ps1` differs.** `*.sh`,
+    `*.typ`, `*.md` and `*.svg` are `eol=lf`, but **`*.ps1` is `text eol=crlf`**: the PowerShell
+    scripts are CRLF in the working tree and LF in the repo (Windows PowerShell 5.1 wants CRLF).
+    Do **not** "normalize" the CRLF you see in `convert.ps1`/`install.ps1` — that is the intended
+    checkout form. Font/PDF/image types are marked `binary`.
   - **`.ps1` files must stay pure ASCII.** They carry no BOM, so Windows PowerShell 5.1 reads
     them in the ANSI code page (CP1252) — a non-ASCII char (e.g. an en-dash `–`) misdecodes
     and can yield a stray typographic quote that PowerShell treats as a string delimiter,
@@ -331,7 +345,8 @@ via `build.sh` only.
 - **Page-break hygiene (widows/orphans, sticky headings, unbreakable figures):**
   - **Headings never sit alone at a page foot.** Typst sets `sticky: true` on heading blocks *by
     default* — but our `#show heading` rule builds its **own** `block(...)`, which **drops** that
-    default. So every heading block here must set `sticky: true` explicitly (all four levels do);
+    default. So every heading block here must set `sticky: true` explicitly (all three branches —
+    H1, H2, H3+ — do);
     omitting it silently re-introduces orphaned headings. Verified via A/B (same doc, `sticky` on
     vs off): off strands the heading at the page foot, on pushes it to the next page.
   - **Figure + caption stay together** — the `#show figure` rule sets `breakable: false`, so an
