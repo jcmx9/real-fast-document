@@ -51,9 +51,11 @@ Silbentrennung**; im Text erscheinen Mediävalziffern (1, 2, 3 … 2026), in Tab
 | `"gerade"` und `'einfach'` | "gerade" und 'einfach' |
 | `das geht's` | das geht's |
 | `„deutsch“ »französisch« “englisch”` | „deutsch“ »französisch« “englisch” |
-| `Seite 3--5` | Seite 3--5 |
-| `Gedanke---Strich` | Gedanke---Strich |
-| `Moment...` | Moment... |
+| `Seite 3--5` (Bis-Strich) | Seite 3--5 |
+| `9--17 Uhr` (Bis-Strich) | 9--17 Uhr |
+| `Pause -- dann weiter` (Gedankenstrich) | Pause -- dann weiter |
+| `Gedanke---Strich` (Geviertstrich) | Gedanke---Strich |
+| `Moment...` (Auslassungszeichen) | Moment... |
 
 Gerade Anführungszeichen werden nach Sprache gesetzt, getippte typografische bleiben exakt
 erhalten. Code bleibt unberührt: `echo "x" --flag ...`.

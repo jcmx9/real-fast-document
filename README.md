@@ -222,7 +222,10 @@ folgenden Abschnitte beschreiben, was darüber hinaus gilt.
 | `"Zitat"`, `'Zitat'` | nach Sprache: `lang: de` „Zitat“ ‚Zitat‘, sonst “Zitat” ‘Zitat’ |
 | `geht's` | geht’s (Apostroph) |
 | `„…“`, `‚…‘`, `»…«`, `“…”` | getippte Zeichen bleiben exakt erhalten |
-| `3--5`, `Wort---Wort`, `...` | 3–5, Wort—Wort, … |
+| `3--5`, `9--17 Uhr` | Halbgeviertstrich als Bis-Strich: 3–5, 9–17 Uhr |
+| `Pause -- dann weiter` | Halbgeviertstrich als Gedankenstrich: Pause – dann weiter |
+| `Wort---Wort` | Geviertstrich: Wort—Wort |
+| `...` | Auslassungszeichen: … |
 | `==Markierung==` | gelblich hinterlegt |
 | `~~durchgestrichen~~` | durchgestrichen |
 | `z. B.`, `5 %`, `12 pt`, `1.234,56 €` | geschützte Leerzeichen, kein Zeilenumbruch dazwischen |

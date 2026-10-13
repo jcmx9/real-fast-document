@@ -221,7 +221,10 @@ describe what applies beyond that.
 | `"quote"`, `'quote'` | by language: `lang: de` „quote“ ‚quote‘, otherwise “quote” ‘quote’ |
 | `it's` | it’s (apostrophe) |
 | `„…“`, `‚…‘`, `»…«`, `“…”` | typed characters stay exactly as they are |
-| `3--5`, `word---word`, `...` | 3–5, word—word, … |
+| `3--5`, `9--17 Uhr` | en dash as a range: 3–5, 9–17 Uhr |
+| `pause -- then go on` | en dash as a spaced dash: pause – then go on |
+| `word---word` | em dash: word—word |
+| `...` | ellipsis: … |
 | `==highlight==` | yellowish background |
 | `~~strikethrough~~` | strikethrough |
 | `z. B.`, `5 %`, `12 pt`, `1.234,56 €` | non-breaking spaces, no line break in between |
