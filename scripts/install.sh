@@ -324,7 +324,7 @@ case "${1:-install}" in
     ensure_typst
     log "Lade Fonts"
     bash scripts/fetch-fonts.sh
-    log "Lade Typst-Packages (cmarker + mitex)"
+    log "Lade Typst-Packages (cmarker + mitex + mmdr)"
     bash scripts/fetch-typst-packages.sh
     write_tools_env
     install_integration

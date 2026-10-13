@@ -7,7 +7,7 @@
 > Aus einer Markdown-Datei ein archivfähiges, einheitlich gestaltetes **PDF/A-3b** —
 > ohne Textverarbeitung, ohne manuelles Layout.
 
-Markdown → **Typst** (Packages **cmarker** + **mitex**) → **PDF/A** mit festem
+Markdown → **Typst** (Packages **cmarker** + **mitex** + **mmdr**) → **PDF/A** mit festem
 Corporate-Layout: DIN A4 Hochformat, laufender Kopf mit Kapitel und Logo, Fußzeile mit
 Dateiname, Seitenzählung und optionalem Datum. Die Markdown-Quelle wird ins PDF eingebettet.
 **Kein Pandoc nötig** — die gesamte Konvertierung läuft in Typst.
@@ -18,7 +18,7 @@ Dateiname, Seitenzählung und optionalem Datum. Die Markdown-Quelle wird ins PDF
   liefert den halbfetten Schnitt der Überschriften; `build.sh` bricht unter 0.15 ab)
 - [git](https://git-scm.com) zum Klonen
 
-Die Typst-Packages **cmarker** (Markdown → Typst) und **mitex** (Formeln) sowie die Fonts
+Die Typst-Packages **cmarker** (Markdown → Typst), **mitex** (Formeln) und **mmdr** (Mermaid-Diagramme) sowie die Fonts
 werden vom Installer offline ins Projekt gelegt (`vendor/`, `fonts/`) — kein Registry-Zugriff
 zur Build-Zeit.
 
@@ -272,11 +272,19 @@ Codeblöcke werden mit Syntax-Hervorhebung gesetzt, Formeln (`$…$`, `$$…$$`)
 
 Snippet-Vorlage für Aufgaben: `- [ ] ${1:Aufgabe} – ${2:Name}, bis ${3:Datum}$0`
 
-**Bilder:** `![Untertitel](pfad.svg)` wird als nummerierte Abbildung mit Untertitel gesetzt.
-Lokale Bilder werden eingebettet; relative Pfade sind **relativ zum Dokument**. **Remote-Bilder**
+**Bilder:** `![Untertitel](pfad.svg)` wird als nummerierte Abbildung mit Untertitel gesetzt,
+`{width=50%}` (auch `8cm`, `80mm`, `300px`) dahinter setzt die Breite. Lokale Bilder werden
+eingebettet; relative Pfade sind **relativ zum Dokument**, absolute gehen auch, und `~`, `$VAR`,
+`${VAR}` sowie `%VAR%` werden ersetzt (`USER`↔`USERNAME`, `HOME`↔`USERPROFILE` als Rückfall).
+Ein **fehlendes Bild bricht den Export nie ab**: Im PDF steht kursiv „[Bild fehlt: pfad]“, auf
+stderr eine Warnung. Unter Windows sind nur Bilder auf dem Laufwerk der Installation erreichbar. **Remote-Bilder**
 (`http(s)://`, protokoll-relativ `//host`, `data:`) lassen sich offline nicht laden — Typst hat
 bewusst keinen Netzzugriff — und entfallen daher automatisch; der Build meldet, wie viele Bilder
 übersprungen wurden.
+
+**Diagramme:** Ein ` ```mermaid `-Codeblock wird offline gezeichnet (Typst-Package **mmdr**,
+kein Netz), in ruhigen Farben und mit der variablen Source Sans 3. Fehlerhafte Syntax bricht
+den Export nicht ab.
 
 Der **Dokumenttitel** kommt aus dem Frontmatter (`title:`), nicht aus dem Markdown. `# H1` ist das
 oberste **Kapitel** (feine Linie, Seitenumbruch bei `h1_break`, läuft im Seitenkopf mit); `## H2`
@@ -320,7 +328,8 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
 | Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): gezeichnetes Kästchen (erledigt: dunkel gefüllt mit weißem Häkchen), bündig mit den Punkten; reine Aufgabenlisten als Tabelle (Aufgabe 56 % · Wer 20 % · Bis 14 % · Status 10 %) |
 | Hinweisboxen | Fläche aufgehellt, 2,5-pt-Balken links, Titel klein + gesperrt in Versalien; Farben: Info `#2f6aa8`, Tipp `#3b7d3a`, Wichtig `#7a4fb0`, Hinweis `#b05a1a`, Achtung `#b5452b` |
-| Bilder | lokal: nummerierte Abbildung mit Untertitel; remote (`http(s)`, `//host`, `data:`) offline automatisch entfernt |
+| Bilder | lokal: nummerierte Abbildung mit Untertitel, Breite per `{width=…}`; fehlend: „[Bild fehlt: pfad]“ statt Abbruch; remote (`http(s)`, `//host`, `data:`) offline automatisch entfernt |
+| Diagramme | ` ```mermaid ` offline per mmdr, mittig, Flächen `#f4f2ee`, Rahmen `#b9b2a6`, Linien `#6b6b6b`, Text `#2b2b2b`, Notizen `#fbeab0`; Beschriftung Source Sans 3 (variabel, Medium) |
 | Zitate | beidseitig eingerückt (schmaler als Satzspiegel) + kursiv |
 | Emoji/Symbole | zeichenbasierter Fallback: Noto Emoji + Noto Sans Symbols 2 (monochrom, nur für Zeichen ohne Source-Glyph) |
 | Umbruchschutz | Überschriften nie allein am Seitenfuß (sticky); Abbildung + Unterschrift bleiben zusammen; Schusterjungen/Hurenkinder/Runts vermieden (`costs`); **geschützte Leerzeichen** in deutschen Abkürzungen (z. B., d. h., u. a., …) und zwischen Zahl + Einheit/Prozent/Währung (12 pt, 5 %, 1.234,56 €) |
@@ -350,14 +359,14 @@ scripts/build.sh            Pipeline Markdown -> PDF/A (macOS/Linux): Frontmatte
 scripts/test-pdf.sh         End-to-End-Tests: baut tests/fixtures/*.md und prüft den PDF-Text
 scripts/convert.ps1         Windows-Konverter (von "Senden an" aufgerufen)
 scripts/fetch-fonts.sh      bündelt variable Source-Fonts nach ./fonts
-scripts/fetch-typst-packages.sh  vendort cmarker + mitex nach ./vendor (offline)
+scripts/fetch-typst-packages.sh  vendort cmarker + mitex + mmdr nach ./vendor (offline)
 scripts/bootstrap.sh        Ein-Zeiler-Installer (macOS/Linux): klont + ruft install.sh
 scripts/bootstrap.ps1       Ein-Zeiler-Installer (Windows): klont + ruft install.ps1
 scripts/install.sh          macOS/Linux-Setup: Werkzeug + Fonts + Packages + Rechtsklick
 scripts/install.ps1         Windows-Setup: Werkzeug + Fonts + Packages + "Senden an"
 scripts/rfd-convert.sh      Konverter-Dispatcher der Rechtsklick-Integration (macOS/Linux)
-fonts/                      Source-OTF (Serif 4 / Sans 3 / Code Pro) + Noto-Fallbacks (git-ignored)
-vendor/                     gevendorte Typst-Packages cmarker + mitex (git-ignored)
+fonts/                      variable Source-OTF (Serif 4 / Sans 3 / Code Pro) + Noto-Fallbacks
+vendor/                     gevendorte Typst-Packages cmarker + mitex + mmdr (git-ignored)
 logo.svg                    Kopf-Logo (optional)
 assets/pipeline.svg         lokale Beispielabbildung für example.md
 example.md                  volle Beispiel-/Falltest-Datei (alle Elemente, dokumentierter Frontmatter)
@@ -398,7 +407,7 @@ Schnittstelle (exakter Ausgabepfad, Exit-Codes, eingebettete Quelle, minimaler `
 - **Quelle als Anhang**: Die Markdown-Datei wird via `pdf.attach` ins PDF eingebettet (unter
   ihrem Dateinamen, ohne lokalen Pfad) und lässt sich z. B. mit `mutool extract datei.pdf`
   wieder herauslösen. Abschalten mit `--no-source` oder `embed_source: false`.
-- **Package-Versionen**: cmarker/mitex sind in `scripts/fetch-typst-packages.sh` und
+- **Package-Versionen**: cmarker/mitex/mmdr sind in `scripts/fetch-typst-packages.sh` und
   `scripts/install.ps1` gepinnt; zum Aktualisieren dort die Version anheben und neu vendoren.
 
 ## Versionierung
@@ -410,4 +419,4 @@ Schnittstelle (exakter Ausgabepfad, Exit-Codes, eingebettete Quelle, minimaler `
 
 MIT — siehe [LICENSE](LICENSE). Die gebündelten Fonts unter `fonts/` stehen unter der
 SIL Open Font License 1.1 (siehe [fonts/README.md](fonts/README.md)). Die gevendorten Packages
-unter `vendor/` tragen ihre eigenen Lizenzen (cmarker: MIT, mitex: Apache-2.0).
+unter `vendor/` tragen ihre eigenen Lizenzen (cmarker: MIT, mitex: Apache-2.0, mmdr: MIT).

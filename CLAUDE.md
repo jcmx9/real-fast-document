@@ -303,16 +303,31 @@ via `build.sh` only.
     param makes `-V` an **ambiguous prefix** (binding error before any script code runs); only the
     full `-Version`/`-Help` switches and the double-dash `--version`/`--help` are safe there. Keep
     the flag list in sync across `build.sh`, `convert.ps1`, and **both** READMEs' options tables.
-  - **Skip reporting:** the template marks each stripped remote image with an invisible
-    `<rfd-remote-skip>` metadatum; after compiling, `build.sh`/`convert.ps1` run a **second
-    `typst eval` pass** — `typst eval --in template.typ 'query(<rfd-remote-skip>).len()'` with the
-    same inputs — to count them and print a `N Remote-Bild(er) übersprungen` summary. (`typst query`
-    is **deprecated since Typst 0.15**; `eval` with `query(...).len()` returns the count directly.
-    The Typst `query` *function* used inside `template.typ`'s show rules is unaffected — only the
-    CLI subcommand is deprecated.) `rfd-convert.sh` greps that summary out of each build's output
-    and folds the total into its system notification (so GUI right-click users notice). The summary
-    line is the parse contract — don't reword it without updating the grep. (Cost: two Typst passes
-    per build; negligible for small docs.)
+  - **Image probe pass (replaces the old remote-count pass):** Typst can neither read env vars
+    nor test file existence (a missing image *aborts* the build). So both converters first run
+    `typst eval --in template.typ <expr> --input probe=true`: in probe mode `safe-image` loads
+    nothing and emits `metadata(source)<rfd-image>` (remote sources still emit
+    `<rfd-remote-skip>`). `build.sh` uses a JSON *string* (`"N\npath\npath…"`, decoded by the awk
+    `json_string_lines`); `convert.ps1` uses a quote-free expression returning a JSON *array*
+    (`(str(…len()),) + query(<rfd-image>).map(m => m.value).dedup()`) because **Windows PowerShell
+    5.1 mangles `"` inside arguments to native programs**. The shells expand each path
+    (`expand_path`/`Expand-NotePath`), resolve it against the note, test it, write a JSON mapping
+    `source → absolute path` (`""` = missing, plus a stderr warning) to a temp file and pass it as
+    `--input images=…`; the template then renders `[Bild fehlt: …]` for `""`. Without `images`
+    (direct typst call) `safe-image` falls back to `resolve-path`. The first probe value is the
+    remote count → `N Remote-Bild(er) übersprungen` summary, which `rfd-convert.sh` greps — that
+    line is the parse contract, don't reword it. Still two Typst passes per build. (`typst query`
+    is deprecated since 0.15; the in-template `query` function is fine.)
+  - **Image width:** `lib/markdown.typ`'s `image-attrs` turns `![alt](src){width=…}` into
+    `<img src alt width>`; cmarker's built-in `img` handler parses only integer `%` or bare
+    numbers (= pt) with `int()`, so `dim-attr` converts `cm`/`mm`/`in`/`px` to integer pt first.
+  - **Mermaid:** `#show raw.where(lang: "mermaid", block: true)` renders via vendored **mmdr**
+    (`vendor/mmdr`, pinned in `fetch-typst-packages.sh` + `install.ps1`) with `mermaid-theme`.
+    **Font trap:** SVG text is drawn with *named instances* of the variable font; `font-weight`
+    400 resolves to the default instance **ExtraLight (200)**, so the rule injects
+    `font-weight="500"` (Medium) into the SVG. The user wants **only the variable Adobe Source
+    fonts** — do not add a static `SourceSans3-Regular.otf` (tried and removed). mmdr does not
+    abort on invalid syntax.
 - **Install / bootstrap** (separate from conversion):
   - `scripts/bootstrap.sh` / `scripts/bootstrap.ps1` are the curl|bash / irm|iex one-liners:
     require git, clone/pull into `~/.local/share/real-fast-document` (Windows

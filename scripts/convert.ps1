@@ -345,21 +345,52 @@ function Convert-One {
     $env:SOURCE_DATE_EPOCH = [string]([DateTimeOffset]$mtimeUtc).ToUnixTimeSeconds()
   }
 
-  & typst compile $Template $outPdf `
-    --font-path $FontDir --ignore-system-fonts `
-    --root $Root `
-    --pdf-standard a-3b `
-    @inputs
-  if ($LASTEXITCODE) { throw "typst-Fehler ($LASTEXITCODE)" }
-
-  # Uebersprungene Remote-Bilder zaehlen: das Template markiert jedes gestrippte
-  # Bild mit einem unsichtbaren Metadatum <rfd-remote-skip>; per typst eval
-  # auszaehlen (typst query ist ab Typst 0.15 deprecated). Gleiche Inputs, damit
-  # die Kompilierung identisch ist; query(...).len() liefert direkt die Zahl.
-  $q = & typst eval --in $Template 'query(<rfd-remote-skip>).len()' `
-    --font-path $FontDir --ignore-system-fonts --root $Root @inputs 2>$null
+  # Bilder pruefen (Probe-Durchlauf, spiegelt build.sh): Typst kann weder
+  # Umgebungsvariablen lesen noch pruefen, ob eine Datei existiert. Das Template
+  # meldet im Probe-Modus alle Bildquellen (+ Zahl der Remote-Bilder); hier
+  # ~/$VAR/${VAR}/%VAR% ersetzen, relativ zur Notiz aufloesen und pruefen. Ein
+  # fehlendes Bild erscheint im PDF als "[Bild fehlt: pfad]". Ein Bild auf einem
+  # anderen Laufwerk als --root ist fuer Typst nicht erreichbar und zaehlt als
+  # fehlend. Der Ausdruck enthaelt bewusst KEINE doppelten Anfuehrungszeichen:
+  # Windows PowerShell 5.1 reicht sie an externe Programme nicht korrekt weiter.
+  $probeExpr = '(str(query(<rfd-remote-skip>).len()),) + query(<rfd-image>).map(m => m.value).dedup()'
+  $probeJson = & typst eval --in $Template $probeExpr `
+    --font-path $FontDir --ignore-system-fonts --root $Root @inputs --input probe=true 2>$null
+  $probe = @()
+  try { $probe = @((($probeJson -join "`n") | ConvertFrom-Json) | ForEach-Object { $_ }) } catch { $probe = @() }
   $stripped = 0
-  [void][int]::TryParse((($q -join '').Trim()), [ref]$stripped)
+  $imageMap = @{}
+  if ($probe.Count -gt 0) {
+    [void][int]::TryParse([string]$probe[0], [ref]$stripped)
+    foreach ($raw in ($probe | Select-Object -Skip 1)) {
+      $img = Expand-NotePath ([string]$raw)
+      if (-not [IO.Path]::IsPathRooted($img)) { $img = Join-Path $srcDir $img }
+      $img = [IO.Path]::GetFullPath($img)
+      $sameDrive = [IO.Path]::GetPathRoot($img) -eq $Root
+      if ($sameDrive -and (Test-Path -LiteralPath $img -PathType Leaf)) {
+        $imageMap[[string]$raw] = ConvertTo-TypstPath $img
+      } else {
+        if (-not $sameDrive) { Write-Warning "Bild auf anderem Laufwerk (nicht erreichbar): $raw" }
+        else { Write-Warning "Bild nicht gefunden: $raw" }
+        $imageMap[[string]$raw] = ''
+      }
+    }
+  }
+  $imagesJson = Join-Path ([IO.Path]::GetTempPath()) ('rfd-images-' + [Guid]::NewGuid().ToString('N') + '.json')
+  [IO.File]::WriteAllText($imagesJson, ($imageMap | ConvertTo-Json -Compress), (New-Object Text.UTF8Encoding $false))
+  $inputs += @('--input', ('images=' + (ConvertTo-TypstPath $imagesJson)))
+
+  try {
+    & typst compile $Template $outPdf `
+      --font-path $FontDir --ignore-system-fonts `
+      --root $Root `
+      --pdf-standard a-3b `
+      @inputs
+    if ($LASTEXITCODE) { throw "typst-Fehler ($LASTEXITCODE)" }
+  }
+  finally {
+    Remove-Item -LiteralPath $imagesJson -ErrorAction SilentlyContinue
+  }
 
   Write-Host "OK  $outPdf" -ForegroundColor Green
   if ($stripped -gt 0) {

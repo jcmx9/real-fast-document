@@ -388,6 +388,70 @@ if [[ -z "${SOURCE_DATE_EPOCH:-}" ]]; then
 fi
 export SOURCE_DATE_EPOCH
 
+# ---------------------------------------------------------------------------
+# Bilder prüfen (Probe-Durchlauf). Typst kann weder Umgebungsvariablen lesen noch
+# prüfen, ob eine Datei existiert – ein fehlendes Bild bräche den Build ab. Daher:
+# Template im Probe-Modus (lädt keine Bilder) per `typst eval` nach allen
+# Bildquellen fragen (+ Zahl der Remote-Bilder), hier ~/$VAR/${VAR}/%VAR%
+# ersetzen, relativ zur Notiz auflösen, Existenz prüfen und die Zuordnung als
+# JSON übergeben. Fehlende Bilder erscheinen im PDF als „[Bild fehlt: pfad]".
+# ---------------------------------------------------------------------------
+images_json="$(mktemp -t rfd-images.XXXXXX)"
+cleanup() { rm -f "${images_json}"; }
+trap cleanup EXIT
+
+# JSON-String-Literal aus typst eval in Klartextzeilen zerlegen (\n, \t, \",
+# \\ und \/ werden aufgelöst; \uXXXX kommt in Pfaden praktisch nicht vor).
+json_string_lines() {
+  awk '{
+    s = $0; sub(/^[ \t]*"/, "", s); sub(/"[ \t]*$/, "", s)
+    out = ""; n = length(s); i = 1
+    while (i <= n) {
+      c = substr(s, i, 1)
+      if (c == "\\") {
+        d = substr(s, i + 1, 1)
+        if (d == "n") out = out "\n"
+        else if (d == "t") out = out "\t"
+        else if (d == "u") { out = out "?"; i += 4 }
+        else out = out d
+        i += 2
+      } else { out = out c; i++ }
+    }
+    printf "%s", out
+  }'
+}
+
+json_escape() {
+  local v="$1"
+  v="${v//\\/\\\\}"
+  v="${v//\"/\\\"}"
+  v="${v//$'\t'/\\t}"
+  printf '"%s"' "${v}"
+}
+
+probe_expr='str(query(<rfd-remote-skip>).len()) + "\n" + query(<rfd-image>).map(m => m.value + "\n").dedup().sum(default: "")'
+probe="$("${typst_bin}" eval --in template.typ "${probe_expr}" \
+  "${font_arg[@]}" --root / "${typst_inputs[@]}" --input probe=true 2>/dev/null || true)"
+stripped=0
+image_entries=""
+first=1
+while IFS= read -r raw; do
+  if (( first )); then stripped="${raw:-0}"; first=0; continue; fi
+  [[ -n "${raw}" ]] || continue
+  img="$(expand_path "${raw}")"
+  case "${img}" in /*) ;; *) img="${src_dir}/${img}" ;; esac
+  if [[ -f "${img}" ]]; then
+    resolved="$(json_escape "${img}")"
+  else
+    echo "Warnung: Bild nicht gefunden: ${raw}" >&2
+    resolved='""'
+  fi
+  image_entries="${image_entries:+${image_entries},}$(json_escape "${raw}"): ${resolved}"
+done < <(printf '%s' "${probe}" | json_string_lines)
+[[ "${stripped}" =~ ^[0-9]+$ ]] || stripped=0
+printf '{%s}\n' "${image_entries}" > "${images_json}"
+typst_inputs+=(--input "images=${images_json}")
+
 # Markdown -> PDF/A-3b (Template ruft cmarker auf der vorverarbeiteten Quelle).
 "${typst_bin}" compile template.typ "${out}" \
   "${font_arg[@]}" \
@@ -395,14 +459,9 @@ export SOURCE_DATE_EPOCH
   --pdf-standard "${standard}" \
   "${typst_inputs[@]}"
 
-# Übersprungene Remote-Bilder zählen: das Template markiert jedes gestrippte
-# Bild mit einem unsichtbaren Metadatum <rfd-remote-skip>; per `typst eval`
-# auszählen (`typst query` ist ab Typst 0.15 deprecated). Gleiche Inputs, damit
-# die Kompilierung identisch ist; `query(...).len()` liefert direkt die Zahl.
-stripped="$("${typst_bin}" eval --in template.typ 'query(<rfd-remote-skip>).len()' \
-  "${font_arg[@]}" --root / "${typst_inputs[@]}" 2>/dev/null || true)"
-
 echo "✓ ${out} erzeugt (PDF/A-3b)"
+# Remote-Bilder zählt der Probe-Durchlauf oben (<rfd-remote-skip>); die Zeile
+# ist der Parse-Vertrag für rfd-convert.sh – nicht umformulieren.
 if [[ "${stripped:-0}" -gt 0 ]]; then
   echo "Hinweis: ${stripped} Remote-Bild(er) übersprungen (kein Netzzugriff in Typst)."
 fi
