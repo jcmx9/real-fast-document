@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.9] - 2026-10-13
+
+### Changed
+- **Typography is back, now language-aware:** `--` → –, `---` → —, `...` → …, and straight quotes are
+  set by `lang` — German „…“ ‚…‘ (default), otherwise “…” ‘…’; an apostrophe between letters
+  becomes ’ (`geht's` → geht’s). Typed typographic quotes stay exactly as they are. Code, math,
+  HTML and separator rows are left alone. (26.10.1 had switched cmarker's smart punctuation off
+  because it always produced English quotes; that also dropped the dash/ellipsis conversion.)
+- **Logo default height 20 mm** (was 13 mm), still at most 60 mm wide and proportional;
+  `logo-height` up to 25 mm.
+
 ## [26.10.8] - 2026-10-13
 
 ### Changed

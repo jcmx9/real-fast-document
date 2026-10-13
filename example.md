@@ -55,7 +55,9 @@ Fachbegriffen wie `PDF/A`, `sys.inputs` oder `--font-path`.
 
 Absätze werden durch eine Leerzeile getrennt. Ein einzelner Zeilenumbruch in der Quelle wird zu
 einem Leerzeichen; das hält den Quelltext angenehm schmal, ohne die Ausgabe zu beeinflussen.[^umbruch]
-Anführungszeichen bleiben exakt so, wie sie getippt sind: „deutsch“, ‚einfach‘, »französisch«.
+Gerade Anführungszeichen werden je nach Sprache gesetzt ("gerade" wird „gerade“), getippte bleiben
+exakt erhalten: „deutsch“, ‚einfach‘, »französisch«. Aus `--` wird ein Halbgeviertstrich (Seite 3--5),
+aus `...` ein Auslassungszeichen...
 
 [^umbruch]: Zwei Leerzeichen am Zeilenende erzwingen bei Bedarf einen harten Umbruch. Mit
     `hard_breaks: true` im Frontmatter bleibt jede Zeile eine Zeile — praktisch für Mitschriften.

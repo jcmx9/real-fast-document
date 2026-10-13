@@ -3,6 +3,8 @@ title: "Textfunktionen"
 ---
 
 „Deutsche Anführungszeichen“ und ‚einfache‘ sowie »Guillemets« und "gerade".
+Aus 'einfach gerade' wird ‚einfach‘, das geht's; Seite 3--5, Gedanke---Strich, Moment...
+Code bleibt: `echo "x" --flag ...`.
 Text mit ==markiert== und `==kein Mark im Code==`.
 
 # Termine

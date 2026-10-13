@@ -370,10 +370,61 @@
   })
 }
 
+// Typografie (cmarker läuft mit smart-punctuation: false, weil dessen Automatik
+// gerade Anführungszeichen immer englisch setzte – auch in deutschem Text):
+//   ---  -> —   (Geviertstrich)        --  -> –   (Halbgeviertstrich)
+//   ...  -> …   (Auslassungszeichen)
+//   "x"  -> „x“ (lang de) bzw. “x” (sonst)   'x' -> ‚x‘ bzw. ‘x’
+//   geht's -> geht’s (Apostroph zwischen Buchstaben)
+// Getippte typografische Zeichen bleiben unverändert. Nicht angefasst werden
+// Code (Zäune, Inline-Code), Formeln ($$-Blöcke, $…$), HTML-Zeilen/-Tags,
+// HTML-Kommentare und Trennzeilen (Tabellen, Linien, Setext).
+#let rule-line-re = regex("^\s*\|?[\s:|*_=-]+\|?\s*$")
+#let opener-re = regex("^[\s(\[{„“‚‘»«–—/-]?$")
+#let smart-quotes(t, de) = {
+  let (dq-open, dq-close, sq-open, sq-close) = if de { ("„", "“", "‚", "‘") } else { ("“", "”", "‘", "’") }
+  let t = t.replace(regex("(^|.)\""), m => {
+    let prev = m.captures.at(0)
+    prev + if prev.match(opener-re) != none { dq-open } else { dq-close }
+  })
+  // Apostroph zwischen Buchstaben/Ziffern (geht's, 90's) vor den Anführungen
+  let t = t.replace(regex("([\p{L}\p{N}])'([\p{L}])"), m => m.captures.at(0) + "’" + m.captures.at(1))
+  t.replace(regex("(^|.)'"), m => {
+    let prev = m.captures.at(0)
+    prev + if prev.match(opener-re) != none { sq-open } else { sq-close }
+  })
+}
+#let smart-text(t, de, dashes) = {
+  let t = if dashes { t.replace("---", "—").replace("--", "–") } else { t }
+  smart-quotes(t.replace("...", "…"), de)
+}
+#let smart-typography(lines, lang) = {
+  let mask = skip-mask(lines)
+  let de = lang.starts-with("de")
+  lines.enumerate().map(((i, l)) => {
+    let t = l.trim()
+    if mask.at(i) or t.starts-with("<") or t.match(rule-line-re) != none { return l }
+    if not (l.contains("\"") or l.contains("'") or l.contains("--") or l.contains("...")) { return l }
+    // HTML im Satz (<span …>, <!-- … -->): Zeile nicht anfassen
+    if l.match(regex("<[A-Za-z!/]")) != none { return l }
+    // Inline-Code auslassen (an Backticks teilen), darin Formeln $…$ auslassen
+    l.split("`").enumerate().map(((k, p)) => {
+      if calc.odd(k) { return p }
+      let dollars = p.split("$")
+      if dollars.len() >= 3 and calc.odd(dollars.len()) {
+        dollars.enumerate().map(((j, q)) => if calc.odd(j) { q } else { smart-text(q, de, true) }).join("$")
+      } else {
+        smart-text(p, de, true)
+      }
+    }).join("`")
+  })
+}
+
 // Gesamte Vorverarbeitung: Markdown-String für cmarker.
-#let preprocess(src, hard-breaks: false) = {
+#let preprocess(src, hard-breaks: false, lang: "de") = {
   let lines = strip-frontmatter(src)
   lines = pagebreaks(lines)
+  lines = smart-typography(lines, lang)
   lines = alerts(lines)
   lines = task-tables(lines)
   lines = date-lines(lines)
