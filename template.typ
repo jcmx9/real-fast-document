@@ -8,6 +8,7 @@
 #import "vendor/cmarker/lib.typ" as cmarker
 #import "vendor/mitex/lib.typ": mitex
 #import "lib/markdown.typ": preprocess
+#import "vendor/mmdr/lib.typ": mermaid-svg
 
 // ---------------------------------------------------------------------------
 // Helfer für von cmarker erzeugte Elemente
@@ -324,9 +325,11 @@
 // Beschriftungen je Sprache (de, sonst en).
 #let labels = (
   de: (page: "Seite", contents: "Inhalt", task: "Aufgabe", owner: "Wer", due: "Bis", status: "Status",
-       note: "Info", tip: "Tipp", important: "Wichtig", warning: "Hinweis", caution: "Achtung"),
+       note: "Info", tip: "Tipp", important: "Wichtig", warning: "Hinweis", caution: "Achtung",
+       missing: "Bild fehlt", diagram: "Diagramm"),
   en: (page: "Page", contents: "Contents", task: "Task", owner: "Owner", due: "Due", status: "Status",
-       note: "Note", tip: "Tip", important: "Important", warning: "Warning", caution: "Caution"),
+       note: "Note", tip: "Tip", important: "Important", warning: "Warning", caution: "Caution",
+       missing: "Image missing", diagram: "Diagram"),
 )
 #let label-text(key) = labels.at(doc-lang.slice(0, calc.min(2, doc-lang.len())), default: labels.en).at(key)
 
@@ -556,6 +559,43 @@
   it,
 )
 
+// Mermaid-Diagramme (```mermaid) offline über das gebündelte Typst-Paket mmdr
+// (WASM, kein Netz). Farben aus der ruhigen Palette (Flächen, Rahmen, Linien,
+// Text, Notizen). Schrift: NUR die variable Source Sans 3 von Adobe. Typst
+// wählt im SVG die benannten Schnitte der variablen Schrift – font-weight 400
+// fällt dabei auf den Standardschnitt ExtraLight (200) zurück und wird
+// hauchdünn; 500 (Medium) trifft einen echten Schnitt und bleibt gut lesbar.
+// Darum setzt die Regel font-weight="500" in das SVG. mmdr bricht bei
+// fehlerhafter Syntax nicht ab (zeichnet, was es versteht).
+#let mermaid-theme = (
+  font_family: "SourceSans3VF",
+  primary_color: "#f4f2ee",
+  primary_text_color: "#2b2b2b",
+  primary_border_color: "#b9b2a6",
+  secondary_color: "#fbeab0",
+  tertiary_color: "#fdfcfa",
+  line_color: "#6b6b6b",
+  text_color: "#2b2b2b",
+  edge_label_background: "#ffffff",
+  cluster_background: "#fdfcfa",
+  cluster_border: "#e4e1dc",
+  background: "#ffffff",
+  sequence_actor_fill: "#f4f2ee",
+  sequence_actor_border: "#b9b2a6",
+  sequence_actor_line: "#b9b2a6",
+  sequence_note_fill: "#fbeab0",
+  sequence_note_border: "#e0c66a",
+)
+#show raw.where(lang: "mermaid", block: true): it => block(
+  width: 100%, above: 1.4em, below: 1.4em, breakable: false,
+  {
+    let svg = mermaid-svg(it.text, base-theme: "modern", theme: mermaid-theme)
+      .replace("font-family=", "font-weight=\"500\" font-family=")
+    align(center, image(bytes(svg), format: "svg", alt: label-text("diagram"),
+      width: auto))
+  },
+)
+
 // Fußnoten mit hängendem Einzug: Markierung in fester Spalte, Body als eigener
 // Block daneben -> alle Body-Zeilen fluchten unter dem Textanfang.
 #show footnote.entry: it => {
@@ -572,24 +612,44 @@
 // ---------------------------------------------------------------------------
 // Body: Markdown -> Typst via cmarker
 // ---------------------------------------------------------------------------
-// Nicht-ladbare Bilder (Typst hat keinen Netzzugriff) werden entfernt: bei
-// http(s)-, protokoll-relativen (`//host/…`) und data:-Quellen wird nichts
-// gerendert, aber ein unsichtbares Metadatum als Zähl-Marker hinterlegt
-// (build.sh zählt es per `typst query <rfd-remote-skip>`). Lokale Bilder mit
-// Alt-Text werden zur nummerierten Abbildung mit Untertitel.
+// Bilder. Typst hat keinen Netzzugriff und kann nicht prüfen, ob eine Datei
+// existiert (ein fehlendes Bild bricht den Build ab). Daher zwei Durchläufe:
+//   1. probe=true: Bilder werden NICHT geladen, jede Quelle wird nur als
+//      Metadatum <rfd-image> notiert. build.sh/convert.ps1 lesen sie per
+//      `typst eval` aus, ersetzen ~/$VAR/${VAR}/%VAR%, lösen relative Pfade gegen
+//      die Notiz auf und prüfen, ob die Datei existiert.
+//   2. images=<json>: Zuordnung Quelle -> absoluter Pfad ("" = fehlt). Ein
+//      fehlendes Bild erscheint kursiv als „[Bild fehlt: pfad]", nie als Abbruch.
+// Remote-Quellen (http(s), //host, data:) werden nicht gerendert, aber als
+// <rfd-remote-skip> gezählt. Lokale Bilder mit Alt-Text werden zur nummerierten
+// Abbildung mit Untertitel; die Breite kommt aus {width=…} (siehe lib/markdown.typ).
+#let probe-mode = sys.inputs.at("probe", default: "false") == "true"
+#let image-map = {
+  let f = sys.inputs.at("images", default: "")
+  if f == "" { none } else { json(f) }
+}
 #let is-remote(s) = type(s) == str and (
   s.starts-with("http://") or s.starts-with("https://")
     or s.starts-with("//") or s.starts-with("data:"))
-// Relative Pfade gegen das Dokumentverzeichnis auflösen; absolute (führendes "/")
-// und leeres doc-dir unverändert lassen.
+// Ohne Zuordnung (z. B. direkter typst-Aufruf): relative Pfade gegen das
+// Dokumentverzeichnis auflösen; absolute (führendes "/") unverändert.
 #let resolve-path(p) = if doc-dir == "" or p.starts-with("/") { p } else { doc-dir + "/" + p }
 #let safe-image(source, alt: none, ..args) = {
-  if is-remote(source) {
+  if type(source) != str {
+    image(source, alt: alt, ..args)
+  } else if is-remote(source) {
     [#metadata("rfd-remote-skip")<rfd-remote-skip>]
-  } else if alt != none and alt != "" {
-    figure(image(resolve-path(source), alt: alt, ..args), caption: alt)
+  } else if probe-mode {
+    [#metadata(source)<rfd-image>]
   } else {
-    image(resolve-path(source), alt: alt, ..args)
+    let path = if image-map == none { resolve-path(source) } else { image-map.at(source, default: "") }
+    if path == "" {
+      emph[\[#label-text("missing"): #source\]]
+    } else if alt != none and alt != "" {
+      figure(image(path, alt: alt, ..args), caption: alt)
+    } else {
+      image(path, alt: alt, ..args)
+    }
   }
 }
 

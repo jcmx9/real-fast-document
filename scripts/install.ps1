@@ -7,7 +7,7 @@
     * Tools    - prueft typst (>= 0.15) und installiert es bei Bedarf via winget.
                  Pandoc wird NICHT mehr benoetigt (cmarker uebernimmt das in Typst).
     * Fonts    - laedt die Variable Source-Fonts ins Projekt (./fonts).
-    * Packages - laedt die Typst-Packages cmarker + mitex nach ./vendor (offline).
+    * Packages - laedt die Typst-Packages cmarker + mitex + mmdr nach ./vendor (offline).
     * SendTo   - legt eine "Senden an"-Verknuepfung an, die eine .md per
                  convert.ps1 nach PDF/A wandelt und im Quellverzeichnis ablegt.
 
@@ -23,7 +23,7 @@
 .PARAMETER Fonts
   Nur die Fonts ins Projekt laden.
 .PARAMETER Packages
-  Nur die Typst-Packages (cmarker + mitex) nach ./vendor laden.
+  Nur die Typst-Packages (cmarker + mitex + mmdr) nach ./vendor laden.
 .PARAMETER SendTo
   Nur die "Senden an"-Verknuepfung anlegen.
 .PARAMETER Cli
@@ -66,6 +66,7 @@ $ShortcutName  = 'Nach PDF-A (real-fast-document).lnk'
 $TypstPackages = @(
   @{ Name = 'cmarker'; Version = '0.1.10' }
   @{ Name = 'mitex';   Version = '0.2.7' }
+  @{ Name = 'mmdr';    Version = '0.2.2' }
 )
 
 # Variable OTF (CFF2) der Source-Familien (Source Serif 4 / Sans 3 / Code Pro,

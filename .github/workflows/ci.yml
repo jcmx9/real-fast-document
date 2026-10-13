@@ -40,7 +40,7 @@ jobs:
       - name: Fetch bundled fonts
         run: bash scripts/fetch-fonts.sh
 
-      - name: Vendor Typst packages (cmarker + mitex)
+      - name: Vendor Typst packages (cmarker + mitex + mmdr)
         run: bash scripts/fetch-typst-packages.sh
 
       - name: Install PDF tools for the end-to-end tests

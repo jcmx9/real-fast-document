@@ -7,7 +7,7 @@
 > Turn a Markdown file into an archival, consistently styled **PDF/A-3b** —
 > no word processor, no manual layout.
 
-Markdown → **Typst** (packages **cmarker** + **mitex**) → **PDF/A** with a fixed corporate
+Markdown → **Typst** (packages **cmarker** + **mitex** + **mmdr**) → **PDF/A** with a fixed corporate
 layout: A4 portrait, running header with chapter and logo, footer with filename, page count
 and optional date. The Markdown source is embedded into the PDF. **No Pandoc required** — the
 entire conversion runs in Typst.
@@ -18,7 +18,7 @@ entire conversion runs in Typst.
   the semibold heading weight; `build.sh` aborts below 0.15)
 - [git](https://git-scm.com) for cloning
 
-The Typst packages **cmarker** (Markdown → Typst) and **mitex** (math) as well as the fonts are
+The Typst packages **cmarker** (Markdown → Typst), **mitex** (math) and **mmdr** (Mermaid diagrams) as well as the fonts are
 placed into the project offline by the installer (`vendor/`, `fonts/`) — no registry access at
 build time.
 
@@ -270,10 +270,18 @@ blank line before them.
 
 Snippet template for tasks: `- [ ] ${1:Task} – ${2:Name}, due ${3:Date}$0`
 
-**Images:** `![caption](path.svg)` is set as a numbered figure with a caption. Local images are
-embedded; relative paths are **relative to the document**. **Remote images** (`http(s)://`,
+**Images:** `![caption](path.svg)` is set as a numbered figure with a caption; a trailing
+`{width=50%}` (also `8cm`, `80mm`, `300px`) sets the width. Local images are embedded; relative
+paths are **relative to the document**, absolute ones work too, and `~`, `$VAR`, `${VAR}` and
+`%VAR%` are expanded (`USER`↔`USERNAME`, `HOME`↔`USERPROFILE` as fallback). A **missing image
+never aborts the export**: the PDF shows "[Image missing: path]" in italics (German: "Bild
+fehlt"), stderr a warning. On Windows only images on the install drive are reachable. **Remote images** (`http(s)://`,
 protocol-relative `//host`, `data:`) cannot be loaded offline — Typst deliberately has no network
 access — and are therefore dropped automatically; the build reports how many images were skipped.
+
+**Diagrams:** a ` ```mermaid ` code block is drawn offline (Typst package **mmdr**, no
+network), in calm colors and with the variable Source Sans 3. Broken syntax does not abort the
+export.
 
 The **document title** comes from the frontmatter (`title:`), not from the Markdown. `# H1` is the
 top-level **chapter** (fine line, page break with `h1_break`, runs in the header); `## H2` and
@@ -317,7 +325,8 @@ Body text with **emphasis** and a footnote.[^1]
 | Code | Source Code Pro, 10 pt, with syntax highlighting |
 | Lists | unordered: small square at **all** levels; ordered: numbers; tasks (`- [ ]`): drawn box (done: filled dark with a white check mark), aligned with the bullets; task-only lists as a table (Task 56 % · Owner 20 % · Due 14 % · Status 10 %) |
 | Callouts | light fill, 2.5 pt bar on the left, small letter-spaced uppercase title; colors: Info `#2f6aa8`, Tip `#3b7d3a`, Important `#7a4fb0`, Warning `#b05a1a`, Caution `#b5452b` |
-| Images | local: numbered figure with caption; remote (`http(s)`, `//host`, `data:`) removed automatically offline |
+| Images | local: numbered figure with caption, width via `{width=…}`; missing: "[Image missing: path]" instead of an abort; remote (`http(s)`, `//host`, `data:`) removed automatically offline |
+| Diagrams | ` ```mermaid ` offline via mmdr, centered, fills `#f4f2ee`, borders `#b9b2a6`, lines `#6b6b6b`, text `#2b2b2b`, notes `#fbeab0`; labels in Source Sans 3 (variable, Medium) |
 | Quotes | indented on both sides (narrower than the text block) + italic |
 | Emoji/symbols | per-glyph fallback: Noto Emoji + Noto Sans Symbols 2 (monochrome, only for characters without a Source glyph) |
 | Break protection | headings never alone at a page foot (sticky); figure + caption stay together; orphans/widows/runts avoided (`costs`); **non-breaking spaces** in German abbreviations (z. B., d. h., u. a., …) and between number + unit/percent/currency (12 pt, 5 %, 1.234,56 €) |
@@ -347,14 +356,14 @@ scripts/build.sh            pipeline Markdown -> PDF/A (macOS/Linux): frontmatte
 scripts/test-pdf.sh         end-to-end tests: builds tests/fixtures/*.md and checks the PDF text
 scripts/convert.ps1         Windows converter (called from "Send to")
 scripts/fetch-fonts.sh      bundles the variable Source fonts into ./fonts
-scripts/fetch-typst-packages.sh  vendors cmarker + mitex into ./vendor (offline)
+scripts/fetch-typst-packages.sh  vendors cmarker + mitex + mmdr into ./vendor (offline)
 scripts/bootstrap.sh        one-liner installer (macOS/Linux): clones + runs install.sh
 scripts/bootstrap.ps1       one-liner installer (Windows): clones + runs install.ps1
 scripts/install.sh          macOS/Linux setup: tool + fonts + packages + right-click
 scripts/install.ps1         Windows setup: tool + fonts + packages + "Send to"
 scripts/rfd-convert.sh      converter dispatcher of the right-click integration (macOS/Linux)
-fonts/                      Source OTF (Serif 4 / Sans 3 / Code Pro) + Noto fallbacks (git-ignored)
-vendor/                     vendored Typst packages cmarker + mitex (git-ignored)
+fonts/                      variable Source OTF (Serif 4 / Sans 3 / Code Pro) + Noto fallbacks
+vendor/                     vendored Typst packages cmarker + mitex + mmdr (git-ignored)
 logo.svg                    header logo (optional)
 assets/pipeline.svg         local example figure for example.md
 example.md                  full example/probe file (all elements, documented frontmatter)
@@ -395,7 +404,7 @@ interface (exact output path, exit codes, embedded source, minimal `PATH`). Requ
 - **Source as attachment**: the Markdown file is embedded into the PDF via `pdf.attach` (under its
   file name, without a local path) and can be extracted again, e.g. with `mutool extract file.pdf`.
   Disable with `--no-source` or `embed_source: false`.
-- **Package versions**: cmarker/mitex are pinned in `scripts/fetch-typst-packages.sh` and
+- **Package versions**: cmarker/mitex/mmdr are pinned in `scripts/fetch-typst-packages.sh` and
   `scripts/install.ps1`; to update, bump the version there and re-vendor.
 
 ## Versioning
@@ -407,4 +416,4 @@ interface (exact output path, exit codes, embedded source, minimal `PATH`). Requ
 
 MIT — see [LICENSE](LICENSE). The bundled fonts under `fonts/` are licensed under the SIL Open
 Font License 1.1 (see [fonts/README.md](fonts/README.md)). The vendored packages under `vendor/`
-carry their own licenses (cmarker: MIT, mitex: Apache-2.0).
+carry their own licenses (cmarker: MIT, mitex: Apache-2.0, mmdr: MIT).

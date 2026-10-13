@@ -211,6 +211,33 @@ test_fixtures() {
     expect "tables.md Seite 2" "$(pdftotext -f 2 -l 2 -layout "${pdf}" -)" "Position" "Betrag"
   fi
   ok tables.md
+
+  # Bilder: Breite aus {width=…}, Remote-Bild übersprungen, Bildunterschrift.
+  text="$(render images.md)"
+  expect images.md "${text}" "Abbildung 1: Screenshot aus dem Termin" "Ende der Bilder."
+  reject images.md "${text}" "{width" "Remote wird übersprungen"
+  if command -v pdfimages >/dev/null 2>&1; then
+    [[ "$(pdfimages -list "${out_dir}/images.pdf" | tail -n +3 | wc -l | tr -d ' ')" -ge 2 ]] ||
+      die "images.md: Bilder nicht eingebettet"
+  fi
+  ok images.md
+
+  # Absolute Pfade über Umgebungsvariablen ($VAR, ${VAR} fürs Logo); ein
+  # fehlendes Bild hinterlässt einen Hinweis statt den Export abzubrechen.
+  text="$(TEST_ASSETS="${fixtures}" render absolute-paths.md)"
+  expect absolute-paths.md "${text}" "Abbildung 1: Absolut über Variable" \
+    "[Bild fehlt: bilder/gibt-es-nicht.png]" "Text nach den Bildern."
+  grep -q "Bild nicht gefunden: bilder/gibt-es-nicht.png" "${out_dir}/absolute-paths.md.err" ||
+    die "absolute-paths.md: keine Warnung auf stderr"
+  reject absolute-paths.md "${text}" "real·fast"   # Notiz-Logo statt Standard-Logo
+  ok absolute-paths.md
+
+  # Mermaid offline: Beschriftungen als Text im PDF, kein Quelltext.
+  text="$(render mermaid.md)"
+  expect mermaid.md "${text}" "Kick-off" "Konzept ok?" "Design" "Briefing" "Angebot" \
+    "Text nach dem Diagramm."
+  reject mermaid.md "${text}" "flowchart LR" "sequenceDiagram" "-->"
+  ok mermaid.md
 }
 
 test_interface() {

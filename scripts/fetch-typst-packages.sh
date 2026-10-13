@@ -12,6 +12,7 @@ set -euo pipefail
 # Versionen zentral gepinnt (mit template.typ-Import konsistent halten).
 CMARKER_VERSION="0.1.10"
 MITEX_VERSION="0.2.7"
+MMDR_VERSION="0.2.2"
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 vendor_dir="${root_dir}/vendor"
@@ -50,5 +51,6 @@ fetch_pkg() {
 
 fetch_pkg cmarker "${CMARKER_VERSION}"
 fetch_pkg mitex "${MITEX_VERSION}"
+fetch_pkg mmdr "${MMDR_VERSION}"
 
-echo "✓ Typst-Packages in ${vendor_dir} (cmarker ${CMARKER_VERSION}, mitex ${MITEX_VERSION})"
+echo "✓ Typst-Packages in ${vendor_dir} (cmarker ${CMARKER_VERSION}, mitex ${MITEX_VERSION}, mmdr ${MMDR_VERSION})"

@@ -6,6 +6,30 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.3] - 2026-10-13
+
+Stage 4 of the Zettlr port: images, paths and offline diagrams.
+
+### Added
+- **Image paths like in the notes:** relative to the note or absolute; `~`, `$VAR`, `${VAR}` and
+  `%VAR%` are expanded (`USER`↔`USERNAME`, `HOME`↔`USERPROFILE` fallback), `%20` decoded.
+- **A missing image never aborts the export:** the PDF shows "[Bild fehlt: pfad]" ("[Image
+  missing: path]" with `lang: en`) in italics and stderr a warning. Implemented as a probe pass:
+  the template reports all image sources without loading them, the shell scripts expand and check
+  them and hand Typst a JSON mapping (the probe also replaces the separate remote-image count pass,
+  so builds still take two Typst runs).
+- **Image width** from Pandoc attributes: `![Alt](bild.png){width=50%}` (also `cm`, `mm`, `in`,
+  `pt`, `px`).
+- **Mermaid diagrams** (```` ```mermaid ````) drawn offline with the vendored Typst package
+  **mmdr 0.2.2** (MIT, WASM) in a calm palette. Labels use only the variable Source Sans 3: Typst
+  picks named instances for SVG text, `font-weight` 400 falls back to the ExtraLight default
+  instance, so diagrams set 500 (Medium). Broken Mermaid syntax does not abort the build. Alt text
+  "Diagramm"/"Diagram".
+
+### Changed
+- `fetch-typst-packages.sh` / `install.ps1` vendor mmdr next to cmarker and mitex.
+- READMEs: `fonts/` is tracked in the repository (the structure listing wrongly said git-ignored).
+
 ## [26.10.2] - 2026-10-13
 
 Stage 3 of the Zettlr port: table column widths.

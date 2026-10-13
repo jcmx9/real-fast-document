@@ -337,6 +337,36 @@
   })
 }
 
+// Bildattribute (Pandoc-Syntax): ![Alt](pfad){width=50%} -> <img …>. cmarkers
+// <img>-Handler versteht nur ganze Zahlen (% oder pt), daher hier umrechnen:
+// 50% bleibt, 8cm/80mm/2in/12pt -> pt, Zahl ohne Einheit/px -> 0,75 pt je px.
+// Ungültige Werte entfallen.
+#let dim-attr(v) = {
+  let m = v.trim().trim("\"").match(regex("^([0-9]+(?:\.[0-9]+)?)\s*(%|px|pt|mm|cm|in)?$"))
+  if m == none { return none }
+  let x = float(m.captures.at(0))
+  let u = m.captures.at(1)
+  if u == "%" { return str(int(calc.round(x))) + "%" }
+  let f = if u == none or u == "px" { 0.75 } else { (pt: 1, mm: 2.8346, cm: 28.346, "in": 72).at(u) }
+  str(int(calc.round(x * f)))
+}
+#let image-attr-re = regex("!\[([^\]]*)\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)\{([^}]*)\}")
+#let image-attrs(lines) = {
+  let mask = skip-mask(lines)
+  lines.enumerate().map(((i, l)) => {
+    if mask.at(i) or not l.contains("){") { return l }
+    l.replace(image-attr-re, m => {
+      let (alt, src, attrs) = m.captures
+      let out = "<img src=\"" + src.replace("\"", "%22") + "\" alt=\"" + alt.replace("\"", "'") + "\""
+      for a in attrs.matches(regex("(width|height)\s*=\s*(\"[^\"]*\"|\S+)")) {
+        let d = dim-attr(a.captures.at(1))
+        if d != none { out += " " + a.captures.at(0) + "=\"" + d + "\"" }
+      }
+      out + ">"
+    })
+  })
+}
+
 // Gesamte Vorverarbeitung: Markdown-String für cmarker.
 #let preprocess(src, hard-breaks: false) = {
   let lines = strip-frontmatter(src)
@@ -347,5 +377,6 @@
   lines = deflists(lines)
   if hard-breaks { lines = keep-line-breaks(lines) }
   lines = marks(lines)
+  lines = image-attrs(lines)
   lines.join("\n") + "\n"
 }

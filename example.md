@@ -141,6 +141,17 @@ keinen Netzzugriff — und werden automatisch entfernt; der Build meldet, wie vi
 
 [![Dieses Logo liegt im Netz und wird beim Offline-Build entfernt.](https://typst.app/assets/logo.svg)](https://typst.app)
 
+# Diagramme
+
+Mermaid-Diagramme werden offline gezeichnet — ohne Netz, in ruhigen Farben:
+
+```mermaid
+flowchart LR
+  A[Markdown] --> B[Typst]
+  B --> C{PDF/A-3b}
+  C --> D[Archiv]
+```
+
 # Definitionslisten
 
 Begriff und Erläuterung stehen als Definitionsliste — der Begriff fett, die Erläuterung
