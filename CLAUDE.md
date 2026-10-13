@@ -197,6 +197,10 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   is **always a chapter**, never promoted to the title (the user explicitly rejected Zettlr's
   "leading `# Title` becomes the title" legacy rule). The PDF/A metadata title is `title:`, else the
   basename.
+  - **Metadata:** `#set document(title, date, author, description, keywords)` — author list from
+    `author:` (split on commas), description = `subtitle:`, keywords = client + `"rf-document "` +
+    `read("VERSION")`. Typst hard-codes Creator/CreatorTool ("Typst 0.15.0") with no setting; the
+    user chose keywords over post-processing the PDF (exiftool/qpdf would risk PDF/A sync).
   - **Attachment name:** `pdf.attach` gets `"/" + basename` **plus the bytes** (`read(…, encoding:
     none)`). With only a path, Typst names the attachment after the root-relative path
     (`Users/<name>/…/note.md` — leaks the local path into client PDFs); a leading `/` makes the name

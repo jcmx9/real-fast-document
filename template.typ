@@ -171,7 +171,18 @@
 // Zeitstempels). Ohne gültiges date: bleibt es auto -- PDF/A-3b verlangt ZWINGEND
 // ein Datum (date: none bricht den Export ab), aber build.sh setzt dann
 // SOURCE_DATE_EPOCH aus der Quell-mtime, sodass auch auto stabil statt "jetzt" ist.
-#set document(title: doc-title, date: if date-parsed == none { auto } else { date-parsed })
+// Weitere Metadaten: Autor(en) aus author:, Beschreibung (Subject) aus
+// subtitle:, Stichwörter: Kunde und das erzeugende Werkzeug mit Version. Das
+// Creator-Feld schreibt Typst selbst („Typst 0.15.0“) und lässt sich nicht
+// ändern – rf-document steht deshalb in den Stichwörtern.
+#let rfd-version = read("VERSION").trim()
+#set document(
+  title: doc-title,
+  date: if date-parsed == none { auto } else { date-parsed },
+  author: author-text.split(",").map(a => a.trim()).filter(a => a != ""),
+  description: if subtitle-text != "" { subtitle-text } else { none },
+  keywords: (if client-text != "" { (client-text,) } else { () }) + ("rf-document " + rfd-version,),
+)
 
 // PDF/A-3b erlaubt eingebettete Dateien: Original-Markdown als Anhang beilegen.
 // Name des Anhangs = reiner Dateiname: mit nur einem Pfad würde Typst den

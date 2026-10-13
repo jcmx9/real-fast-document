@@ -11,11 +11,8 @@ real·fast·document (Befehl `rf-document`) setzt Markdown mit **Typst** in ein 
 Corporate-Layout: DIN A4, Titelblock, laufender Kopf mit Kapitel und Logo, Fußzeile mit
 Seitenzählung. Das Ergebnis ist **PDF/A-3b** mit eingebetteter Markdown-Quelle. Alles läuft
 **offline** — Schriften und Typst-Packages liegen im Projekt, Pandoc wird nicht gebraucht.
-
 ![Markdown → Typst → PDF/A-3b: vom reinen Text bis zum Archiv-PDF.](assets/pipeline.svg)
-
 ## Was es kann
-
 - **Dokumente mit festem Layout:** Titelblock mit Kunde, Titel, Untertitel, Datum und Autor;
   Kopfzeile mit aktuellem Kapitel und Logo; Fußzeile mit Name, Seite und Datum;
   Inhaltsverzeichnis und Kapitel-Seitenumbruch automatisch ab längeren Dokumenten;
@@ -30,11 +27,8 @@ Seitenzählung. Das Ergebnis ist **PDF/A-3b** mit eingebetteter Markdown-Quelle.
 - **Archivfähig:** PDF/A-3b, Quelle als Anhang (abschaltbar), reproduzierbares PDF-Datum.
 - **Überall nutzbar:** Terminal-Befehl `rf-document`, Rechtsklick im Dateimanager und Aufruf
   aus anderen Programmen (z. B. als Zettlr-Export) — auf macOS, Linux und Windows.
-
 ## Installation & Update
-
 Einzige Vorbedingung ist **git**. **Ein Befehl installiert — derselbe Befehl aktualisiert.**
-
 **macOS / Linux:**
 
 ```bash
@@ -372,6 +366,10 @@ Symbols 2** — einfarbig, PDF/A-tauglich: 🚀 ✓ ⚠ → ★ ½ €.
   `embed_source: false` oder `--no-source`.
 - Das **PDF-Datum** ist das `date:` der Notiz, sonst die Änderungszeit der Quelle — nie der
   Zeitpunkt des Builds.
+- **Weitere Metadaten:** Titel aus `title:` (sonst Dateiname), Autor aus `author:`, Beschreibung
+  aus `subtitle:`, Sprache aus `lang:`; die Stichwörter enthalten den Kunden und
+  „rf-document <Version>“. Als erzeugendes Programm trägt Typst sich selbst ein („Typst 0.15.0“);
+  dieses Feld lässt sich nicht ändern.
 
 ## Schriften
 

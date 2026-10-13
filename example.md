@@ -34,7 +34,7 @@ Varianten, die dieses Dokument nicht zeigt:
 - `lang: en` stellt Datum, Beschriftungen und Anführungszeichen auf Englisch um.
 - `logo: kunde.png` setzt ein Logo nur für dieses Dokument.
 
-Alle Schlüssel mit Standardwerten stehen in `header.md`.
+Alle Schlüssel mit ==Standardwerten== stehen in `header.md`.
 
 # Text & Typografie
 

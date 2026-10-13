@@ -130,6 +130,12 @@ test_fixtures() {
   expect_compact client-meta.md "${text}" "MUSTER GMBH"
   expect client-meta.md "${text}" "Kick-off" "12. Oktober 2026 · jcmx9, Ben Probe" \
     "Muster GmbH · Kick-off" "Seite 1 / 1"
+  # PDF-Metadaten: Autor(en), Stichwörter mit Kunde und rf-document-Version.
+  if command -v pdfinfo >/dev/null 2>&1; then
+    local info
+    info="$(pdfinfo "${out_dir}/client-meta.pdf")"
+    expect "client-meta.md Metadaten" "${info}" "jcmx9, Ben Probe" "Muster GmbH, rf-document $(cat "${root_dir}/VERSION")"
+  fi
   ok client-meta.md
 
   # Englische Beschriftungen.
