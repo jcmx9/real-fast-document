@@ -61,6 +61,9 @@ bash scripts/fetch-fonts.sh           # download bundled fonts into ./fonts (ide
 bash scripts/fetch-typst-packages.sh  # vendor cmarker + mitex into ./vendor (idempotent: skips if vendored at the pinned version; --force)
 bash scripts/install.sh               # set up tool + fonts + packages + right-click + rf-document CLI (idempotent)
 bash scripts/install.sh --uninstall   # remove the right-click integration + rf-document
+bash scripts/bootstrap.sh --uninstall # FULL removal: integration + rf-document + install folder
+                                      #   (README one-liner: curl … | bash -s -- --uninstall;
+                                      #    Windows: & ([scriptblock]::Create((irm …))) -Uninstall)
 rf-document SRC.md                    # global CLI after install (wrapper → build.sh)
 TYPST=/path/to/typst bash scripts/build.sh ...       # override the typst binary (e.g. to test a version)
 # Lint ALL shell scripts (PowerShell has no runner here — review only).
@@ -331,7 +334,13 @@ via `build.sh` only.
 - **Install / bootstrap** (separate from conversion):
   - `scripts/bootstrap.sh` / `scripts/bootstrap.ps1` are the curl|bash / irm|iex one-liners:
     require git, clone/pull into `~/.local/share/real-fast-document` (Windows
-    `%LOCALAPPDATA%\real-fast-document`), then run the installer.
+    `%LOCALAPPDATA%\real-fast-document`), then run the installer. The **same** one-liner installs and
+    updates. With `--uninstall` / `-Uninstall` they run `install.sh --uninstall` / `install.ps1
+    -Uninstall` and then delete the install folder — **only** if it is a git clone whose `origin`
+    contains `real-fast-document` (guard against a stray `RFD_HOME`). Test the cycle in a
+    throwaway `HOME` (`HOME=/tmp/x XDG_DATA_HOME= XDG_BIN_HOME= bash scripts/bootstrap.sh`, then
+    `… --uninstall`) — `install.sh` writes the Quick Action / `rf-document` under `$HOME`, so a run
+    with the real `HOME` would overwrite the user's own integration.
   - `scripts/install.sh` (macOS/Linux) ensures typst (≥0.15) via the system package manager —
     **typst falls back to the official GitHub binary into `./bin`** when no PM package exists
     (Linux) — fetches fonts **and** vendors the Typst packages, then installs the right-click

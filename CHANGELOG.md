@@ -6,6 +6,19 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.5] - 2026-10-13
+
+### Added
+- **One-command uninstall:** `bootstrap.sh --uninstall` (`curl … | bash -s -- --uninstall`) and
+  `bootstrap.ps1 -Uninstall` remove the right-click integration, the `rf-document` command **and**
+  the install folder. Only a git clone of this project is deleted (guard on `origin`), so a stray
+  `RFD_HOME` can never hit a foreign folder.
+
+### Changed
+- **READMEs:** installation and update are one section with one command per system (the same
+  command does both); uninstall is a single command per system. The long installer option lists
+  are gone; manual setup is reduced to three lines for development.
+
 ## [26.10.4] - 2026-10-13
 
 Stage 5 of the Zettlr port: typography.
