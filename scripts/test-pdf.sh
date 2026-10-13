@@ -238,6 +238,26 @@ test_fixtures() {
     "Text nach dem Diagramm."
   reject mermaid.md "${text}" "flowchart LR" "sequenceDiagram" "-->"
   ok mermaid.md
+
+  # Frontmatter: Inline-Kommentare, Quotes, Listen, auto und leere Bool-Werte –
+  # ohne eine einzige Warnung.
+  text="$(render frontmatter-parsing.md)"
+  expect frontmatter-parsing.md "${text}" "Titel mit Kommentar" "Ohne Anführungszeichen" \
+    "Anna Beispiel, Ben Probe" "Inhalt."
+  expect_compact frontmatter-parsing.md "${text}" "EINFACHE ANFÜHRUNGSZEICHEN"
+  reject frontmatter-parsing.md "${text}" "Kommentar gehört" "# auch" '"'
+  if grep -q "Warnung" "${out_dir}/frontmatter-parsing.md.err"; then
+    die "frontmatter-parsing.md: unerwartete Warnung: $(cat "${out_dir}/frontmatter-parsing.md.err")"
+  fi
+  ok frontmatter-parsing.md
+
+  # Vorlage header.md (alle Schlüssel mit Standardwerten) baut ohne Warnung.
+  (cd "${root_dir}" && bash "${build}" header.md "${out_dir}/header.pdf" >/dev/null 2>"${out_dir}/header.err") ||
+    die "header.md: Export fehlgeschlagen: $(cat "${out_dir}/header.err")"
+  if grep -q "Warnung" "${out_dir}/header.err"; then
+    die "header.md: unerwartete Warnung: $(cat "${out_dir}/header.err")"
+  fi
+  ok header.md
 }
 
 test_interface() {

@@ -6,6 +6,22 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.6] - 2026-10-13
+
+### Added
+- **`header.md`** — frontmatter template with every key, its default value and a comment; builds
+  without a single warning (checked in `scripts/test-pdf.sh`).
+
+### Fixed
+- **Inline comments leaked into values:** `title: "Kick-off" # Kommentar` produced the title
+  `Kick-off" # Kommentar`. Quoted values now end at the closing quote, unquoted ones drop a
+  trailing ` # …` (also after inline lists).
+- **`toc: auto` / `h1_break: auto`** — the documented default value was rejected with a warning.
+- **Empty boolean values** (`toc:`, `print_filename: ""`) warned although empty values are meant to
+  be ignored silently.
+- `convert.ps1`: `lang: ""` no longer clears the default language; the frontmatter parser is a
+  single key switch mirroring `build.sh` (reviewed, not executed).
+
 ## [26.10.5] - 2026-10-13
 
 ### Added

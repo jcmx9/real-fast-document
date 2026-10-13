@@ -133,16 +133,35 @@ function ConvertTo-TypstPath {
   return ($Path -replace '\\', '/') -replace '^[A-Za-z]:', ''
 }
 
-# Einen YAML-String-Skalar saeubern (Whitespace + umschliessende Quotes weg).
-# Eine Inline-Liste [a, "b"] wird zu "a, b" (z. B. mehrere Autoren).
+# Einen YAML-String-Skalar saeubern (spiegelt yaml_str in build.sh): in
+# Anfuehrungszeichen gilt der Inhalt bis zum schliessenden Zeichen, sonst wird
+# ein Inline-Kommentar (' # ...') abgeschnitten. Eine Inline-Liste [a, "b"]
+# wird zu "a, b" (z. B. mehrere Autoren).
 function ConvertTo-YamlStr {
   param([string]$Raw)
   $v = $Raw.Trim()
-  if ($v.StartsWith('[') -and $v.EndsWith(']')) {
-    $v = (($v.Substring(1, $v.Length - 2) -replace '["'']', '') -split '\s*,\s*' |
-      ForEach-Object { $_.Trim() }) -join ', '
+  if ($v -match '^"([^"]*)') { return $Matches[1] }
+  if ($v -match "^'([^']*)") { return $Matches[1] }
+  if ($v -match '^\[([^\]]*)') {
+    return (($Matches[1] -replace '["'']', '') -split '\s*,\s*' |
+      ForEach-Object { $_.Trim() } | Where-Object { $_ }) -join ', '
   }
-  return $v.Trim('"', "'")
+  return ($v -replace '\s#.*$', '').Trim()
+}
+
+# Bool-Schluessel auswerten (spiegelt fm_bool in build.sh): 'true'/'false'
+# (bzw. 'auto', wenn erlaubt). Leerer Wert -> $null ohne Warnung; ungueltiger
+# Wert -> Warnung + $null, der Default bleibt.
+function Get-FmBool {
+  param([string]$Key, [string]$Raw, [switch]$AllowAuto)
+  $v = ConvertTo-YamlStr $Raw
+  if (-not $v) { return $null }
+  if ($AllowAuto -and $v.ToLower() -eq 'auto') { return 'auto' }
+  $b = ConvertTo-YamlBool $v
+  if ($b) { return $b }
+  $allowed = if ($AllowAuto) { 'true/false/auto' } else { 'true/false' }
+  Write-Warning "Ungueltiger Wert fuer '$Key': '$v' - ignoriert ($allowed)."
+  return $null
 }
 
 # Umgebungsvariable lesen; USER<->USERNAME und HOME<->USERPROFILE als Rueckfall.
@@ -206,59 +225,26 @@ function Convert-One {
   if ($lines.Count -gt 0 -and $lines[0].Trim() -eq '---') {
     for ($i = 1; $i -lt $lines.Count; $i++) {
       if ($lines[$i].Trim() -in @('---', '...')) { break }
-      if ($lines[$i] -match '^date:\s*(.+?)\s*$') {
-        $fmDate = ConvertTo-YamlStr $Matches[1]
-      }
-      elseif ($lines[$i] -match '^subtitle:\s*(.+?)\s*$') {
-        $fmSubtitle = ConvertTo-YamlStr $Matches[1]
-      }
-      elseif ($lines[$i] -match '^client:\s*(.+?)\s*$') {
-        $fmClient = ConvertTo-YamlStr $Matches[1]
-      }
-      elseif ($lines[$i] -match '^author:\s*(.+?)\s*$') {
-        $fmAuthor = ConvertTo-YamlStr $Matches[1]
-      }
-      elseif ($lines[$i] -match '^logo:\s*(.+?)\s*$') {
-        $fmLogo = ConvertTo-YamlStr $Matches[1]
-      }
-      elseif ($lines[$i] -match '^logo-height:\s*(.+?)\s*$') {
-        $fmLogoHeight = ConvertTo-YamlStr $Matches[1]
-      }
-      elseif ($lines[$i] -match '^hard_breaks:\s*(.+?)\s*$') {
-        $b = ConvertTo-YamlBool $Matches[1]
-        if ($b) { $fmBreaks = $b } elseif (ConvertTo-YamlStr $Matches[1]) { Write-Warning "Ungueltiger Wert fuer 'hard_breaks': '$($Matches[1])' - ignoriert (true/false)." }
-      }
-      elseif ($lines[$i] -match '^embed_source:\s*(.+?)\s*$') {
-        $b = ConvertTo-YamlBool $Matches[1]
-        if ($b) { $fmEmbed = $b } elseif (ConvertTo-YamlStr $Matches[1]) { Write-Warning "Ungueltiger Wert fuer 'embed_source': '$($Matches[1])' - ignoriert (true/false)." }
-      }
-      elseif ($lines[$i] -match '^isodate_praefix:\s*(.+?)\s*$') {
-        $b = ConvertTo-YamlBool $Matches[1]
-        if ($b) { $fmIsodatePraefix = $b } else { Write-Warning "Ungueltiger Wert fuer 'isodate_praefix': '$($Matches[1])' - ignoriert (true/false)." }
-      }
-      elseif ($lines[$i] -match '^lang:\s*(.+?)\s*$') {
-        $fmLang = $Matches[1].Trim('"', "'")
-      }
-      elseif ($lines[$i] -match '^header:\s*(.+?)\s*$') {
-        $fmHeader = $Matches[1].Trim('"', "'")
-      }
-      elseif ($lines[$i] -match '^watermark:\s*(.+?)\s*$') {
-        $fmWatermark = $Matches[1].Trim('"', "'")
-      }
-      elseif ($lines[$i] -match '^toc:\s*(.+?)\s*$') {
-        $b = ConvertTo-YamlBool $Matches[1]
-        if ($b) { $fmToc = $b } else { Write-Warning "Ungueltiger Wert fuer 'toc': '$($Matches[1])' - ignoriert (true/false)." }
-      }
-      elseif ($lines[$i] -match '^h1_break:\s*(.+?)\s*$') {
-        $b = ConvertTo-YamlBool $Matches[1]
-        if ($b) { $fmBreak = $b } else { Write-Warning "Ungueltiger Wert fuer 'h1_break': '$($Matches[1])' - ignoriert (true/false)." }
-      }
-      elseif ($lines[$i] -match '^title:\s*(.+?)\s*$') {
-        $fmTitle = ConvertTo-YamlStr $Matches[1]
-      }
-      elseif ($lines[$i] -match '^print_filename:\s*(.+?)\s*$') {
-        $b = ConvertTo-YamlBool $Matches[1]
-        if ($b) { $fmShowname = $b } else { Write-Warning "Ungueltiger Wert fuer 'print_filename': '$($Matches[1])' - ignoriert (true/false)." }
+      $line = $lines[$i]
+      if ($line -notmatch '^([A-Za-z_-]+):(.*)$') { continue }
+      $key = $Matches[1]; $raw = $Matches[2]
+      switch ($key) {
+        'date'            { $fmDate = ConvertTo-YamlStr $raw }
+        'title'           { $fmTitle = ConvertTo-YamlStr $raw }
+        'subtitle'        { $fmSubtitle = ConvertTo-YamlStr $raw }
+        'client'          { $fmClient = ConvertTo-YamlStr $raw }
+        'author'          { $fmAuthor = ConvertTo-YamlStr $raw }
+        'logo'            { $fmLogo = ConvertTo-YamlStr $raw }
+        'logo-height'     { $fmLogoHeight = ConvertTo-YamlStr $raw }
+        'header'          { $fmHeader = ConvertTo-YamlStr $raw }
+        'watermark'       { $fmWatermark = ConvertTo-YamlStr $raw }
+        'lang'            { $v = ConvertTo-YamlStr $raw; if ($v) { $fmLang = $v } }
+        'isodate_praefix' { $b = Get-FmBool $key $raw; if ($b) { $fmIsodatePraefix = $b } }
+        'toc'             { $b = Get-FmBool $key $raw -AllowAuto; if ($b) { $fmToc = $b } }
+        'h1_break'        { $b = Get-FmBool $key $raw -AllowAuto; if ($b) { $fmBreak = $b } }
+        'print_filename'  { $b = Get-FmBool $key $raw; if ($b) { $fmShowname = $b } }
+        'hard_breaks'     { $b = Get-FmBool $key $raw; if ($b) { $fmBreaks = $b } }
+        'embed_source'    { $b = Get-FmBool $key $raw; if ($b) { $fmEmbed = $b } }
       }
     }
   }
