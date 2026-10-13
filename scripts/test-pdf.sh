@@ -134,7 +134,7 @@ test_fixtures() {
   if command -v pdfinfo >/dev/null 2>&1; then
     local info
     info="$(pdfinfo "${out_dir}/client-meta.pdf")"
-    expect "client-meta.md Metadaten" "${info}" "jcmx9, Ben Probe" "Muster GmbH, rf-document $(cat "${root_dir}/VERSION")"
+    expect "client-meta.md Metadaten" "${info}" "jcmx9, Ben Probe" "Muster GmbH, real-fast-document $(cat "${root_dir}/VERSION")"
     grep -q '^Subject: *Kick-off$' <<<"${info}" || die "client-meta.md: Thema ist nicht der Titel"
     # Ohne author: kein Autor, ohne title: kein Thema.
     info="$(pdfinfo "${out_dir}/edge-cases.pdf")"

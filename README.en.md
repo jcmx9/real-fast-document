@@ -370,7 +370,7 @@ Symbols 2** — monochrome, PDF/A-safe: 🚀 ✓ ⚠ → ★ ½ €.
 - **Further metadata:** title and subject from `title:` (without `title:` the title is the file
   name and the subject stays empty), author only from `author:` (otherwise empty), language from
   `lang:`; the keywords contain the client and
-  “rf-document <version>”. Typst records itself as the creating program (“Typst 0.15.0”); that
+  “real-fast-document <version>”. Typst records itself as the creating program (“Typst 0.15.0”); that
   field cannot be changed.
 
 ## Fonts

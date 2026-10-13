@@ -368,7 +368,7 @@ Symbols 2** — einfarbig, PDF/A-tauglich: 🚀 ✓ ⚠ → ★ ½ €.
   Zeitpunkt des Builds.
 - **Weitere Metadaten:** Titel und Thema aus `title:` (Titel ohne `title:` = Dateiname, Thema
   leer), Autor nur aus `author:` (sonst leer), Sprache aus `lang:`; die Stichwörter enthalten den Kunden und
-  „rf-document <Version>“. Als erzeugendes Programm trägt Typst sich selbst ein („Typst 0.15.0“);
+  „real-fast-document <Version>“. Als erzeugendes Programm trägt Typst sich selbst ein („Typst 0.15.0“);
   dieses Feld lässt sich nicht ändern.
 
 ## Schriften
