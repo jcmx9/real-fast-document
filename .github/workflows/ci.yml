@@ -44,7 +44,7 @@ jobs:
         run: bash scripts/fetch-typst-packages.sh
 
       - name: Install PDF tools for the end-to-end tests
-        run: sudo apt-get install -y --no-install-recommends poppler-utils mupdf-tools
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends poppler-utils mupdf-tools
 
       # One test note per feature (tests/fixtures/*.md): checks the PDF text and the
       # CLI interface (exact output path, exit codes, embedded source).
