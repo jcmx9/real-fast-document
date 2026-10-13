@@ -64,14 +64,25 @@ bash scripts/install.sh --uninstall   # remove the right-click integration + rf-
 rf-document SRC.md                    # global CLI after install (wrapper → build.sh)
 TYPST=/path/to/typst bash scripts/build.sh ...       # override the typst binary (e.g. to test a version)
 # Lint ALL shell scripts (PowerShell has no runner here — review only).
-# This list is duplicated in ci.yml's "Lint shell scripts" step (same six scripts, different order):
+# This list is duplicated in ci.yml's "Lint shell scripts" step (same seven scripts, different order):
 # a NEW script must be added to BOTH, otherwise it is never linted anywhere.
-shellcheck scripts/build.sh scripts/fetch-fonts.sh scripts/fetch-typst-packages.sh scripts/install.sh scripts/bootstrap.sh scripts/rfd-convert.sh
+shellcheck scripts/build.sh scripts/fetch-fonts.sh scripts/fetch-typst-packages.sh scripts/install.sh scripts/bootstrap.sh scripts/rfd-convert.sh scripts/test-pdf.sh
+bash scripts/test-pdf.sh              # end-to-end tests: build tests/fixtures/*.md, check PDF text + CLI interface
 ```
 
-There is **no unit-test suite**; local verification is **visual** (render pages to PNG and inspect).
-But **CI does gate builds**: `.github/workflows/ci.yml` (push/PR on `main`/`dev`) installs Typst
-`0.15.0` on Linux, fetches fonts + vendors the packages, `shellcheck`s the scripts, then builds
+**End-to-end tests:** `scripts/test-pdf.sh` builds every note in `tests/fixtures/` through `build.sh`
+(from the fixture folder, like Zettlr: cwd = the note's folder) and checks the extracted PDF text
+(`pdftotext`, else `mutool`) with `expect`/`expect_compact`/`reject` — `expect_compact` ignores
+whitespace because letter-spaced text (`tracking`, e.g. the client line) extracts as `M U S T E R`.
+It also checks the interface: exact explicit output (no ISO prefix), prefix from a German date,
+exit codes (missing source, unknown option), embedded attachment name / `--no-source` /
+`embed_source: false` (via `mutool show … trailer/Root/Names/EmbeddedFiles`), and a build under
+`env -i PATH=/usr/bin:/bin` (skipped when no `bin/rfd-tools.env`/`bin/typst` exists, e.g. in CI).
+**Every new feature gets a fixture + assertions here.** Layout is still checked **visually**
+(render pages to PNG and inspect).
+**CI gates builds**: `.github/workflows/ci.yml` (push/PR on `main`/`dev`) installs Typst
+`0.15.0` on Linux, fetches fonts + vendors the packages, `shellcheck`s the scripts, runs
+`scripts/test-pdf.sh` (installs `poppler-utils` + `mupdf-tools` for it), then builds
 `example.md`, `README.md` **and** `README.en.md` and asserts each is PDF/A part 3. A clean CI run
 already proves no compile error, no missing-glyph abort, and PDF/A-3b conformance — the README builds
 also exercise the date-less `SOURCE_DATE_EPOCH` metadata path. CI can't catch *visual* regressions
@@ -82,13 +93,13 @@ mode (`#H2 + #H3 > 5`), task lists, tables, math, the emoji/symbol glyph fallbac
 captioned figure, definition lists, **and** a remote image that the template must strip (see
 below). Use it to eyeball layout changes; its `*.pdf` is git-ignored.
 
-To render PNGs for inspection you must reproduce build.sh's preprocessing (strip frontmatter,
-tighten task lists, deflists → `<dl>`) into a temp file, then compile `template.typ` directly:
+To render PNGs directly, compile `template.typ` with the same inputs `build.sh` passes (the
+Markdown preprocessing runs inside the template, so `source=` is the original `.md`; absolute
+paths because of `--root /`):
 
 ```bash
-# (build.sh does this; for a manual PNG render, feed a preprocessed copy as source=)
 typst compile template.typ --root / --font-path fonts --ignore-system-fonts \
-  --input source=RENDER.md --input attach=SRC.md --input docdir=SRC_DIR \
+  --input source=/ABS/SRC.md --input attach= --input docdir=/ABS/SRC_DIR \
   --input filename=OUT.pdf --input title=SRC --input doctitle= --input logo=logo.svg \
   --input date= --input toc=auto --input "h1_break=auto" --input showname=true --input lang=de \
   --input header= --input watermark= \
@@ -160,25 +171,48 @@ via `build.sh` only.
 
 - **`template.typ`** owns the entire layout (DIN A4, margins, header/footer, fonts, heading
   rules, TOC, footnotes) **and** renders the body. It is a **plain Typst file** now (not a
-  Pandoc template): after all `#set`/`#show` rules it calls `#cmarker.render(read(source), …)`.
-  Runtime values (`filename`, `title` [metadata], `doctitle` [visible title], `logo`, `source`,
-  `attach`, `docdir`, plus the frontmatter-derived `date`, `toc`, `h1_break`, `showname`, `lang`,
-  `header`, `watermark`) are passed as `typst --input` and read via `sys.inputs`.
+  Pandoc template): it reads the original `.md` (`source`), runs it through `preprocess()` from
+  **`lib/markdown.typ`**, and after all `#set`/`#show` rules calls `#cmarker.render(prepared.markdown, …)`.
+  Runtime values (`filename`, `title` [fallback metadata title = basename], `doctitle` [frontmatter
+  `title:`], `logo` [already resolved: per-note or global], `logo_height`, `source`, `attach` [empty =
+  don't embed], `docdir`, plus the frontmatter-derived `date`, `subtitle`, `client`, `author`, `toc`,
+  `h1_break`, `showname`, `lang`, `header`, `watermark`) are passed as `typst --input` and read via
+  `sys.inputs`. The visible title comes **only** from `doctitle` (frontmatter `title:`); a `# …`
+  is **always a chapter**, never promoted to the title (the user explicitly rejected Zettlr's
+  "leading `# Title` becomes the title" legacy rule). The PDF/A metadata title is `title:`, else the
+  basename.
+  - **Attachment name:** `pdf.attach` gets `"/" + basename` **plus the bytes** (`read(…, encoding:
+    none)`). With only a path, Typst names the attachment after the root-relative path
+    (`Users/<name>/…/note.md` — leaks the local path into client PDFs); a leading `/` makes the name
+    root-relative = just the file name (the file need not exist there since the data is given).
   - The **cmarker call** uses `h1-level: 1` (markdown `#` → Typst level-1 heading, styled as a
     *chapter*) and `set-document-title: false` (the PDF/A metadata title comes from `--input title`
     = the frontmatter `title:` or the `.md` basename). `math: mitex`, `task-list-marker:` a
     checkbox glyph (☐/☒ via Noto), and `scope:` overrides for `image` (`safe-image`), `divider` (the centered
-    `horizontalrule`), and `terms` (`rfd-terms`, builds `terms.item` explicitly to silence a
-    cmarker deprecation warning).
+    `horizontalrule`), and `terms` (`rfd-terms`: builds each term/description pair as plain blocks —
+    term bold on its own line, description indented below, unbreakable. A `#show terms.item` rule
+    does **not** fire in Typst 0.15, which is why the old approach silently ran term and description
+    on one line).
   - **`safe-image`** (in `template.typ`) replaces the old Lua image/link/para/figure dance:
     remote sources (`http(s)://`, protocol-relative `//host`, `data:`) render **nothing** but
     emit an invisible `metadata("rfd-remote-skip")<rfd-remote-skip>` marker for counting; a
     local image with alt text becomes a **numbered figure with caption**; relative paths are
     resolved against `docdir` (the document's directory) so images next to documents anywhere
     on disk are found.
-- **Optional YAML frontmatter** (parsed by `build.sh`/`convert.ps1`, then passed via `--input`):
+- **Optional YAML frontmatter** (parsed by `build.sh`/`convert.ps1`, then passed via `--input`;
+  **empty values are ignored, never an error**):
   `title:` → centered title block + running-header title (from page 1) + PDF/A metadata title;
-  `date:` (ISO) → ISO-prefixes the output file (`2026-06-19_name.pdf`), shows a
+  `subtitle:`/`client:`/`author:` → title block (client small + letter-spaced above, subtitle and a
+  "date · author" line below — that line only appears when `author:` is set; `author: [A, B]` inline
+  lists are flattened by `yaml_str`/`ConvertTo-YamlStr`); as soon as `client:` or `subtitle:` is set
+  the **footer-left** shows at most two of client/title/subtitle ("Kunde · Titel") instead of the
+  filename; `logo:` → per-note logo (expanded by `expand_path`/`Expand-NotePath`: `~`, `${VAR}`,
+  `$VAR`, `%VAR%` with USER↔USERNAME / HOME↔USERPROFILE fallback, `%XX` decoding — **no `eval`**;
+  relative to the note; missing → warning + global logo); `logo-height:` → absolute lengths only,
+  parsed in the template (`logo-max-height`, capped at 25 mm), the logo is fitted proportionally into
+  height × 60 mm via `measure`; `embed_source:` / CLI `--no-source` → `attach=` empty;
+  `date:` (ISO **or** German `T.M.JJJJ`, parsed by `parse-date` in the template and `iso_date`/
+  `ConvertTo-IsoDate` in the shells; anything else is shown verbatim and gets no prefix) → ISO-prefixes the output file (`2026-06-19_name.pdf`), shows a
   `lang`-localized date in the footer right, **and** pins the PDF metadata date (`CreateDate`/
   `ModifyDate`) via `#set document(date: <datetime>)` — see *Reproducible metadata date* below;
   `isodate_praefix:` true|false controls **only** the
@@ -186,19 +220,20 @@ via `build.sh` only.
   date; a filename-only knob, never passed to `template.typ`); `toc:`/`h1_break:` true|false
   override the `> 5`
   automatism; `print_filename:` true|false toggles the footer-left name (→ `showname` input);
-  `lang:` sets the document language / date format (default `de`); `header:` → fixed header text
+  `lang:` sets the document language / date format / labels (`labels` dict: Seite/Page,
+  Inhalt/Contents; default `de`); `header:` → fixed header text
   (from page 1, overrides the running header); `watermark:` → diagonal page-background watermark.
   The footer is 2-col without a date (name | page) and 3-col with one (name | page centered | date).
   The bool keys are
   parsed **YAML-1.1-tolerant** (case-insensitive `true/false/yes/no/on/off`, quotes, inline
   comments via `yaml_bool`/`ConvertTo-YamlBool`); an unrecognized value warns and keeps the
   default. Typst does not localize month names (`[month repr:long]` is English only) → a manual
-  `months-de` array lives in `template.typ`; `fmt-date` validates the ISO string defensively
+  `months-de` array lives in `template.typ`; `parse-date` validates the string defensively
   because an invalid `datetime`/`int()` *panics* and aborts the whole build.
 - **Reproducible metadata date.** By default Typst (`document.date: auto`) writes the *build moment*
   (date **and** wall-clock time) into the PDF `CreateDate`/`ModifyDate` — so the same source produced
   a different PDF every run. `template.typ` computes `doc-date`: the frontmatter `date:` parsed to a
-  `datetime` (same defensive ISO split as `fmt-date`) when valid, else `auto`. `#set document(date:
+  `datetime` (`parse-date`) when valid, else `auto`. `#set document(date:
   doc-date)` pins the metadata to the document date. **`date: none` is not an option** — PDF/A-3b
   *requires* a creation date and Typst aborts (`hint: set the date of the document`). For the
   date-less case, `build.sh`/`convert.ps1` export **`SOURCE_DATE_EPOCH`** (from the **source file's
@@ -207,18 +242,19 @@ via `build.sh` only.
   fails because Typst 0.15 emits a **random Document/Instance ID (UUID)** per build (base64 in the XMP
   and trailer `/ID`); the timestamp is fixed, the doc ID is not, and Typst 0.15 exposes no knob for
   it. Verify with `exiftool -CreateDate FILE.pdf` (not a text dump).
-- **Build-time Markdown preprocessing** (`build.sh` awk / `convert.ps1` native, kept in sync):
-  before Typst sees the source it produces a **temp render copy** that (1) strips the YAML
-  frontmatter, (2) normalizes **loose task lists to tight** — cmarker 0.1.9 **crashes** (`wasm unreachable`; upstream #71, fixed, pending release) on task items separated by blank lines — and (3) converts Pandoc-style
-  definition lists (`Term` / `: def`) to HTML `<dl>`. The `<dl>` uses **block form** (a blank
-  line after `<dd>`) so inline markdown in a definition renders — inline `<dd>x `code` y</dd>`
-  would show literal backticks. **Multi-line definitions** (a `: def` line plus indented Pandoc
-  continuation lines) are folded into one `<dd>` — otherwise the continuation escapes the `<dd>`
-  and renders as body text flush left instead of indented under the term. The temp copy is rendered; the **original** `.md` is embedded
-  (`--input attach`) so the attachment keeps the real name and untouched content.
+- **Markdown preprocessing lives in Typst** (`lib/markdown.typ`, imported by the template) — **not**
+  in `build.sh`/`convert.ps1` anymore. Rationale: one implementation for all platforms; the
+  Windows path (never executed) can't drift. The shells only parse the frontmatter and handle
+  paths. `preprocess(src)` works line-wise and skips fenced code (`code-mask`):
+  (1) strips the YAML frontmatter (CRLF-tolerant), (2) converts Pandoc-style definition lists (`Term` / `: def`) to HTML `<dl>` in **block form** (a
+  blank line after `<dd>`, so inline markdown renders; inline `<dd>x `code` y</dd>` would show
+  literal backticks) and folds indented continuation lines into the `<dd>`. Loose task lists need no
+  workaround anymore — cmarker **0.1.10** fixed the `wasm unreachable` crash. The **original** `.md`
+  is both rendered (after preprocessing in memory) and embedded (`--input attach`). New Markdown
+  transforms go into `lib/markdown.typ` (git-tracked via `!lib/*.typ` in `.gitignore`).
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the
-  conversion entry points. They parse the frontmatter, preprocess to a temp file, resolve the
-  logo (`logo.svg → .png → .jpg`, optional), and run `typst compile template.typ` directly
+  conversion entry points. They parse the frontmatter, resolve the logo (frontmatter `logo:`, else
+  `logo.svg → .png → .jpg`, optional), and run `typst compile template.typ` directly
   (no intermediate `.typ`, no Pandoc), emitting PDF/A-3b with the source Markdown embedded.
   `build.sh` writes the PDF **next to the source** (not the repo root, which it `cd`s into for
   template/fonts/vendor) unless an explicit second arg is given, and passes `typst --root /`
@@ -230,6 +266,12 @@ via `build.sh` only.
     Without this, `rf-document foo.md` from any other directory failed with "file not found".
   - **Auto-open:** after a successful build both scripts open the PDF in the default viewer
     (`open`/`xdg-open`/`Start-Process`); set `RFD_NO_OPEN=1` to suppress (batch/cron).
+  - **Called by other programs (Zettlr messenger):** `rf-document IN.md OUT.pdf` writes exactly
+    `OUT.pdf`; exit 0 only on success; errors short + German on stderr (missing source → `Error:
+    Quelle nicht gefunden`, missing typst → `Error: typst nicht gefunden`). `build.sh` itself sources
+    `bin/rfd-tools.env` and prefers `bin/typst`, so it works under a **minimal `PATH`** (GUI apps),
+    not only through the `rf-document` wrapper. `convert.ps1` accepts `SOURCE.md OUTPUT.pdf` (exactly
+    two args, second `.pdf`) and only waits for Enter on errors in the interactive "Send to" case.
   - **`--help` / `--version`:** `build.sh` parses `-h`/`--help` and `-V`/`--version` in a small
     loop **before** the Typst-version check (so `--help` works without typst) and before the
     positional `[SOURCE] [OUTPUT]`; the surviving positionals are restored via
@@ -296,11 +338,11 @@ via `build.sh` only.
     (`ae`/`ue`/`oe`); keep all `.ps1` content ASCII (`grep -nP '[^\x00-\x7F]'`).
   - **Read the Markdown *source* as UTF-8 explicitly.** Windows PowerShell 5.1's `Get-Content`
     (no `-Encoding`) decodes in the ANSI code page (CP1252), so a UTF-8 `.md` with umlauts becomes
-    mojibake (`ä` → `Ã¤`) that then flows into the render temp and the PDF. `convert.ps1` reads via
+    mojibake (`ä` → `Ã¤`) in the frontmatter values. `convert.ps1` reads via
     `[IO.File]::ReadAllLines($Src, (New-Object Text.UTF8Encoding $false))` — auto-detects/strips a
-    BOM and matches the BOM-less UTF-8 the temp is written with. (This is about *content* files, not
-    the ASCII rule above, which is about the *script* files themselves.) The body flows through the
-    render **file** (UTF-8, safe); only the frontmatter values go via `--input` argv, which Windows
+    BOM. (This is about *content* files, not the ASCII rule above, which is about the *script* files
+    themselves.) The body is read by Typst itself (`read()` = UTF-8, safe); only the frontmatter
+    values go via `--input` argv, which Windows
     passes as UTF-16 (unaffected). `build.sh` reads UTF-8 natively.
   - **`Invoke-WebRequest -OutFile` treats its path as a wildcard pattern.** A font name with
     brackets (`NotoEmoji[wght].ttf`) is read as a char class and the download aborts with
@@ -463,10 +505,9 @@ resource); it is *not* rendered by the build — plain repo documentation.
 
 Generated artifacts (`*.pdf`, generated `*.typ`, `preview-*.png`, `bin/`, and `vendor/`) are
 git-ignored — note only `preview-*.png` matches, so scratch PNGs under any other name pollute
-`git status`. There is **no Pandoc intermediate `.typ` anymore**; `build.sh` writes a temp
-**render `.md`** (via `mktemp`, cleaned up by an `EXIT` trap even on failure), and `convert.ps1`
-a dot-prefixed temp `.md` in a `finally` block. `template.typ` is the one tracked `.typ`;
-`.gitignore` globs `*.typ`. If scratch `.typ` ever appear, clean with
+`git status`. There is **no intermediate file anymore** (no Pandoc `.typ`, no render temp `.md` —
+the template preprocesses in memory). `template.typ` and `lib/*.typ` are the tracked `.typ` files;
+`.gitignore` globs `*.typ` and re-includes both. If scratch `.typ` ever appear in the root, clean with
 `find . -maxdepth 1 -name '*.typ' ! -name 'template.typ' -delete`.
 
 The user's **global** excludesfile (`~/.gitignore`) ignores `CLAUDE.md` (and possibly other

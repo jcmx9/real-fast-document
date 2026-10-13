@@ -6,6 +6,46 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.0] - 2026-10-13
+
+First step of making rf-document the single PDF tool for meeting notes written in Zettlr (the
+Zettlr export profile becomes a thin messenger that calls `rf-document <note.md> <out.pdf>`).
+
+### Added
+- **Front matter for client notes:** `client` (small, letter-spaced above the title), `subtitle`,
+  `author` (scalar or inline list; "date · author" line below the title), per-document `logo`
+  (relative to the note or absolute; `~`, `$VAR`, `${VAR}`, `%VAR%` expanded; a missing file warns
+  and falls back to the global logo) and `logo-height` (absolute lengths only, logo fitted
+  proportionally into height × 60 mm). Empty values are ignored, never an error.
+- **Footer left** shows "client · title" (or "title · subtitle") instead of the filename as soon
+  as `client` or `subtitle` is set — at most two of the three.
+- **`lang: en` labels:** "Page" / "Contents" instead of "Seite" / "Inhalt".
+- **German dates** (`date: 12.10.2026`) are accepted next to ISO; the filename prefix is always
+  ISO (`2026-10-12_…`). An unrecognized date is shown verbatim and gets no prefix.
+- **`--no-source` / `embed_source: false`** — build without the embedded Markdown source (client
+  PDFs). Default stays on.
+- **`scripts/test-pdf.sh` + `tests/fixtures/`** — end-to-end tests that build one note per feature
+  and check the PDF text and the CLI interface (exact output path, exit codes, embedded source,
+  minimal `PATH`). Runs in CI.
+
+### Changed
+- **Markdown preprocessing moved from `build.sh` (awk) / `convert.ps1` into Typst**
+  (`lib/markdown.typ`). It now exists once for all platforms; the shell scripts only parse the
+  front matter and handle paths. No render temp file anymore.
+- **cmarker 0.1.10** — fixes the crash on loose task lists upstream; the tight-list workaround is
+  gone.
+- **`build.sh` works with a minimal `PATH`** (GUI callers): it loads `bin/rfd-tools.env` / `bin/typst`
+  itself and reports a missing typst or source with a short German error on stderr.
+- **`convert.ps1`** accepts `SOURCE.md OUTPUT.pdf` (exact output) and `--no-source`, writes errors
+  to stderr and no longer waits for Enter when run unattended (explicit output or `RFD_NO_OPEN`).
+  Reviewed, not executed (no Windows runner).
+
+### Fixed
+- **Definition lists** render as documented again (term bold on its own line, description indented
+  below) — the `#show terms.item` rule did not fire, so term and description ran on one line.
+- **Embedded source no longer leaks the local path:** the attachment was named after the full path
+  (`Users/<name>/…/note.md`); it is now just the file name.
+
 ## [26.7.12] - 2026-07-22
 
 ### Fixed

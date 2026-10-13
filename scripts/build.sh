@@ -25,13 +25,23 @@ resolve_from_pwd() {
   esac
 }
 
+# GUI-Start (Finder/Zettlr/.desktop) erbt nicht den Shell-PATH: den vom
+# Installer gemerkten typst-Ordner (bin/rfd-tools.env) selbst voranstellen und
+# ein im Installpfad abgelegtes typst-Binary bevorzugen. So läuft build.sh auch
+# mit minimalem PATH (/usr/bin:/bin), nicht nur über den rf-document-Wrapper.
+if [[ -f "${root_dir}/bin/rfd-tools.env" ]]; then
+  # shellcheck source=/dev/null
+  source "${root_dir}/bin/rfd-tools.env"
+  if [[ -n "${RFD_TOOL_PATH:-}" ]]; then PATH="${RFD_TOOL_PATH}:${PATH}"; fi
+fi
+if [[ -z "${TYPST:-}" && -x "${root_dir}/bin/typst" ]]; then TYPST="${root_dir}/bin/typst"; fi
 # Typst-Binary überschreibbar (z. B. zum Testen einer bestimmten Version).
 typst_bin="${TYPST:-typst}"
 
 # ---------------------------------------------------------------------------
 # CLI-Flags: --help / --version (vor dem Typst-Check, damit --help auch ohne
-# installiertes typst funktioniert). Flags dürfen vor den Positionsargumenten
-# stehen; der Rest wird als [SOURCE.md] [OUTPUT.pdf] weitergereicht.
+# installiertes typst funktioniert) und Build-Schalter. Flags dürfen vor den
+# Positionsargumenten stehen; der Rest wird als [SOURCE.md] [OUTPUT.pdf] weitergereicht.
 # ---------------------------------------------------------------------------
 rfd_version="$(cat "${root_dir}/VERSION" 2>/dev/null || printf 'unknown')"
 
@@ -53,16 +63,21 @@ Usage:
 
 Arguments:
   SOURCE.md    Zu rendernde Markdown-Quelle (Default: example.md)
-  OUTPUT.pdf   Ausgabepfad (Default: neben der Quelle; ein 'date:' im Frontmatter
-               stellt das ISO-Datum voran, z. B. 2026-06-19_SOURCE.pdf –
-               abschaltbar mit 'isodate_praefix: false')
+  OUTPUT.pdf   Ausgabepfad, wird exakt so geschrieben. Ohne Angabe: neben der
+               Quelle; ein 'date:' im Frontmatter stellt das ISO-Datum voran,
+               z. B. 2026-06-19_SOURCE.pdf – abschaltbar mit 'isodate_praefix: false'
 
 Options:
+  --no-source     Markdown-Quelle NICHT ins PDF einbetten (z. B. für Kunden-PDFs;
+                  Frontmatter: embed_source: false)
   -V, --version   rf-document- und Typst-Version ausgeben und beenden
   -h, --help      Diese Hilfe ausgeben und beenden
 
 Optionale YAML-Frontmatter-Schlüssel:
-  title, date, isodate_praefix, toc, h1_break, print_filename, lang, header, watermark
+  title, subtitle, client, author, date, isodate_praefix, toc, h1_break,
+  print_filename, lang, header, watermark, logo, logo-height, embed_source
+
+Exit-Code 0 nur bei Erfolg; Fehler und Warnungen gehen auf stderr.
 
 Environment:
   RFD_NO_OPEN=1   Das PDF nach dem Build nicht öffnen (Batch/Cron)
@@ -70,11 +85,13 @@ Environment:
 EOF
 }
 
+cli_embed=""
 positional=()
 while [ $# -gt 0 ]; do
   case "$1" in
     -h|--help)    print_help; exit 0 ;;
     -V|--version) print_version; exit 0 ;;
+    --no-source)  cli_embed="false"; shift ;;
     --)           shift; while [ $# -gt 0 ]; do positional+=("$1"); shift; done; break ;;
     -*)           printf 'Error: unbekannte Option %s\n' "$1" >&2
                   printf "Aufruf: rf-document --help\n" >&2; exit 2 ;;
@@ -84,6 +101,10 @@ done
 # Positionsargumente wiederherstellen (set-u-sicher, auch für bash 3.2/macOS).
 if [ "${#positional[@]}" -gt 0 ]; then set -- "${positional[@]}"; else set --; fi
 
+if ! command -v "${typst_bin}" >/dev/null 2>&1; then
+  echo "Error: typst nicht gefunden (${typst_bin}). Installation: bash scripts/install.sh" >&2
+  exit 1
+fi
 # Variable Fonts brauchen Typst >= 0.15.
 ver="$("${typst_bin}" --version | awk '{print $2}')"
 ver_major="${ver%%.*}"
@@ -94,22 +115,19 @@ if (( ver_major == 0 && ver_minor < 15 )); then
 fi
 
 src="$(resolve_from_pwd "${1:-example.md}")"
+if [[ ! -f "${src}" ]]; then
+  echo "Error: Quelle nicht gefunden: ${src}" >&2
+  exit 1
+fi
 base="$(basename "${src%.*}")"
 standard="a-3b"
 
-# Vorverarbeitete Render-Quelle: Frontmatter wird für Typst entfernt, loose
-# Task-Listen zu tight normalisiert (cmarker 0.1.9 crasht sonst; Upstream-Fix in SabrinaJewson/cmarker.typ#71, noch nicht > 0.1.9 released) und Pandoc-
-# Definitionslisten in HTML <dl> übersetzt (cmarker kennt nur <dl>). Die
-# EINGEBETTETE Quelle (pdf.attach) bleibt die unveränderte Original-.md.
-render_tmp="$(mktemp -t rfd-render.XXXXXX)"
-cleanup() { rm -f "${render_tmp}"; }
-trap cleanup EXIT
-
 # ---------------------------------------------------------------------------
-# Optionalen YAML-Frontmatter (führender ---...---) parsen: title/date/isodate_praefix/
-# toc/h1_break/print_filename/lang/header/watermark, CRLF-tolerant. Bool-Schlüssel YAML-1.1
-# gelesen (siehe yaml_bool); ein erkannter Schlüssel mit ungültigem Wert warnt
-# und behält den Default.
+# Optionalen YAML-Frontmatter (führender ---...---) parsen, CRLF-tolerant.
+# Bool-Schlüssel YAML-1.1 gelesen (siehe yaml_bool); ein erkannter Schlüssel mit
+# ungültigem Wert warnt und behält den Default. Leere Werte ("" oder nichts)
+# werden ignoriert, nie ein Fehler. Die Markdown-Vorverarbeitung selbst macht
+# das Template (lib/markdown.typ), nicht dieses Skript.
 # ---------------------------------------------------------------------------
 # Einen YAML-Skalar zu "true"/"false" normalisieren (YAML-1.1-Boolean-Menge,
 # Obsidian-kompatibel; Superset von YAML 1.2). Unbekannte Werte -> leer.
@@ -127,9 +145,68 @@ yaml_bool() {
 }
 
 # Einen YAML-String-Skalar säubern (Whitespace + umschließende Quotes weg).
+# Eine Inline-Liste [a, "b"] wird zu "a, b" (z. B. mehrere Autoren).
 yaml_str() {
-  printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
-                         -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'\$//"
+  local v
+  v="$(printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  if [[ "${v}" == \[*\] ]]; then
+    v="$(printf '%s' "${v:1:${#v}-2}" | sed -e 's/["'\'']//g' -e 's/[[:space:]]*,[[:space:]]*/, /g' \
+                                           -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  fi
+  printf '%s' "${v}" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'\$//"
+}
+
+# Umgebungsvariable lesen; USER<->USERNAME und HOME<->USERPROFILE als Rückfall
+# (Notizen, die unter Windows geschrieben wurden, und umgekehrt).
+env_lookup() {
+  local v
+  v="$(printenv "$1" 2>/dev/null || true)"
+  if [[ -z "${v}" ]]; then
+    case "$1" in
+      USER)        v="${USERNAME:-}" ;;
+      USERNAME)    v="${USER:-}" ;;
+      HOME)        v="${USERPROFILE:-}" ;;
+      USERPROFILE) v="${HOME:-}" ;;
+    esac
+  fi
+  printf '%s' "${v}"
+}
+
+# Pfad aus einer Notiz aufbereiten: ~, ${VAR}, $VAR und %VAR% ersetzen,
+# %XX-Kodierung (z. B. %20) auflösen, Backslashes -> '/'. Ohne eval: es wird
+# nichts ausgeführt, nur Variablen eingesetzt.
+expand_path() {
+  local p="$1" name hex guard=0
+  # shellcheck disable=SC2088 # literales ~ am Pfadanfang erkennen, nicht expandieren
+  case "${p}" in "~"|"~/"*|"~\\"*) p="$(env_lookup HOME)${p:1}" ;; esac
+  # shellcheck disable=SC2016 # Regex für literale $-Variablen, keine Expansion gewollt
+  local re_brace='\$\{([A-Za-z_][A-Za-z0-9_]*)\}' re_plain='\$([A-Za-z_][A-Za-z0-9_]*)'
+  local re_win='%([A-Za-z_][A-Za-z0-9_]*)%' re_hex='%([0-9A-Fa-f]{2})'
+  while [[ "${p}" =~ ${re_brace} ]] && (( guard++ < 20 )); do
+    name="${BASH_REMATCH[1]}"; p="${p/"\${${name}}"/"$(env_lookup "${name}")"}"
+  done
+  while [[ "${p}" =~ ${re_plain} ]] && (( guard++ < 40 )); do
+    name="${BASH_REMATCH[1]}"; p="${p/"\$${name}"/"$(env_lookup "${name}")"}"
+  done
+  while [[ "${p}" =~ ${re_win} ]] && (( guard++ < 60 )); do
+    name="${BASH_REMATCH[1]}"; p="${p/"%${name}%"/"$(env_lookup "${name}")"}"
+  done
+  while [[ "${p}" =~ ${re_hex} ]] && (( guard++ < 200 )); do
+    hex="${BASH_REMATCH[1]}"
+    # shellcheck disable=SC2059 # \xHH aus geprüften Hex-Ziffern
+    p="${p/"%${hex}"/"$(printf "\\x${hex}")"}"
+  done
+  printf '%s' "${p//\\//}"
+}
+
+# Frontmatter-Datum (ISO 2026-10-13 oder deutsch 13.10.2026) -> ISO; sonst leer.
+iso_date() {
+  local d="$1" re_iso='^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})$' re_de='^([0-9]{1,2})\.([0-9]{1,2})\.([0-9]{4})$'
+  if [[ "${d}" =~ ${re_iso} ]]; then
+    printf '%s-%02d-%02d' "${BASH_REMATCH[1]}" "$((10#${BASH_REMATCH[2]}))" "$((10#${BASH_REMATCH[3]}))"
+  elif [[ "${d}" =~ ${re_de} ]]; then
+    printf '%s-%02d-%02d' "${BASH_REMATCH[3]}" "$((10#${BASH_REMATCH[2]}))" "$((10#${BASH_REMATCH[1]}))"
+  fi
 }
 
 fm_date=""
@@ -141,13 +218,17 @@ fm_lang="de"
 fm_header=""
 fm_watermark=""
 fm_title=""
+fm_subtitle=""
+fm_client=""
+fm_author=""
+fm_logo=""
+fm_logo_height=""
+fm_embed="true"
 if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
-  block="$(awk 'NR==1 { next } /^---[[:space:]]*$/ { exit } { print }' "${src}" | tr -d '\r')"
+  block="$(awk 'NR==1 { next } /^(---|\.\.\.)[[:space:]]*$/ { exit } { print }' "${src}" | tr -d '\r')"
   while IFS= read -r line; do
     case "${line}" in
-      date:*)
-        fm_date="$(yaml_str "${line#date:}")"
-        ;;
+      date:*)            fm_date="$(yaml_str "${line#date:}")" ;;
       isodate_praefix:*)
         b="$(yaml_bool "${line#isodate_praefix:}")"
         if [[ -n "${b}" ]]; then fm_isodate_praefix="${b}"
@@ -157,12 +238,8 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
         v="$(yaml_str "${line#lang:}")"
         if [[ -n "${v}" ]]; then fm_lang="${v}"; fi
         ;;
-      header:*)
-        fm_header="$(yaml_str "${line#header:}")"
-        ;;
-      watermark:*)
-        fm_watermark="$(yaml_str "${line#watermark:}")"
-        ;;
+      header:*)          fm_header="$(yaml_str "${line#header:}")" ;;
+      watermark:*)       fm_watermark="$(yaml_str "${line#watermark:}")" ;;
       toc:*)
         b="$(yaml_bool "${line#toc:}")"
         if [[ -n "${b}" ]]; then fm_toc="${b}"
@@ -173,104 +250,77 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
         if [[ -n "${b}" ]]; then fm_break="${b}"
         else echo "Warnung: ungültiger Wert für 'h1_break' im Frontmatter: '${line#h1_break:}' – ignoriert (true/false)." >&2; fi
         ;;
-      title:*)
-        fm_title="$(yaml_str "${line#title:}")"
-        ;;
+      title:*)           fm_title="$(yaml_str "${line#title:}")" ;;
+      subtitle:*)        fm_subtitle="$(yaml_str "${line#subtitle:}")" ;;
+      client:*)          fm_client="$(yaml_str "${line#client:}")" ;;
+      author:*)          fm_author="$(yaml_str "${line#author:}")" ;;
+      logo:*)            fm_logo="$(yaml_str "${line#logo:}")" ;;
+      logo-height:*)     fm_logo_height="$(yaml_str "${line#logo-height:}")" ;;
       print_filename:*)
         b="$(yaml_bool "${line#print_filename:}")"
         if [[ -n "${b}" ]]; then fm_showname="${b}"
         else echo "Warnung: ungültiger Wert für 'print_filename' im Frontmatter: '${line#print_filename:}' – ignoriert (true/false)." >&2; fi
         ;;
+      embed_source:*)
+        b="$(yaml_bool "${line#embed_source:}")"
+        if [[ -n "${b}" ]]; then fm_embed="${b}"
+        elif [[ -n "$(yaml_str "${line#embed_source:}")" ]]; then
+          echo "Warnung: ungültiger Wert für 'embed_source' im Frontmatter: '${line#embed_source:}' – ignoriert (true/false)." >&2
+        fi
+        ;;
     esac
   done <<< "${block}"
 fi
+# Die CLI-Option gewinnt über das Frontmatter.
+if [[ -n "${cli_embed}" ]]; then fm_embed="${cli_embed}"; fi
 
 # ---------------------------------------------------------------------------
-# Preprocessing: Frontmatter strippen, Task-Listen tighten, Deflisten -> <dl>.
-# ---------------------------------------------------------------------------
-awk '
-function is_blank(s) { return s ~ /^[ \t]*$/ }
-function is_task(s)  { return s ~ /^[ \t]*[-*+][ \t]+\[[ xX]\]/ }
-{
-  line = $0
-  sub(/\r$/, "", line)                                   # CRLF-tolerant
-  if (NR == 1 && line ~ /^---[ \t]*$/) { fm = 1; next }  # Frontmatter-Start
-  if (fm == 1) { if (line ~ /^(---|\.\.\.)[ \t]*$/) fm = 0; next }
-  L[++n] = line
-}
-END {
-  i = 1
-  while (i <= n) {
-    # Definitionsliste: Begriff (Blockanfang) + Folgezeile ": Definition".
-    # Ausgabe als HTML <dl> in Block-Form (Leerzeile nach <dd>, damit Inline-
-    # Markdown in der Definition rendert – inline crasht cmarker es zu Literal).
-    if (!is_blank(L[i]) && L[i] !~ /^:/ && (i == 1 || is_blank(L[i-1])) \
-        && i+1 <= n && L[i+1] ~ /^:[ \t]+/) {
-      print "<dl>"
-      while (1) {
-        if (is_blank(L[i]) || L[i] ~ /^:/ || i+1 > n || L[i+1] !~ /^:[ \t]+/) break
-        term = L[i]
-        def = L[i+1]; sub(/^:[ \t]+/, "", def)
-        k = i + 2
-        # Pandoc-Fortsetzungszeilen der Definition (eingerückt, nicht-leer, kein
-        # neuer ":"-Eintrag) an die Definition anhängen -> EINE Zeile im <dd>.
-        # Ohne das landet die 2. Beschreibungszeile als Fließtext am linken Rand.
-        while (k <= n && !is_blank(L[k]) && L[k] ~ /^[ \t]+/ && L[k] !~ /^[ \t]*:[ \t]+/) {
-          cont = L[k]; sub(/^[ \t]+/, "", cont)
-          def = def " " cont
-          k++
-        }
-        print "<dt>" term "</dt>"
-        print "<dd>"
-        print ""
-        print def
-        print "</dd>"
-        i = k
-        j = i; while (j <= n && is_blank(L[j])) j++          # Leerzeilen zwischen Paaren
-        if (j <= n && L[j] !~ /^:/ && j+1 <= n && L[j+1] ~ /^:[ \t]+/) i = j
-      }
-      print "</dl>"
-      continue
-    }
-    # Loose Task-Liste -> tight: Leerzeile entfernen, wenn die umgebenden
-    # nicht-leeren Zeilen beide Task-Items sind.
-    if (is_blank(L[i])) {
-      p = i-1; while (p >= 1 && is_blank(L[p])) p--
-      q = i+1; while (q <= n && is_blank(L[q])) q++
-      if (p >= 1 && q <= n && is_task(L[p]) && is_task(L[q])) { i++; continue }
-    }
-    print L[i]
-    i++
-  }
-}
-' "${src}" > "${render_tmp}"
-
-# ---------------------------------------------------------------------------
-# Ausgabepfad: explizites zweites Argument gewinnt (relativ zum Aufruf-Verz.).
-# Sonst NEBEN der Quelle; bei gesetztem Datum mit ISO-Präfix (sortierbar), außer
-# 'isodate_praefix: false' schaltet das Präfix ab (Datum bleibt in der Fußzeile).
+# Ausgabepfad: explizites zweites Argument gewinnt (relativ zum Aufruf-Verz.)
+# und wird exakt so geschrieben. Sonst NEBEN der Quelle; bei erkennbarem Datum
+# mit ISO-Präfix (sortierbar), außer 'isodate_praefix: false' schaltet das
+# Präfix ab (Datum bleibt in der Fußzeile).
 # ---------------------------------------------------------------------------
 src_dir="$(cd "$(dirname "${src}")" && pwd)"
 src_abs="${src_dir}/$(basename "${src}")"
+date_iso="$(iso_date "${fm_date}")"
 if [[ -n "${2:-}" ]]; then
   case "${2}" in
     /*) out="${2}" ;;
     *)  out="${orig_pwd}/${2}" ;;
   esac
-elif [[ -n "${fm_date}" && "${fm_isodate_praefix}" != "false" ]]; then
-  out="${src_dir}/${fm_date}_${base}.pdf"
+elif [[ -n "${date_iso}" && "${fm_isodate_praefix}" != "false" ]]; then
+  out="${src_dir}/${date_iso}_${base}.pdf"
 else
   out="${src_dir}/${base}.pdf"
 fi
 
-# Logo: erstes vorhandenes in fester Reihenfolge svg -> png -> jpg.
+# Logo: Frontmatter logo: (pro Notiz, relativ zur Notiz oder absolut) vor dem
+# globalen logo.svg -> .png -> .jpg im Projekt. Ein fehlendes Notiz-Logo bricht
+# den Export nie ab: Warnung, dann globales Logo.
 logo=""
-for candidate in logo.svg logo.png logo.jpg; do
-  if [[ -f "${candidate}" ]]; then
-    logo="${candidate}"
-    break
-  fi
-done
+if [[ -n "${fm_logo}" ]]; then
+  case "${fm_logo}" in
+    http://*|https://*|//*|data:*)
+      echo "Warnung: Remote-Logo wird nicht geladen (kein Netzzugriff): ${fm_logo}" >&2 ;;
+    *)
+      note_logo="$(expand_path "${fm_logo}")"
+      case "${note_logo}" in /*) ;; *) note_logo="${src_dir}/${note_logo}" ;; esac
+      if [[ -f "${note_logo}" ]]; then
+        logo="${note_logo}"
+      else
+        echo "Warnung: Logo nicht gefunden: ${fm_logo} – nutze das Standard-Logo." >&2
+      fi
+      ;;
+  esac
+fi
+if [[ -z "${logo}" ]]; then
+  for candidate in logo.svg logo.png logo.jpg; do
+    if [[ -f "${candidate}" ]]; then
+      logo="${candidate}"
+      break
+    fi
+  done
+fi
 if [[ -z "${logo}" ]]; then
   echo "Hinweis: kein Logo gefunden (logo.svg | logo.png | logo.jpg) – baue ohne Logo." >&2
 fi
@@ -278,19 +328,24 @@ fi
 font_arg=()
 [[ -d fonts ]] && font_arg=(--font-path fonts --ignore-system-fonts)
 
+attach=""
+if [[ "${fm_embed}" != "false" ]]; then attach="${src_abs}"; fi
+
 # Laufzeit-Eingaben fürs Template. --root / : Typst behandelt absolute Pfade
-# projektwurzel-relativ und sperrt Lesezugriffe außerhalb; für die eingebettete
-# Quelle (die überall liegen kann) muss die Wurzel den absoluten Pfad umfassen.
-# PDF/A-Metadatentitel: Frontmatter title: falls gesetzt, sonst .md-Basisname.
-# doctitle = der sichtbare Titel (nur aus title:, sonst leer -> kein Titelblock).
-title_meta="${fm_title:-${base}}"
+# projektwurzel-relativ und sperrt Lesezugriffe außerhalb; für Quelle, Bilder
+# und Logo (die überall liegen können) muss die Wurzel den absoluten Pfad umfassen.
+# title = Rückfall-Metadatentitel (.md-Basisname); doctitle = Frontmatter title:.
 typst_inputs=(
   --input "filename=$(basename "${out}")"
-  --input "title=${title_meta}"
+  --input "title=${base}"
   --input "doctitle=${fm_title}"
+  --input "subtitle=${fm_subtitle}"
+  --input "client=${fm_client}"
+  --input "author=${fm_author}"
   --input "logo=${logo}"
-  --input "source=${render_tmp}"
-  --input "attach=${src_abs}"
+  --input "logo_height=${fm_logo_height}"
+  --input "source=${src_abs}"
+  --input "attach=${attach}"
   --input "docdir=${src_dir}"
   --input "date=${fm_date}"
   --input "toc=${fm_toc}"

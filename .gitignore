@@ -2,6 +2,7 @@
 *.pdf
 *.typ
 !template.typ
+!lib/*.typ
 preview-*.png
 
 # Lokal installierte Werkzeuge / gemerkte Pfade (vom Installer)
