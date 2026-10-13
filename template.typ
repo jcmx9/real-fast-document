@@ -175,14 +175,14 @@
 // = Titel aus title: (sonst leer), Stichwörter: Kunde und das erzeugende
 // Werkzeug mit Version. Das
 // Creator-Feld schreibt Typst selbst („Typst 0.15.0“) und lässt sich nicht
-// ändern – rf-document steht deshalb in den Stichwörtern.
+// ändern – real-fast-document steht deshalb in den Stichwörtern.
 #let rfd-version = read("VERSION").trim()
 #set document(
   title: doc-title,
   date: if date-parsed == none { auto } else { date-parsed },
   author: author-text.split(",").map(a => a.trim()).filter(a => a != ""),
   description: if title-text != "" { title-text } else { none },
-  keywords: (if client-text != "" { (client-text,) } else { () }) + ("rf-document " + rfd-version,),
+  keywords: (if client-text != "" { (client-text,) } else { () }) + ("real-fast-document " + rfd-version,),
 )
 
 // PDF/A-3b erlaubt eingebettete Dateien: Original-Markdown als Anhang beilegen.

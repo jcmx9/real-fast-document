@@ -6,6 +6,12 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.13] - 2026-10-13
+
+### Changed
+- **PDF keyword names the repository:** "real-fast-document <version>" instead of
+  "rf-document <version>".
+
 ## [26.10.12] - 2026-10-13
 
 ### Changed
