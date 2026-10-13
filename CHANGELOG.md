@@ -16,6 +16,10 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 - **Table cell padding** horizontally 5 pt (was 7 pt) — with the narrower text block a 13-column
   table overflowed and the first column ran into the second; `scripts/test-pdf.sh` now checks it.
 
+### Fixed
+- **Footer:** a long "client · title" ran up to the page number. The footer columns now keep an
+  8 mm gap; a long entry wraps within its column (checked in `scripts/test-pdf.sh`).
+
 ## [26.10.9] - 2026-10-13
 
 ### Changed

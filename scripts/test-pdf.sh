@@ -274,6 +274,16 @@ test_fixtures() {
   reject mermaid.md "${text}" "flowchart LR" "sequenceDiagram" "-->"
   ok mermaid.md
 
+  # Lange Fußzeile (Kunde · Titel): bricht um und hält Abstand zur Seitenzahl.
+  text="$(render long-footer.md)"
+  expect long-footer.md "${text}" "Muster Beratungsgesellschaft mbH · Kick-off" "Relaunch der Unternehmenswebsite" "Seite 1 / 1"
+  if command -v pdftotext >/dev/null 2>&1; then
+    awk -v a="$(xmax "${out_dir}/long-footer.pdf" Kick-off | tail -n 1)" \
+        -v b="$(xmin "${out_dir}/long-footer.pdf" Seite)" 'BEGIN { exit !(a != "" && b != "" && a + 15 < b) }' ||
+      die "long-footer.md: Fußzeilentext läuft an die Seitenzahl heran"
+  fi
+  ok long-footer.md
+
   # Frontmatter: Inline-Kommentare, Quotes, Listen, auto und leere Bool-Werte –
   # ohne eine einzige Warnung.
   text="$(render frontmatter-parsing.md)"

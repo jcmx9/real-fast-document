@@ -340,11 +340,16 @@
   line(length: 100%, stroke: rule-stroke)
   v(2pt)
   set text(font: body-font, size: 9pt, fill: head-color, number-type: "lining")
+  // Fester Abstand zwischen den Spalten: ein langer Name (Kunde · Titel) bricht
+  // in seiner Spalte um, statt bis an die Seitenzahl zu laufen.
+  set par(justify: false)
+  let gap = 8mm
   if date-disp == none {
     // 2-spaltig: Name links, Seitenzahl rechts (bzw. mittig, wenn kein Name).
     if show-name {
       grid(
         columns: (1fr, auto),
+        column-gutter: gap,
         align: (left + top, right + top),
         name, page-num,
       )
@@ -355,6 +360,7 @@
     // 3-spaltig: Name links, Seitenzahl mittig, Datum rechts.
     grid(
       columns: (1fr, auto, 1fr),
+      column-gutter: gap,
       align: (left + top, center + top, right + top),
       name, page-num, align(right, date-disp),
     )
