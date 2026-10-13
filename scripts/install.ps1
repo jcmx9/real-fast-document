@@ -64,7 +64,7 @@ $ShortcutName  = 'Nach PDF-A (real-fast-document).lnk'
 
 # Typst-Packages (mit scripts/fetch-typst-packages.sh konsistent halten).
 $TypstPackages = @(
-  @{ Name = 'cmarker'; Version = '0.1.9' }
+  @{ Name = 'cmarker'; Version = '0.1.10' }
   @{ Name = 'mitex';   Version = '0.2.7' }
 )
 

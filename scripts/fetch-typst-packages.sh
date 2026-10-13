@@ -10,7 +10,7 @@
 set -euo pipefail
 
 # Versionen zentral gepinnt (mit template.typ-Import konsistent halten).
-CMARKER_VERSION="0.1.9"
+CMARKER_VERSION="0.1.10"
 MITEX_VERSION="0.2.7"
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

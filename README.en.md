@@ -142,14 +142,22 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\real-fast-document"  # Windows
 ```bash
 bash scripts/build.sh                 # example.md  -> example.pdf
 bash scripts/build.sh document.md     # document.md -> document.pdf
-bash scripts/build.sh in.md out.pdf   # explicit output
+bash scripts/build.sh in.md out.pdf   # explicit output (exactly this path, no prefix)
+bash scripts/build.sh --no-source in.md out.pdf  # without the embedded Markdown source
 bash scripts/build.sh --help          # show options + frontmatter keys
 bash scripts/build.sh --version       # show rf-document and Typst version
 ```
 
 Without a second argument the output lands next to the source. If a `date` is set in the
 frontmatter, the file automatically gets an ISO prefix (`2026-06-19_document.pdf`);
-`isodate_praefix: false` disables that prefix (the date stays in the footer).
+`isodate_praefix: false` disables that prefix (the date stays in the footer). An explicitly
+given output path is written exactly as given, without a prefix.
+
+**Calling from other programs** (e.g. as a Zettlr export target): the exit code is 0 only on
+success; errors and warnings go briefly to stderr. `build.sh` finds Typst even with a minimal
+`PATH` (GUI apps) because it loads the Typst folder recorded by the installer itself. Relative
+paths (source, output) are relative to the calling directory, images and logo relative to the
+note.
 
 The global command understands the same options: `rf-document --help` or `rf-document --version`
 (`-h` / `-V` as short forms). On Windows also as a PowerShell switch: `rf-document -Help` or
@@ -157,6 +165,7 @@ The global command understands the same options: `rf-document --help` or `rf-doc
 
 | Option | Description |
 |--------|-------------|
+| `--no-source` | Do **not** embed the Markdown source in the PDF (e.g. for client PDFs); same as `embed_source: false` |
 | `--version`, `-V` | Print rf-document and Typst version, then exit |
 | `--help`, `-h` | Print help (options, frontmatter keys, environment variables), then exit |
 
@@ -180,7 +189,10 @@ A YAML block at the start of the file controls individual documents. All keys ar
 ```yaml
 ---
 title: "My Document"    # centered title block on top + title in the header from page 1
-date: 2026-06-19        # ISO date: filename prefix + date bottom right (per language)
+subtitle: "Workshop"    # subtitle below the title
+client: "Example Ltd"   # client: small and letter-spaced above the title
+author: "Ben Probe"     # author(s) below the title: "date · author"
+date: 2026-06-19        # date (ISO or 19.06.2026): filename prefix + date bottom right
 isodate_praefix: false  # disable the ISO filename prefix (default: on when date is set)
 toc: true               # force (true) / suppress (false) the table of contents
 h1_break: false         # force / suppress the chapter page break (before each # H1)
@@ -188,20 +200,34 @@ print_filename: false   # hide the filename bottom left (default: true)
 lang: de                # document language (date format); default de
 header: "Confidential"  # fixed header text from page 1 (overrides the running header)
 watermark: "DRAFT"      # diagonal watermark beneath everything
+logo: client-logo.png   # logo for this document only (relative to the note or absolute)
+logo-height: 15mm       # maximum logo height (absolute lengths only; default 13mm, max 25mm)
+embed_source: false     # do not embed the Markdown source (default: true)
 ---
 ```
 
 | Key | Values | Effect |
 |-----|--------|--------|
 | `title` | text | **Document title**: centered title block on top, additionally in the header from page 1, and the PDF/A metadata title. Without `title` the metadata title stays the filename and there is no title block. |
-| `date` | ISO date | Set → output file gets the ISO prefix `YYYY-MM-DD_name.pdf`, the date appears bottom right, localized per `lang` (de "19. Juni 2026", en "June 19, 2026"), **and** it is set as the reproducible PDF metadata date (`CreateDate`). The footer then becomes 3-column (name · page centered · date). Without `date` the metadata date carries the **source file's modification time** (not the build moment); a set `SOURCE_DATE_EPOCH` wins. |
+| `subtitle` | text | Subtitle below the title. |
+| `client` | text | Client/company, small and letter-spaced above the title. |
+| `author` | text or `[A, B]` | Line below the title: "date · author" (only what is set). |
+| `date` | ISO or `D.M.YYYY` | Set → output file gets the ISO prefix `YYYY-MM-DD_name.pdf`, the date appears bottom right, localized per `lang` (de "19. Juni 2026", en "June 19, 2026"), **and** it is set as the reproducible PDF metadata date (`CreateDate`). The footer then becomes 3-column (name · page centered · date). Without `date` the metadata date carries the **source file's modification time** (not the build moment); a set `SOURCE_DATE_EPOCH` wins. |
 | `isodate_praefix` | `true` / `false` | Controls only the ISO prefix on the **filename**. Without it a set `date` prefixes automatically (backward-compatible); `false` disables the prefix without touching the date in the footer. No effect without `date`. |
 | `toc` | `true` / `false` | Force / suppress the table of contents. Without it the structure automatism applies (see below). |
 | `h1_break` | `true` / `false` | Force / suppress the chapter page break (before each `# H1`). Without it the same automatism applies, independently of `toc`. |
-| `print_filename` | `true` / `false` | Show the filename bottom left. Default `true`. |
-| `lang` | language code | Document language and date format (`de`, `en`, …). Default `de`. |
+| `print_filename` | `true` / `false` | Show the bottom-left entry (filename or "client · title", see below). Default `true`. |
+| `lang` | language code | Document language, date format and labels (Seite/Page, Inhalt/Contents, …): `de`, `en`, …. Default `de`. |
 | `header` | text | Fixed header text from **page 1**; overrides the running header (and the title in the header). |
 | `watermark` | text | Diagonal, letter-spaced watermark (bold, light gray) on every page, **beneath** all other elements. |
+| `logo` | path | Logo **for this document only** (PNG/JPG/SVG), relative to the note or absolute; `~`, `$VAR`, `${VAR}` and `%VAR%` are expanded. Overrides the global logo. If the file is missing, the build warns and uses the global logo. |
+| `logo-height` | length | Maximum logo height, absolute lengths only (`15mm`, `1.2cm`, `40pt`); anything else is ignored. The logo keeps its proportions and is at most 60 mm wide. |
+| `embed_source` | `true` / `false` | Embed the Markdown source as an attachment. Default `true`; `false` (or `--no-source`) for PDFs that must not contain the note. |
+
+Empty values (`subtitle: ""` or just `subtitle:`) are ignored, never an error.
+
+**Footer left:** the filename — as soon as `client` or `subtitle` is set, instead at most two of
+client, title and subtitle in this order ("client · title", without client "title · subtitle").
 
 **Header — precedence top to bottom:** (1) `header:` fixed text from page 1; else (2) the active
 `# H1` chapter as a running header; before that, prior to the first chapter, (3) the **title**
@@ -214,7 +240,7 @@ a new page. With **five or fewer** it stays *compact* — no TOC, chapters run i
 `h1_break` toggle these two effects **individually and independently** (`true` forces, `false`
 suppresses).
 
-The boolean keys (`isodate_praefix`, `toc`, `h1_break`, `print_filename`) accept all YAML 1.1 spellings, regardless
+The boolean keys (`isodate_praefix`, `toc`, `h1_break`, `print_filename`, `embed_source`) accept all YAML 1.1 spellings, regardless
 of case: `true`/`false`, `yes`/`no`, `on`/`off` (as well as `"true"` in quotes). An unrecognized
 value is ignored with a warning and the default applies.
 
@@ -258,13 +284,13 @@ Body text with **emphasis** and a footnote.[^1]
 | Format | A4 portrait |
 | Margins | left 30 mm · top/bottom/right 20 mm each |
 | PDF standard | PDF/A-3b, fonts embedded, source as attachment |
-| **Title** | from `title:` — centered on top (serif) + in the header from page 1; not a heading, not in the TOC |
+| **Title** | from `title:` — centered on top (serif) + in the header from page 1; not a heading, not in the TOC. Optionally the client above (small, letter-spaced), subtitle and "date · author" below |
 | **H1** | **Chapter** (serif, fine line right below); starts on a new page with `h1_break` and runs in the header |
 | **H2 / H3** | subsections (serif, no line); **H4** and deeper identical to H3 at body size |
 | Header | `header:` fixed text · else active H1 chapter · before the 1st chapter the title. Text in **sans** |
 | **TOC** | conditional: from `#H1 + #H2 > 5` → table of contents (H1 + H2 only) + chapter per new page; overridable via `toc`/`h1_break` |
-| Header right | logo (`logo.svg` → `.png` → `.jpg`), height 13 mm — **optional** |
-| Footer | **sans**; without date: name left · page right. With date: name left · page centered · date right |
+| Header right | logo (`logo:` per document, else `logo.svg` → `.png` → `.jpg`), fitted proportionally into 13 mm × 60 mm (`logo-height`) — **optional** |
+| Footer | **sans**; without date: name left · page right. With date: name left · page centered · date right. Name = filename or "client · title" |
 | Headings | **Source Serif 4**, `luma(8%)`, left-aligned, no bars; **only H1** carries a fine hairline right below, all others are set apart by size/spacing |
 | Watermark | optional (`watermark:`): diagonal, letter-spaced, bold, light gray (single-channel gray → clean K in print), **beneath** everything |
 | Body text | Source Sans 3, 11 pt, justified with hyphenation (line spacing 0.85em), `luma(13%)` |
@@ -296,7 +322,9 @@ Body text with **emphasis** and a footnote.[^1]
 
 ```
 template.typ                Typst template: page layout + calls cmarker on the source
-scripts/build.sh            pipeline Markdown -> PDF/A (macOS/Linux), frontmatter + preprocessing
+lib/markdown.typ            Markdown preprocessing in Typst (identical on all systems)
+scripts/build.sh            pipeline Markdown -> PDF/A (macOS/Linux): frontmatter, paths, invocation
+scripts/test-pdf.sh         end-to-end tests: builds tests/fixtures/*.md and checks the PDF text
 scripts/convert.ps1         Windows converter (called from "Send to")
 scripts/fetch-fonts.sh      bundles the variable Source fonts into ./fonts
 scripts/fetch-typst-packages.sh  vendors cmarker + mitex into ./vendor (offline)
@@ -310,15 +338,20 @@ vendor/                     vendored Typst packages cmarker + mitex (git-ignored
 logo.svg                    header logo (optional)
 assets/pipeline.svg         local example figure for example.md
 example.md                  full example/probe file (all elements, documented frontmatter)
+tests/fixtures/             test notes (one per feature, plus edge cases)
 ```
+
+**Tests:** `bash scripts/test-pdf.sh` builds all test notes and checks the PDFs' text and the
+interface (exact output path, exit codes, embedded source, minimal `PATH`). Requires `pdftotext`
+(poppler) or `mutool` (mupdf). CI runs the tests on every push.
 
 ## Customizing
 
 - **Frontmatter** controls individual documents (date, TOC, break, filename, language) — see above.
 - **Filename / date / title** are passed as Typst `--input` at compile time
   (`scripts/build.sh`) and read in the template via `sys.inputs`.
-- **Swapping the logo:** the logo lives **in the install folder** and applies to **all**
-  documents (not per `.md`). Default paths after the quick install:
+- **Swapping the logo:** the global logo lives **in the install folder** and applies to **all**
+  documents; a single document can set its own via `logo:` in the frontmatter. Default paths after the quick install:
   - macOS / Linux: `~/.local/share/real-fast-document/logo.svg`
   - Windows: `%LOCALAPPDATA%\real-fast-document\logo.svg`
 
@@ -334,13 +367,14 @@ example.md                  full example/probe file (all elements, documented fr
 
   The **first existing** of `logo.svg` → `logo.png` → `logo.jpg` is chosen; replace the
   existing file (or remove the other formats). If no logo is present, the pipeline continues
-  with a note. Logo height in the template via `logo-height`.
+  with a note. Maximum height per document via `logo-height:`.
 - **Margins, fonts, colors, font sizes** are collected at the top of `template.typ`
   (`#set page`, `#set text`, `head-color`, `heading-text`).
 - **Different PDF/A level**: change `standard` in `scripts/build.sh` (`a-1b`, `a-2b`, `a-3b`).
   Embedding the source requires `a-3b`.
-- **Source as attachment**: the Markdown file is embedded into the PDF via `pdf.attach` and can be
-  extracted again, e.g. with `mutool extract file.pdf`.
+- **Source as attachment**: the Markdown file is embedded into the PDF via `pdf.attach` (under its
+  file name, without a local path) and can be extracted again, e.g. with `mutool extract file.pdf`.
+  Disable with `--no-source` or `embed_source: false`.
 - **Package versions**: cmarker/mitex are pinned in `scripts/fetch-typst-packages.sh` and
   `scripts/install.ps1`; to update, bump the version there and re-vendor.
 

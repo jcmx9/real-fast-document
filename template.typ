@@ -7,6 +7,7 @@
 
 #import "vendor/cmarker/lib.typ" as cmarker
 #import "vendor/mitex/lib.typ": mitex
+#import "lib/markdown.typ": preprocess
 
 // ---------------------------------------------------------------------------
 // Helfer für von cmarker erzeugte Elemente
@@ -14,11 +15,6 @@
 // Thematische Trennlinie (`---`): mittige Teillinie statt voller Breite.
 #let horizontalrule = align(center, line(start: (25%, 0%), end: (75%, 0%)))
 
-// Definitionslisten (aus cmarker <dl>): Begriff fett, Beschreibung eingerückt.
-#show terms.item: it => block(breakable: false)[
-  #text(weight: "bold")[#it.term]
-  #block(inset: (left: 1.5em, top: -0.4em))[#it.description]
-]
 
 #set table(inset: 7pt, stroke: none)
 // Tabellen über die volle Satzspiegelbreite; Kopf zentriert + fett, Inhalte
@@ -95,24 +91,23 @@
 // Laufzeit-Eingaben (via `typst compile --input ...`)
 // ---------------------------------------------------------------------------
 #let doc-filename = sys.inputs.at("filename", default: "document.md")
-// PDF/A-Metadatentitel (Frontmatter title: falls gesetzt, sonst .md-Basisname).
-#let doc-title = sys.inputs.at("title", default: "Dokument")
-// Sichtbarer Dokumenttitel aus dem Frontmatter (title:): Titelblock oben +
-// Kopfzeile ab Seite 1. Leer = kein Titelblock (H1 ist trotzdem ein Kapitel).
-#let title-text = sys.inputs.at("doctitle", default: "")
-// Leerer Pfad = kein Logo (Kopf läuft dann ohne Logo durch).
+// Leerer Pfad = kein Logo (Kopf läuft dann ohne Logo durch). build.sh wählt:
+// Frontmatter logo: (pro Notiz) vor dem globalen logo.svg/png/jpg.
 #let logo-path = sys.inputs.at("logo", default: "")
-// Zu rendernde Quelle (ggf. vorverarbeitete Kopie).
-#let render-path = sys.inputs.at("source", default: none)
+// Markdown-Quelle (das Original; die Vorverarbeitung passiert in lib/markdown.typ).
+#let source-path = sys.inputs.at("source", default: none)
 // Verzeichnis der Original-Quelle: relative Bildpfade im Markdown werden dagegen
 // aufgelöst (nicht gegen den Projekt-Root), damit Bilder neben Dokumenten überall
 // gefunden werden.
 #let doc-dir = sys.inputs.at("docdir", default: "")
-// Einzubettende Original-Quelle (pdf.attach); getrennt von render-path, damit
-// der Anhang die unveränderte .md mit korrektem Namen behält.
-#let attach-path = sys.inputs.at("attach", default: none)
+// Einzubettende Original-Quelle (pdf.attach). Leer = nicht einbetten
+// (embed_source: false / --no-source, z. B. für Kunden-PDFs).
+#let attach-path = sys.inputs.at("attach", default: "")
 // Frontmatter-gesteuert (von build.sh/convert.ps1 aus dem YAML-Block gereicht):
-#let date-iso   = sys.inputs.at("date", default: "")       // ISO-Wert oder leer
+#let date-raw   = sys.inputs.at("date", default: "")       // ISO, T.M.JJJJ oder Freitext
+#let client-text   = sys.inputs.at("client", default: "")
+#let subtitle-text = sys.inputs.at("subtitle", default: "")
+#let author-text   = sys.inputs.at("author", default: "")
 #let toc-mode   = sys.inputs.at("toc", default: "auto")    // "true" | "false" | "auto"
 #let break-mode = sys.inputs.at("h1_break", default: "auto")
 #let show-name  = sys.inputs.at("showname", default: "true") != "false"
@@ -124,6 +119,31 @@
 // Optionales Wasserzeichen (Frontmatter watermark:): diagonal, gespreizt, fett,
 // auf unterster Ebene unter allen Elementen.
 #let watermark-text = sys.inputs.at("watermark", default: "")
+// Maximale Logohöhe (Frontmatter logo-height:), nur absolute Längen.
+#let logo-height-raw = sys.inputs.at("logo_height", default: "")
+
+// Markdown vorverarbeiten (lib/markdown.typ).
+#let body-markdown = if source-path == none { "" } else { preprocess(read(source-path)) }
+// Sichtbarer Dokumenttitel nur aus dem Frontmatter (title:): Titelblock oben +
+// Kopfzeile ab Seite 1. Leer = kein Titel; ein "# …" ist immer ein Kapitel.
+#let title-text = sys.inputs.at("doctitle", default: "")
+// PDF/A-Metadatentitel (Pflicht): sichtbarer Titel, sonst .md-Basisname.
+#let doc-title = if title-text != "" { title-text } else { sys.inputs.at("title", default: "Dokument") }
+
+// Datum aus dem Frontmatter: ISO (2026-10-13) oder deutsch (13.10.2026).
+// Defensiv: ungültige Werte -> none (datetime()/int() würden den Build sonst
+// per Panic abbrechen).
+#let parse-date(raw) = {
+  let s = raw.trim()
+  let (y, m, d) = if s.match(regex("^\d{4}-\d{1,2}-\d{1,2}$")) != none {
+    s.split("-").map(int)
+  } else if s.match(regex("^\d{1,2}\.\d{1,2}\.\d{4}$")) != none {
+    s.split(".").map(int).rev()
+  } else { return none }
+  if m < 1 or m > 12 or d < 1 or d > 31 { return none }
+  datetime(year: y, month: m, day: d)
+}
+#let date-parsed = parse-date(date-raw)
 
 // PDF-/PDF-A-Metadaten: Titel ist für PDF/A Pflicht.
 // Datum: standardmäßig würde Typst (date: auto) den *Build-Zeitpunkt* inkl.
@@ -132,23 +152,15 @@
 // Zeitstempels). Ohne gültiges date: bleibt es auto -- PDF/A-3b verlangt ZWINGEND
 // ein Datum (date: none bricht den Export ab), aber build.sh setzt dann
 // SOURCE_DATE_EPOCH aus der Quell-mtime, sodass auch auto stabil statt "jetzt" ist.
-// Defensive ISO-Zerlegung wie in fmt-date.
-#let doc-date = {
-  let s = date-iso.trim()
-  if s == "" or s.match(regex("^\d{1,4}-\d{1,2}-\d{1,2}$")) == none {
-    auto
-  } else {
-    let p = s.split("-").map(int)
-    let (y, m, d) = (p.at(0), p.at(1), p.at(2))
-    if m < 1 or m > 12 or d < 1 or d > 31 { auto } else { datetime(year: y, month: m, day: d) }
-  }
-}
-#set document(title: doc-title, date: doc-date)
+#set document(title: doc-title, date: if date-parsed == none { auto } else { date-parsed })
 
 // PDF/A-3b erlaubt eingebettete Dateien: Original-Markdown als Anhang beilegen.
-#if attach-path != none {
+// Name des Anhangs = reiner Dateiname: mit nur einem Pfad würde Typst den
+// vollen lokalen Pfad (inkl. Benutzername) als Anhangsnamen ins PDF schreiben.
+#if attach-path != "" {
   pdf.attach(
-    attach-path,
+    "/" + attach-path.split("/").last(),
+    read(attach-path, encoding: none),
     relationship: "source",
     mime-type: "text/markdown",
     description: "Markdown-Quelle dieses Dokuments",
@@ -184,9 +196,26 @@
 #let margin-left = 30mm
 #let margin-right = 20mm
 
-// Logo-Höhe: muss in den (jetzt schmaleren) oberen Rand passen. Bei 20 mm
-// Top-Margin und 6 mm header-ascent bleibt der Kopf damit innerhalb des Randes.
-#let logo-height = 13mm
+// Logo: proportional in einen Rahmen aus maximaler Höhe und Breite eingepasst.
+// Standardhöhe 13 mm; logo-height: (nur absolute Längen wie 15mm, 1.2cm, 40pt,
+// 0.8in) übersteuert, gedeckelt auf 25 mm, damit der Kopf im oberen Rand bleibt.
+// Ungültige Werte (z. B. 50%) werden ignoriert.
+#let logo-max-width = 60mm
+#let logo-max-height = {
+  let m = logo-height-raw.trim().match(regex("^(\d+(?:\.\d+)?)\s*(mm|cm|pt|in)$"))
+  if m == none { 13mm } else {
+    let v = float(m.captures.at(0))
+    let unit = (mm: 1mm, cm: 1cm, pt: 1pt, "in": 1in).at(m.captures.at(1))
+    calc.min(v * unit, 25mm)
+  }
+}
+#let doc-logo = if logo-path == "" { [] } else {
+  context {
+    let natural = measure(image(logo-path))
+    let scale = calc.min(logo-max-width / natural.width, logo-max-height / natural.height)
+    image(logo-path, width: natural.width * scale, alt: "Logo")
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Laufender Seitenkopf: Text links, Logo rechts, Linie darunter.
@@ -222,7 +251,7 @@
     column-gutter: 6mm,
     align: (left + bottom, right + bottom),
     chapter,
-    if logo-path != "" { image(logo-path, height: logo-height) } else { [] },
+    doc-logo,
   )
   v(2pt)
   line(length: 100%, stroke: rule-stroke)
@@ -233,23 +262,26 @@
 // ---------------------------------------------------------------------------
 #let doc-lang = sys.inputs.at("lang", default: "de")
 
-// Lokalisiertes Datum aus ISO-String. Typst lokalisiert Monatsnamen NICHT
-// selbst ([month repr:long] ist nur Englisch), daher manuelle Tabelle.
-// Defensiv: ungültige Eingaben -> none (sonst paniced datetime/int den Build).
+// Beschriftungen je Sprache (de, sonst en).
+#let labels = (
+  de: (page: "Seite", contents: "Inhalt"),
+  en: (page: "Page", contents: "Contents"),
+)
+#let label-text(key) = labels.at(doc-lang.slice(0, calc.min(2, doc-lang.len())), default: labels.en).at(key)
+
+// Lokalisiertes Datum. Typst lokalisiert Monatsnamen NICHT selbst
+// ([month repr:long] ist nur Englisch), daher manuelle Tabelle. Ein nicht
+// erkennbares Datum (z. B. "Herbst 2026") erscheint unverändert; leer -> none.
 #let months-de = (
   "Januar", "Februar", "März", "April", "Mai", "Juni",
   "Juli", "August", "September", "Oktober", "November", "Dezember",
 )
-#let fmt-date(iso, lang) = {
-  let s = iso.trim()
-  if s == "" { return none }
-  if s.match(regex("^\d{1,4}-\d{1,2}-\d{1,2}$")) == none { return none }
-  let p = s.split("-").map(int)
-  let (y, m, d) = (p.at(0), p.at(1), p.at(2))
-  if m < 1 or m > 12 or d < 1 or d > 31 { return none }
-  let dt = datetime(year: y, month: m, day: d)
-  if lang == "de" {
-    [#dt.display("[day padding:none]"). #months-de.at(m - 1) #dt.display("[year]")]
+#let date-display = {
+  let dt = date-parsed
+  if dt == none {
+    if date-raw.trim() == "" { none } else { date-raw.trim() }
+  } else if doc-lang.starts-with("de") {
+    [#dt.display("[day padding:none]"). #months-de.at(dt.month() - 1) #dt.display("[year]")]
   } else {
     dt.display("[month repr:long] [day padding:none], [year]")
   }
@@ -257,15 +289,23 @@
 
 // ---------------------------------------------------------------------------
 // Fußzeile: Trennlinie darüber. Ohne Datum 2-spaltig (Name | Seite x/y),
-// mit Datum 3-spaltig (Name | Seite x/y mittig | Datum). print_filename:false
-// blendet den Namen aus.
+// mit Datum 3-spaltig (Name | Seite x/y mittig | Datum).
+// Links steht der Dateiname – oder, sobald client: oder subtitle: gesetzt ist,
+// höchstens zwei Angaben aus Kunde, Titel, Untertitel in dieser Reihenfolge
+// ("Kunde · Titel", ohne Kunde "Titel · Untertitel"). print_filename:false
+// blendet die linke Angabe aus.
 // ---------------------------------------------------------------------------
+#let footer-left = if client-text != "" or subtitle-text != "" {
+  let parts = (client-text, title-text, subtitle-text).filter(p => p != "")
+  parts.slice(0, calc.min(2, parts.len())).join(" · ")
+} else { doc-filename }
+
 #let doc-footer = context {
   let n = counter(page).at(here()).first()
   let total = counter(page).final().first()
-  let date-disp = fmt-date(date-iso, doc-lang)
-  let name = if show-name { doc-filename } else { [] }
-  let page-num = [Seite #n / #total]
+  let date-disp = date-display
+  let name = if show-name { footer-left } else { [] }
+  let page-num = [#label-text("page") #n / #total]
   line(length: 100%, stroke: rule-stroke)
   v(2pt)
   set text(font: body-font, size: 9pt, fill: head-color)
@@ -484,27 +524,52 @@
   h(0.3em)
 }
 
-// `terms`-Override: cmarker reicht die <dl>-Paare als Arrays an `terms` – das
-// löst eine Deprecation-Warnung aus. Hier explizit zu `terms.item` bauen
-// (stiller Build; das Aussehen macht die #show terms.item-Regel oben).
-#let rfd-terms(..pairs) = terms(..pairs.pos().map(p => terms.item(p.at(0), p.at(1))))
+// `terms`-Override für Definitionslisten (aus cmarker <dl>): Begriff fett auf
+// eigener Zeile, Beschreibung darunter eingerückt; ein Paar bricht nicht über
+// die Seite. Direkt als Blöcke gebaut – eine `#show terms.item`-Regel greift in
+// Typst 0.15 nicht (Begriff und Beschreibung liefen sonst in einer Zeile).
+#let rfd-terms(..pairs) = for p in pairs.pos() {
+  block(breakable: false, above: 0.9em, below: 0.9em, {
+    text(weight: "bold", p.at(0))
+    block(inset: (left: 1.5em), above: 0.45em, p.at(1))
+  })
+}
 
-// Titelblock (aus title:) + optionales Inhaltsverzeichnis, VOR dem Markdown-Body.
-// Der Titel ist KEIN Heading (steht daher nicht im TOC); H1 ist ein Kapitel.
-#if title-text != "" {
-  block(width: 100%, above: 0.2em, below: 1.0em,
-    align(center, heading-text(21pt, "semibold", title-text)))
+// Titelblock + optionales Inhaltsverzeichnis, VOR dem Markdown-Body. Der Titel
+// ist KEIN Heading (steht daher nicht im TOC); H1 ist ein Kapitel.
+// Aufbau (mittig, jeweils nur was gesetzt ist): Kunde klein und gesperrt über
+// dem Titel, Titel, Untertitel, darunter "Datum · Autor".
+#let meta-line = (date-display, if author-text != "" { author-text }).filter(p => p != none)
+#if (client-text, title-text, subtitle-text, author-text).any(p => p != "") {
+  block(width: 100%, above: 0.2em, below: 1.0em, align(center, {
+    set par(justify: false)
+    if client-text != "" {
+      block(below: 0.6em, text(font: body-font, size: 9pt, tracking: 0.12em, fill: head-color,
+        upper(client-text)))
+    }
+    if title-text != "" {
+      block(below: 0.5em, heading-text(21pt, "semibold", title-text))
+    }
+    if subtitle-text != "" {
+      block(below: 0.6em, text(font: heading-font, size: 14pt, fill: head-color, subtitle-text))
+    }
+    // Datum/Autor-Zeile nur, wenn ein Autor gesetzt ist – das Datum allein
+    // steht wie bisher rechts in der Fußzeile.
+    if author-text != "" {
+      text(font: body-font, size: 10pt, fill: head-color, meta-line.join(" · "))
+    }
+  }))
 }
 #context {
   if want-toc() {
-    block(above: 2.0em, below: 1.0em, heading-text(16pt, "semibold", [Inhalt]))
+    block(above: 2.0em, below: 1.0em, heading-text(16pt, "semibold", label-text("contents")))
     outline(title: none, depth: 2)
     pagebreak(weak: true)
   }
 }
 
 #cmarker.render(
-  read(render-path),
+  body-markdown,
   h1-level: 1,
   set-document-title: false,
   math: mitex,
