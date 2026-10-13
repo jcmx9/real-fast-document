@@ -6,6 +6,14 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.11] - 2026-10-13
+
+### Added
+- **PDF metadata:** author(s) from `author:`, description (Subject) from `subtitle:`, keywords with
+  the client and "rf-document <version>" — in the PDF info dictionary and in XMP. Typst writes the
+  creator field itself ("Typst 0.15.0") and offers no way to change it, so rf-document is named in
+  the keywords. PDF/A-3b stays valid.
+
 ## [26.10.10] - 2026-10-13
 
 ### Changed
