@@ -96,8 +96,12 @@ ausdrücklich angegebener Ausgabepfad wird exakt so geschrieben, ohne Präfix.
 **Aufruf aus anderen Programmen** (z. B. als Zettlr-Exportziel): Der Exit-Code ist nur bei
 Erfolg 0, Fehler und Warnungen gehen kurz auf stderr. `build.sh` findet Typst auch mit
 minimalem `PATH` (GUI-Apps), weil es den vom Installer gemerkten Typst-Ordner selbst lädt.
-Relative Pfade (Quelle, Ausgabe) gelten relativ zum Aufrufverzeichnis, Bilder und Logo relativ
-zur Notiz.
+Ein- und Ausgabe dürfen absolute Pfade mit Leerzeichen sein; relative Pfade gelten relativ zum
+Aufrufverzeichnis, Bilder und Logo relativ zur Notiz. Ist die Umgebungsvariable **`RFD_BASE_DIR`**
+gesetzt, gelten Bild- und Logopfade relativ zu diesem Ordner — für Programme wie Zettlr, die bei
+ungespeicherten Änderungen eine temporäre Kopie der Notiz übergeben. Unter Windows läuft derselbe
+Aufruf über `rf-document.cmd`, inklusive `--no-source` und `--hard-breaks`; die CI prüft das unter
+Windows PowerShell 5.1.
 
 Der globale Befehl versteht dieselben Optionen: `rf-document --help` bzw. `rf-document --version`
 (`-h` / `-V` als Kurzform). Unter Windows zusätzlich als PowerShell-Switch: `rf-document -Help`

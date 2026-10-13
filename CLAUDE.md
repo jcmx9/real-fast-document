@@ -133,9 +133,14 @@ so `grep '/Type /EmbeddedFile'` gives false negatives — use `mutool` to confir
 Locally this is macOS (no Linux/Windows runner); **CI runs the Linux build** (see `ci.yml` above),
 but not the **installer** — the **Linux installer** can be validated for real in Docker (mount
 read-only, copy inside, run `install.sh`): this is how the install path was verified, and it caught
-real bugs. Windows `.ps1` can only be reviewed (the `mcr.microsoft.com/powershell` image crashes
-under qemu on arm64), so `convert.ps1`/`install.ps1` changes are never executed anywhere — CI builds
-via `build.sh` only.
+real bugs. Locally Windows `.ps1` can only be reviewed (no `pwsh`; the `mcr.microsoft.com/powershell`
+image crashes under qemu on arm64). **Since 26.10.7 CI has a `windows` job** (`windows-latest`,
+`shell: powershell` = **Windows PowerShell 5.1**): it installs Typst from the release zip, runs
+`install.ps1 -Fonts -Packages -Cli -Force` and `scripts/test-windows.ps1` (absolute in/out paths with
+spaces from a foreign cwd, POSIX options through the `rf-document.cmd` shim, `RFD_BASE_DIR`, exit
+codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -Tools` (winget),
+`-SendTo`, `-Uninstall`, and `bootstrap.ps1`. Work dirs in that test must sit on the repo's drive
+(`D:` on the runner) — Typst only reads below `--root` = the install drive.
 
 ## Requirements & environment gotchas
 
@@ -304,11 +309,17 @@ via `build.sh` only.
     loop **before** the Typst-version check (so `--help` works without typst) and before the
     positional `[SOURCE] [OUTPUT]`; the surviving positionals are restored via
     `if ((${#positional[@]})) then set -- …`. `--version` prints `rf-document <VERSION>` + the
-    typst version. `convert.ps1` mirrors it with PowerShell-native `[switch]$Version`/`$Help`
-    **plus** a scan of the remaining args for the POSIX `--version`/`--help` forms. **Windows trap:**
-    do **not** advertise `-V`/`-h` as PS switches — under `[CmdletBinding()]` the common `-Verbose`
-    param makes `-V` an **ambiguous prefix** (binding error before any script code runs); only the
-    full `-Version`/`-Help` switches and the double-dash `--version`/`--help` are safe there. Keep
+    typst version. `convert.ps1` has **no `param()` block** and parses `$args` itself (`--version`/
+    `-V`/`-Version`, `--help`/`-h`/`-Help`, `--no-source`, `--hard-breaks`; unknown `-x` → exit 2).
+    **Windows trap:** with PowerShell parameter binding (`[CmdletBinding()]` + `param`) POSIX options
+    such as `--no-source` coming through the `rf-document.cmd` shim (`powershell -File … %*`) are
+    taken as unknown parameter names — the Zettlr messenger passes exactly those. **Path trap:** turn
+    CLI paths absolute with `[IO.Path]::Combine(cwd, p)` (`ConvertTo-FullPath`), never `Join-Path`:
+    `Join-Path` appends an absolute second path (`C:\Notizen\C:\…\x.pdf` → "Das angegebene
+    Pfadformat wird nicht unterstützt"), `Combine` keeps it. **Temp trap:** files Typst must read (the
+    image-mapping JSON) go into the install folder, not `%TEMP%` — Typst only reads on the `--root`
+    drive. **`RFD_BASE_DIR`** (both converters): base folder for relative image/logo paths and the
+    `docdir` input (Zettlr's temporary copy of an unsaved note); invalid → warning + source folder. Keep
     the flag list in sync across `build.sh`, `convert.ps1`, and **both** READMEs' options tables.
   - **Image probe pass (replaces the old remote-count pass):** Typst can neither read env vars
     nor test file existence (a missing image *aborts* the build). So both converters first run

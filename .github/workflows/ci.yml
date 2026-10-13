@@ -102,8 +102,11 @@ jobs:
           Add-Content -Path $env:GITHUB_PATH -Value $exe.DirectoryName
           & $exe.FullName --version
 
+      # -Force: Fonts + Packages wirklich laden (die Fonts liegen im Repo, sonst
+      # würde der Download übersprungen) – prüft u. a. das Escaping von
+      # NotoEmoji[wght].ttf bei Invoke-WebRequest -OutFile.
       - name: Fonts, packages and rf-document shim (install.ps1)
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install.ps1 -Fonts -Packages -Cli
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install.ps1 -Fonts -Packages -Cli -Force
 
       - name: Windows smoke tests (scripts/test-windows.ps1)
         run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-windows.ps1

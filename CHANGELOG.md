@@ -6,6 +6,30 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.7] - 2026-10-13
+
+### Fixed
+- **Windows: an absolute output path broke the export** (Zettlr always passes absolute paths):
+  `convert.ps1` appended it to the current folder with `Join-Path` (`C:\Notizen\C:\…\notiz.pdf` →
+  "Das angegebene Pfadformat wird nicht unterstützt"). Source and output are now resolved with
+  `[IO.Path]::Combine`, which keeps absolute paths.
+- **Windows: `--no-source` / `--hard-breaks` through `rf-document.cmd`** — `convert.ps1` no longer
+  uses PowerShell parameter binding (which takes POSIX options for unknown parameter names) but
+  reads its arguments itself; an unknown option exits with 2 like `build.sh`.
+- **Windows: image mapping on another drive** — the temporary JSON now lives in the install folder,
+  because Typst only reads on the install drive.
+
+### Added
+- **`RFD_BASE_DIR`** (macOS/Linux/Windows): relative image and logo paths are resolved against this
+  folder instead of the source's folder — Zettlr hands over a temporary copy of a note with unsaved
+  changes. File name in footer, PDF title and attachment stays the note's name (checked in tests).
+- **Windows CI job** (Windows PowerShell 5.1): runs `install.ps1 -Fonts -Packages -Cli -Force` and
+  `scripts/test-windows.ps1` — absolute input/output paths with spaces from a foreign working
+  directory, via `convert.ps1` and the `rf-document.cmd` shim, `RFD_BASE_DIR`, exit codes. First time
+  the Windows side is actually executed.
+- `scripts/test-pdf.sh`: absolute paths with spaces, temporary copy with `RFD_BASE_DIR` (plus the
+  counter-check without it).
+
 ## [26.10.6] - 2026-10-13
 
 ### Added

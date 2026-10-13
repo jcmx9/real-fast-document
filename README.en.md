@@ -96,8 +96,12 @@ given output path is written exactly as given, without a prefix.
 **Calling from other programs** (e.g. as a Zettlr export target): the exit code is 0 only on
 success; errors and warnings go briefly to stderr. `build.sh` finds Typst even with a minimal
 `PATH` (GUI apps) because it loads the Typst folder recorded by the installer itself. Relative
-paths (source, output) are relative to the calling directory, images and logo relative to the
-note.
+Input and output may be absolute paths with spaces; relative paths are relative to the calling
+directory, images and logo relative to the note. If the environment variable **`RFD_BASE_DIR`** is
+set, image and logo paths are relative to that folder instead — for programs like Zettlr that hand
+over a temporary copy of a note with unsaved changes. On Windows the same call goes through
+`rf-document.cmd`, including `--no-source` and `--hard-breaks`; CI checks this under Windows
+PowerShell 5.1.
 
 The global command understands the same options: `rf-document --help` or `rf-document --version`
 (`-h` / `-V` as short forms). On Windows also as a PowerShell switch: `rf-document -Help` or
