@@ -144,6 +144,7 @@ bash scripts/build.sh                 # example.md  -> example.pdf
 bash scripts/build.sh dokument.md     # dokument.md -> dokument.pdf
 bash scripts/build.sh in.md out.pdf   # explizite Ausgabe (exakt dieser Pfad, kein Präfix)
 bash scripts/build.sh --no-source in.md out.pdf  # ohne eingebettete Markdown-Quelle
+bash scripts/build.sh --hard-breaks notiz.md     # jede Zeile bleibt eine Zeile
 bash scripts/build.sh --help          # Optionen + Frontmatter-Schlüssel anzeigen
 bash scripts/build.sh --version       # rf-document- und Typst-Version anzeigen
 ```
@@ -165,6 +166,7 @@ bzw. `rf-document -Version`.
 
 | Option | Beschreibung |
 |--------|--------------|
+| `--hard-breaks` | Jede Zeile bleibt eine Zeile, wie im Editor getippt; wie `hard_breaks: true` |
 | `--no-source` | Markdown-Quelle **nicht** ins PDF einbetten (z. B. für Kunden-PDFs); wie `embed_source: false` |
 | `--version`, `-V` | rf-document- und Typst-Version ausgeben und beenden |
 | `--help`, `-h` | Hilfe (Optionen, Frontmatter-Schlüssel, Umgebungsvariablen) ausgeben und beenden |
@@ -203,6 +205,7 @@ watermark: "ENTWURF"    # diagonales Wasserzeichen unter allem
 logo: logo-kunde.png    # Logo nur für dieses Dokument (relativ zur Notiz oder absolut)
 logo-height: 15mm       # maximale Logohöhe (nur absolute Längen; Default 13mm, max. 25mm)
 embed_source: false     # Markdown-Quelle nicht einbetten (Default: true)
+hard_breaks: true       # jede Zeile bleibt eine Zeile (Default: false)
 ---
 ```
 
@@ -222,6 +225,7 @@ embed_source: false     # Markdown-Quelle nicht einbetten (Default: true)
 | `watermark` | Text | Diagonales, gespreiztes Wasserzeichen (fett, hellgrau) auf jeder Seite, **unter** allen anderen Elementen. |
 | `logo` | Pfad | Logo **nur für dieses Dokument** (PNG/JPG/SVG), relativ zur Notiz oder absolut; `~`, `$VAR`, `${VAR}` und `%VAR%` werden ersetzt. Überschreibt das globale Logo. Fehlt die Datei, warnt der Build und nimmt das globale Logo. |
 | `logo-height` | Länge | Maximale Logohöhe, nur absolute Längen (`15mm`, `1.2cm`, `40pt`); anderes wird ignoriert. Das Logo bleibt proportional und höchstens 60 mm breit. |
+| `hard_breaks` | `true` / `false` | Jeder Zeilenumbruch in der Quelle bleibt ein Zeilenumbruch (wie in Zettlr/Obsidian getippt). Default `false`: ein einzelner Umbruch wird zum Leerzeichen, wie in CommonMark. |
 | `embed_source` | `true` / `false` | Markdown-Quelle als Anhang einbetten. Default `true`; `false` (oder `--no-source`) für PDFs, die die Notiz nicht enthalten sollen. |
 
 Leere Werte (`subtitle: ""` oder nur `subtitle:`) werden ignoriert, nie ein Fehler.
@@ -241,7 +245,7 @@ Modus*: ein Inhaltsverzeichnis (nur H1 + H2) erscheint nach dem Titel **und** je
 Verzeichnis, die Kapitel laufen im Fluss. `toc` und `h1_break` schalten diese beiden Effekte
 **einzeln und unabhängig** (`true` erzwingt, `false` unterdrückt).
 
-Die Boolean-Schlüssel (`isodate_praefix`, `toc`, `h1_break`, `print_filename`, `embed_source`) akzeptieren alle
+Die Boolean-Schlüssel (`isodate_praefix`, `toc`, `h1_break`, `print_filename`, `embed_source`, `hard_breaks`) akzeptieren alle
 YAML-1.1-Schreibweisen, unabhängig von Groß-/Kleinschreibung: `true`/`false`, `yes`/`no`,
 `on`/`off` (sowie `"true"` in Anführungszeichen). Ein nicht erkannter Wert wird mit einer
 Warnung ignoriert und der Default greift.
@@ -252,6 +256,21 @@ Markdown deckt im Alltag fast alles ab: `*kursiv*`, `**fett**`, `` `inline-code`
 Aufzählungen, nummerierte Listen, Aufgabenlisten (`- [ ]`), Tabellen, Zitate, Fußnoten,
 Definitionslisten und `[Links](https://typst.app)` funktionieren ohne Zusatzaufwand.
 Codeblöcke werden mit Syntax-Hervorhebung gesetzt, Formeln (`$…$`, `$$…$$`) über LaTeX-Syntax.
+Überschriften und Listen funktionieren auch ohne Leerzeile davor.
+
+**Zusätzlich zu CommonMark:**
+
+| Eingabe | Ergebnis |
+|---------|----------|
+| `==Text==` | Markierung (gelblicher Hintergrund) |
+| `> [!NOTE]` … `[!CAUTION]`, `> [!INFO]`, `[!TIPP]`, `[!WICHTIG]`, `[!HINWEIS]`, `[!ACHTUNG]` | Hinweisbox (Info, Tipp, Wichtig, Hinweis, Achtung; englisch bei `lang: en`), bricht nicht über die Seite |
+| Liste nur aus `- [ ] Aufgabe – Name, bis Datum` | Tabelle *Aufgabe · Wer · Bis · Status* (`bis`/`due`/`by`); überall leere Spalten entfallen |
+| gemischte Liste mit `- [ ]` / `- [x]` | Kästchen statt Aufzählungspunkt, bündig mit den Punkten |
+| `18. Oktober 2026` am Zeilenanfang | bleibt ein Datum, keine nummerierte Liste (Monatsnamen de/en, auch abgekürzt) |
+| `<!-- pagebreak -->`, `\newpage` (eigene Zeile) | Seitenumbruch |
+| `„…“`, `‚…‘`, `»…«`, `"…"` | Anführungszeichen bleiben exakt wie getippt (keine Automatik) |
+
+Snippet-Vorlage für Aufgaben: `- [ ] ${1:Aufgabe} – ${2:Name}, bis ${3:Datum}$0`
 
 **Bilder:** `![Untertitel](pfad.svg)` wird als nummerierte Abbildung mit Untertitel gesetzt.
 Lokale Bilder werden eingebettet; relative Pfade sind **relativ zum Dokument**. **Remote-Bilder**
@@ -299,7 +318,8 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Fließtext | Source Sans 3, 11 pt, Blocksatz mit Silbentrennung (Zeilenabstand 0.85em), `luma(13%)` |
 | Tabellen | volle Breite, **Spalten anteilig nach Inhaltsbreite** (schmale Spalten bleiben schmal, textreiche bekommen mehr Platz); Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien; **Kopfzeile wiederholt sich** bei Seitenumbruch |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
-| Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): Kästchen ☐ offen / ☒ erledigt |
+| Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): gezeichnetes Kästchen (erledigt: dunkel gefüllt mit weißem Häkchen), bündig mit den Punkten; reine Aufgabenlisten als Tabelle (Aufgabe 56 % · Wer 20 % · Bis 14 % · Status 10 %) |
+| Hinweisboxen | Fläche aufgehellt, 2,5-pt-Balken links, Titel klein + gesperrt in Versalien; Farben: Info `#2f6aa8`, Tipp `#3b7d3a`, Wichtig `#7a4fb0`, Hinweis `#b05a1a`, Achtung `#b5452b` |
 | Bilder | lokal: nummerierte Abbildung mit Untertitel; remote (`http(s)`, `//host`, `data:`) offline automatisch entfernt |
 | Zitate | beidseitig eingerückt (schmaler als Satzspiegel) + kursiv |
 | Emoji/Symbole | zeichenbasierter Fallback: Noto Emoji + Noto Sans Symbols 2 (monochrom, nur für Zeichen ohne Source-Glyph) |

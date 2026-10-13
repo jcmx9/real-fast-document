@@ -68,6 +68,8 @@ Arguments:
                z. B. 2026-06-19_SOURCE.pdf – abschaltbar mit 'isodate_praefix: false'
 
 Options:
+  --hard-breaks   Jede Zeile bleibt eine Zeile, wie im Editor getippt
+                  (Frontmatter: hard_breaks: true)
   --no-source     Markdown-Quelle NICHT ins PDF einbetten (z. B. für Kunden-PDFs;
                   Frontmatter: embed_source: false)
   -V, --version   rf-document- und Typst-Version ausgeben und beenden
@@ -75,7 +77,8 @@ Options:
 
 Optionale YAML-Frontmatter-Schlüssel:
   title, subtitle, client, author, date, isodate_praefix, toc, h1_break,
-  print_filename, lang, header, watermark, logo, logo-height, embed_source
+  print_filename, lang, header, watermark, logo, logo-height, embed_source,
+  hard_breaks
 
 Exit-Code 0 nur bei Erfolg; Fehler und Warnungen gehen auf stderr.
 
@@ -86,12 +89,14 @@ EOF
 }
 
 cli_embed=""
+cli_breaks=""
 positional=()
 while [ $# -gt 0 ]; do
   case "$1" in
     -h|--help)    print_help; exit 0 ;;
     -V|--version) print_version; exit 0 ;;
     --no-source)  cli_embed="false"; shift ;;
+    --hard-breaks) cli_breaks="true"; shift ;;
     --)           shift; while [ $# -gt 0 ]; do positional+=("$1"); shift; done; break ;;
     -*)           printf 'Error: unbekannte Option %s\n' "$1" >&2
                   printf "Aufruf: rf-document --help\n" >&2; exit 2 ;;
@@ -224,6 +229,7 @@ fm_author=""
 fm_logo=""
 fm_logo_height=""
 fm_embed="true"
+fm_breaks="false"
 if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
   block="$(awk 'NR==1 { next } /^(---|\.\.\.)[[:space:]]*$/ { exit } { print }' "${src}" | tr -d '\r')"
   while IFS= read -r line; do
@@ -261,6 +267,13 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
         if [[ -n "${b}" ]]; then fm_showname="${b}"
         else echo "Warnung: ungültiger Wert für 'print_filename' im Frontmatter: '${line#print_filename:}' – ignoriert (true/false)." >&2; fi
         ;;
+      hard_breaks:*)
+        b="$(yaml_bool "${line#hard_breaks:}")"
+        if [[ -n "${b}" ]]; then fm_breaks="${b}"
+        elif [[ -n "$(yaml_str "${line#hard_breaks:}")" ]]; then
+          echo "Warnung: ungültiger Wert für 'hard_breaks' im Frontmatter: '${line#hard_breaks:}' – ignoriert (true/false)." >&2
+        fi
+        ;;
       embed_source:*)
         b="$(yaml_bool "${line#embed_source:}")"
         if [[ -n "${b}" ]]; then fm_embed="${b}"
@@ -271,8 +284,9 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
     esac
   done <<< "${block}"
 fi
-# Die CLI-Option gewinnt über das Frontmatter.
+# Die CLI-Optionen gewinnen über das Frontmatter.
 if [[ -n "${cli_embed}" ]]; then fm_embed="${cli_embed}"; fi
+if [[ -n "${cli_breaks}" ]]; then fm_breaks="${cli_breaks}"; fi
 
 # ---------------------------------------------------------------------------
 # Ausgabepfad: explizites zweites Argument gewinnt (relativ zum Aufruf-Verz.)
@@ -354,6 +368,7 @@ typst_inputs=(
   --input "lang=${fm_lang}"
   --input "header=${fm_header}"
   --input "watermark=${fm_watermark}"
+  --input "hard_breaks=${fm_breaks}"
 )
 
 # Reproduzierbarer Metadaten-Zeitstempel: ohne Frontmatter-date: nutzt das Template

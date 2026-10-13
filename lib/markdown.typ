@@ -91,9 +91,261 @@
   out
 }
 
+// Code-Blöcke UND abgesetzte Formeln ($$ … $$ über mehrere Zeilen): dort darf
+// keine Umformung greifen (kein \ für harte Umbrüche, kein <mark>).
+#let skip-mask(lines) = {
+  let mask = code-mask(lines)
+  let in-math = false
+  for (i, l) in lines.enumerate() {
+    if mask.at(i) { continue }
+    let t = l.trim()
+    if in-math {
+      mask.at(i) = true
+      if t.ends-with("$$") { in-math = false }
+    } else if t.starts-with("$$") {
+      mask.at(i) = true
+      // "$$ x $$" in einer Zeile schließt sofort wieder
+      if t == "$$" or not t.slice(2).trim().ends-with("$$") { in-math = true }
+    }
+  }
+  mask
+}
+
+// Seitenumbruch: "<!-- pagebreak -->", "\newpage", "\pagebreak" oder
+// "\clearpage" allein auf einer Zeile -> Typst-Umbruch (cmarker führt
+// <!--raw-typst …--> als Typst-Code aus). Leerzeilen drumherum machen ihn zum
+// eigenen Block, auch wenn in der Notiz keine stehen.
+#let pagebreaks(lines) = {
+  let mask = code-mask(lines)
+  let out = ()
+  for (i, l) in lines.enumerate() {
+    let t = l.trim()
+    if not mask.at(i) and (t in ("\\newpage", "\\pagebreak", "\\clearpage")
+        or t.match(regex("^<!--\s*pagebreak\s*-->$")) != none) {
+      out += ("", "<!--raw-typst #pagebreak(weak: true) -->", "")
+    } else {
+      out.push(l)
+    }
+  }
+  out
+}
+
+// Hinweisboxen: ein Zitatblock, dessen erste Zeile "> [!NOTE]" (GitHub) oder
+// "> [!HINWEIS]" (deutsch) lautet, wird zu <rfd-alert kind="…"> mit dem
+// restlichen Zitatinhalt als Markdown. Text hinter dem Schlüsselwort in
+// derselben Zeile gehört zum Inhalt.
+#let alert-kinds = (
+  NOTE: "note", TIP: "tip", IMPORTANT: "important", WARNING: "warning", CAUTION: "caution",
+  INFO: "note", TIPP: "tip", WICHTIG: "important", HINWEIS: "warning", ACHTUNG: "caution",
+)
+#let alerts(lines) = {
+  let mask = code-mask(lines)
+  let n = lines.len()
+  let out = ()
+  let i = 0
+  while i < n {
+    let m = if mask.at(i) { none } else {
+      lines.at(i).match(regex("^ {0,3}>[ \t]?\[!([A-Za-z]+)\][ \t]*(.*)$"))
+    }
+    let kind = if m == none { none } else { alert-kinds.at(upper(m.captures.at(0)), default: none) }
+    if kind == none {
+      out.push(lines.at(i))
+      i += 1
+      continue
+    }
+    let body = ()
+    if m.captures.at(1).trim() != "" { body.push(m.captures.at(1)) }
+    i += 1
+    while i < n and lines.at(i).match(regex("^ {0,3}>")) != none {
+      body.push(lines.at(i).replace(regex("^ {0,3}>[ \t]?"), ""))
+      i += 1
+    }
+    out += ("", "<rfd-alert kind=\"" + kind + "\">", "", ..body, "", "</rfd-alert>", "")
+  }
+  out
+}
+
+// Aufgabenlisten: eine Liste, die NUR aus Aufgaben (- [ ] / - [x]) besteht,
+// wird zur Tabelle (<rfd-tasks>, gebaut im Template). Wer/Bis kommen aus dem
+// Muster "Aufgabe – Name, bis Datum" (Gedankenstrich mit Leerzeichen; "bis",
+// "due" oder "by"). Gemischte oder verschachtelte Listen bleiben Listen.
+#let task-re = regex("^[-*+][ \t]+\[([ xX])\][ \t]+(.*)$")
+#let item-re = regex("^ {0,3}([-*+]|\d+[.)])([ \t]|$)")
+#let task-parts(text) = {
+  // letzter " – " / " — " / " - " trennt Aufgabe und Zuständigkeit
+  let dash = text.matches(regex(" [–—-] ")).at(-1, default: none)
+  if dash == none { return (task: text.trim(), owner: "", due: "") }
+  let task = text.slice(0, dash.start).trim()
+  let owner = text.slice(dash.end).trim()
+  let due = ""
+  let m = owner.match(regex("^(.*?),?\s+(?:bis|due|by)\s+(.*)$"))
+  if m != none { (owner, due) = (m.captures.at(0).trim(), m.captures.at(1).trim()) }
+  (task: task, owner: owner, due: due)
+}
+#let attr(s) = s.replace("\"", "'")
+#let task-tables(lines) = {
+  let mask = code-mask(lines)
+  let n = lines.len()
+  let out = ()
+  let i = 0
+  while i < n {
+    if mask.at(i) or lines.at(i).match(item-re) == none {
+      out.push(lines.at(i))
+      i += 1
+      continue
+    }
+    // Ausdehnung der Liste: Einträge, dazwischen höchstens Leerzeilen
+    let items = ()
+    let j = i
+    let other = false
+    // Liste über Leerzeilen hinweg, solange ein Eintrag folgt
+    let next-item(j) = {
+      let k = j
+      while k < n and blank(lines.at(k)) { k += 1 }
+      if k < n and lines.at(k).match(item-re) != none { k } else { none }
+    }
+    while j < n {
+      let l = lines.at(j)
+      if l.match(item-re) != none { items.push(l); j += 1 }
+      else if blank(l) and next-item(j) != none { j = next-item(j) }
+      else if blank(l) { break }
+      else { other = true; break }   // Fortsetzungs-/Unterzeile
+    }
+    let all-tasks = not other and items.all(x => x.match(task-re) != none)
+    if not all-tasks {
+      // ganze Liste unverändert übernehmen, inkl. Fortsetzungs- und Unterzeilen
+      while j < n {
+        if not blank(lines.at(j)) { j += 1 }
+        else if next-item(j) != none { j = next-item(j) }
+        else if j + 1 < n and lines.at(j + 1).match(regex("^[ 	]+\S")) != none { j += 1 }
+        else { break }
+      }
+      for k in range(i, j) { out.push(lines.at(k)) }
+      i = j
+      continue
+    }
+    out += ("", "<rfd-tasks>")
+    for x in items {
+      let m = x.match(task-re)
+      let p = task-parts(m.captures.at(1))
+      out += (
+        "<rfd-task done=\"" + (if m.captures.at(0) != " " { "true" } else { "false" }) + "\" owner=\"" + attr(p.owner)
+          + "\" due=\"" + attr(p.due) + "\">",
+        "", p.task, "", "</rfd-task>",
+      )
+    }
+    out += ("</rfd-tasks>", "")
+    i = j
+  }
+  out
+}
+
+// Datumszeilen: "18. Oktober 2026" am Zeilenanfang ist ein Datum, keine
+// nummerierte Liste ab 18. Stehen nur solche "Einträge" untereinander (alle
+// beginnen mit einem Monatsnamen, de/en, auch abgekürzt), wird die Zahl
+// maskiert (18\.) und jede Zeile bleibt eine eigene Zeile.
+#let months = (
+  "januar", "jänner", "februar", "märz", "maerz", "april", "mai", "juni", "juli",
+  "august", "september", "oktober", "november", "dezember",
+  "jan", "feb", "mär", "mrz", "apr", "jun", "jul", "aug", "sep", "sept", "okt", "nov", "dez",
+  "january", "february", "march", "may", "june", "july", "october", "december", "mar", "oct", "dec",
+)
+#let date-re = regex("^( {0,3})(\d{1,2})([.)])[ \t]+(\S+)(.*)$")
+#let is-date-line(l) = {
+  let m = l.match(date-re)
+  m != none and lower(m.captures.at(3)).trim(regex("[.,]"), at: end) in months
+}
+#let date-lines(lines) = {
+  let mask = code-mask(lines)
+  let n = lines.len()
+  let out = ()
+  let i = 0
+  while i < n {
+    if mask.at(i) or lines.at(i).match(date-re) == none {
+      out.push(lines.at(i))
+      i += 1
+      continue
+    }
+    let j = i
+    while j < n and not mask.at(j) and lines.at(j).match(date-re) != none { j += 1 }
+    let run = lines.slice(i, j)
+    if run.all(is-date-line) {
+      for (k, l) in run.enumerate() {
+        let m = l.match(date-re)
+        let c = m.captures
+        out.push(c.at(0) + c.at(1) + "\\" + c.at(2) + " " + c.at(3) + c.at(4)
+          + if k < run.len() - 1 { "\\" } else { "" })
+      }
+    } else {
+      out += run
+    }
+    i = j
+  }
+  out
+}
+
+// Harte Zeilenumbrüche (Schalter hard_breaks): jede Zeile innerhalb eines
+// Absatzes bleibt eine Zeile, wie im Editor getippt. Technisch ein "\" am
+// Zeilenende – aber nur, wenn die Folgezeile denselben Absatz fortsetzt: vor
+// einem neuen Block (Liste, Überschrift, Zitat, Tabelle, Zaun …) wäre "\" ein
+// sichtbarer Backslash. Code und Formeln bleiben unberührt.
+#let block-start-re = regex("^ {0,3}(#{1,6}([ \t]|$)|[-*+]([ \t]|$)|\d+[.)]([ \t]|$)|>|\||`{3,}|~{3,}|\$\$|<|:[ \t]|\[\^[^\]]+\]:|(=+|-+|\*+|_+)[ \t]*$)")
+#let keep-line-breaks(lines) = {
+  let mask = skip-mask(lines)
+  let n = lines.len()
+  let out = ()
+  for (i, l) in lines.enumerate() {
+    if i + 1 >= n or mask.at(i) or mask.at(i + 1) or blank(l) or blank(lines.at(i + 1)) {
+      out.push(l)
+      continue
+    }
+    let next = lines.at(i + 1)
+    // In Zitaten: beide Zeilen mit ">" und der Folge-Inhalt setzt fort.
+    let (cur, nxt) = (l, next)
+    let quoted = l.match(regex("^ {0,3}>")) != none
+    if quoted {
+      if next.match(regex("^ {0,3}>")) == none { out.push(l); continue }
+      cur = l.replace(regex("^ {0,3}>[ \t]?"), "")
+      nxt = next.replace(regex("^ {0,3}>[ \t]?"), "")
+      if blank(cur) or blank(nxt) { out.push(l); continue }
+    }
+    let ends-break = cur.ends-with("\\") or cur.ends-with("  ")
+    let is-heading = cur.match(regex("^ {0,3}#{1,6}([ \t]|$)")) != none
+    let is-other = cur.match(regex("^ {0,3}(\||<|`{3,}|~{3,}|\$\$)")) != none
+    if ends-break or is-heading or is-other or nxt.match(block-start-re) != none {
+      out.push(l)
+    } else {
+      out.push(l + "\\")
+    }
+  }
+  out
+}
+
+// ==Markierung== -> <mark>…</mark> (cmarker -> highlight). Nicht in Code
+// (Zäune, Formeln, `Inline-Code`).
+#let mark-re = regex("==([^=\s](?:[^=]*[^=\s])?)==")
+#let marks(lines) = {
+  let mask = skip-mask(lines)
+  lines.enumerate().map(((i, l)) => {
+    if mask.at(i) or not l.contains("==") { return l }
+    // Inline-Code-Spannen auslassen: an Backtick-Läufen teilen, nur die
+    // Stücke außerhalb umformen.
+    let parts = l.split("`")
+    parts.enumerate().map(((k, p)) => if calc.even(k) {
+      p.replace(mark-re, m => "<mark>" + m.captures.at(0) + "</mark>")
+    } else { p }).join("`")
+  })
+}
+
 // Gesamte Vorverarbeitung: Markdown-String für cmarker.
-#let preprocess(src) = {
+#let preprocess(src, hard-breaks: false) = {
   let lines = strip-frontmatter(src)
+  lines = pagebreaks(lines)
+  lines = alerts(lines)
+  lines = task-tables(lines)
+  lines = date-lines(lines)
   lines = deflists(lines)
+  if hard-breaks { lines = keep-line-breaks(lines) }
+  lines = marks(lines)
   lines.join("\n") + "\n"
 }

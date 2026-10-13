@@ -68,6 +68,17 @@ expect_compact() {
   done
 }
 
+# expect_line <name> <text> <string>…: der String steht als eigene Zeile
+# (nur Leerraum davor/danach) – prüft Zeilenumbrüche im Layout.
+expect_line() {
+  local name="$1" text="$2" s
+  shift 2
+  for s in "$@"; do
+    awk -v want="${s}" '{ sub(/^[ \t]+/, ""); sub(/[ \t]+$/, "") } $0 == want { found = 1 } END { exit !found }' \
+      <<<"${text}" || die "${name}: \"${s}\" steht nicht als eigene Zeile"
+  done
+}
+
 # reject <name> <text> <string>…: kein String darf im Text vorkommen.
 reject() {
   local name="$1" text="$2" s
@@ -114,7 +125,9 @@ test_fixtures() {
   # Englische Beschriftungen.
   text="$(render english.md)"
   expect_compact english.md "${text}" "EXAMPLE LTD"
-  expect english.md "${text}" "Example Ltd" "Kick-off" "Page 1 /" "October 17, 2026"
+  expect english.md "${text}" "Example Ltd" "Kick-off" "Page 1 /" "NOTE" "English alert titles." \
+    "Task" "Owner" "Due" "Status" "17 Oct" "Ben Probe" "October 17, 2026"
+  reject english.md "${text}" "[!NOTE]" "– jcmx9"
   reject english.md "${text}" "Seite"
   ok english.md
 
@@ -124,6 +137,58 @@ test_fixtures() {
   pdfinfo "${out_dir}/h1-chapter.pdf" | grep -q '^Title: *h1-chapter$' ||
     die "h1-chapter.md: PDF-Titel ist nicht der Dateiname"
   ok h1-chapter.md
+
+  # Hinweisboxen: GitHub- und deutsche Schlüsselwörter, deutsche Titel.
+  text="$(render alerts.md)"
+  expect alerts.md "${text}" "INFO" "TIPP" "WICHTIG" "HINWEIS" "ACHTUNG" "Ruhiges Orange." \
+    "Deutsches Schlüsselwort mit Text in derselben Zeile." "Liste in der Box" \
+    "Ein normales Zitat bleibt ein Zitat."
+  reject alerts.md "${text}" "[!NOTE]" "[!HINWEIS]" "[!TIP]"
+  ok alerts.md
+
+  # Aufgabentabelle mit Wer/Bis; gemischte Liste bleibt Liste.
+  text="$(render tasks.md)"
+  expect tasks.md "${text}" "Aufgabe" "Wer" "Bis" "Status" "Sitemap-Entwurf erstellen" "jcmx9" \
+    "Ben Probe" "15.10." "Anna Beispiel" "Offener Punkt ohne Zuständigkeit" \
+    "Ein normaler Punkt" "Erledigte Aufgabe – bleibt Liste"
+  reject tasks.md "${text}" "– jcmx9" ", bis 17.10." "[ ]" "[x]"
+  ok tasks.md
+
+  # Checkliste ohne Namen/Termine: nur Aufgabe + Status (lose Liste, kein Absturz).
+  text="$(render checklist.md)"
+  expect checklist.md "${text}" "Aufgabe" "Status" "Ohne Zuständigkeit bleibt es eine Checkliste" "Erledigt"
+  reject checklist.md "${text}" "Wer" "Bis"
+  ok checklist.md
+
+  # Anführungszeichen wie getippt, Markierung, Datumszeilen, Seitenumbrüche;
+  # Code bleibt unverändert.
+  text="$(render text-features.md)"
+  # shellcheck disable=SC1111,SC1112
+  expect text-features.md "${text}" '„Deutsche Anführungszeichen“' '‚einfache‘' '»Guillemets«' \
+    '"gerade"' "Text mit markiert" "==kein Mark im Code==" "==bleibt Code==" '\newpage' \
+    "1. Echte Liste" "Seite drei."
+  expect_line text-features.md "${text}" "18. Oktober 2026" "19. Okt. 2026" "1. Dez. 2026"
+  # shellcheck disable=SC1111
+  reject text-features.md "${text}" "==markiert==" "pagebreak" '“gerade”'
+  pdfinfo "${out_dir}/text-features.pdf" | grep -q '^Pages: *3$' ||
+    die "text-features.md: Seitenumbrüche fehlen (erwartet 3 Seiten)"
+  ok text-features.md
+
+  # Zeilenumbrüche: Standard weich, mit --hard-breaks / hard_breaks: true hart.
+  text="$(render soft-breaks.md)"
+  expect soft-breaks.md "${text}" "Zeile eins Zeile zwei"
+  text="$(render soft-breaks.md --hard-breaks)"
+  expect_line "soft-breaks.md --hard-breaks" "${text}" "Zeile eins" "Zeile zwei"
+  reject "soft-breaks.md --hard-breaks" "${text}" "\\"
+  ok "soft-breaks.md (+ --hard-breaks)"
+
+  # Zettlr-Notiz ohne Leerzeilen, harte Umbrüche per Front Matter.
+  text="$(render no-blank-lines.md)"
+  expect no-blank-lines.md "${text}" "Agenda" "Mitschrift" "Das ist zu tun" "Markierung" "Abschluss"
+  expect_line no-blank-lines.md "${text}" "Letzte Zeile." "Noch eine Zeile." "18. Oktober 2026" \
+    "Text direkt danach mit Markierung."
+  reject no-blank-lines.md "${text}" "# Mitschrift" "==Markierung==" "\\"
+  ok no-blank-lines.md
 }
 
 test_interface() {

@@ -6,6 +6,35 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.1] - 2026-10-13
+
+Stage 2 of the Zettlr port: Markdown read the way Zettlr shows it.
+
+### Added
+- **Callout boxes** from blockquotes starting with `> [!NOTE]`, `[!TIP]`, `[!IMPORTANT]`,
+  `[!WARNING]`, `[!CAUTION]` or the German `[!INFO]`, `[!TIPP]`, `[!WICHTIG]`, `[!HINWEIS]`,
+  `[!ACHTUNG]`: light fill, 2.5 pt bar, small letter-spaced uppercase title (Info/Tipp/Wichtig/
+  Hinweis/Achtung, English with `lang: en`), WCAG-AA colors; a box never splits across pages.
+- **Task tables:** a list made only of tasks becomes a table *Aufgabe · Wer · Bis · Status*
+  (en: *Task · Owner · Due · Status*), owner/due parsed from `Task – Name, bis Datum`
+  (`bis`/`due`/`by`); columns empty everywhere are dropped and their share goes to the task
+  column (fixed widths 56/20/14/10 %).
+- **Drawn task boxes** replace the ☐/☒ glyphs: open = outline, done = dark fill with a white check;
+  in mixed lists the box sits in the same marker slot as the bullet, so all items align.
+- **`hard_breaks: true` / `--hard-breaks`** — every line break in the source stays a line break
+  (meeting notes typed line by line). Default stays CommonMark (single break = space).
+- **`==highlight==`** (yellowish `#fbeab0`), **page breaks** via `<!-- pagebreak -->` / `\newpage`
+  / `\pagebreak` / `\clearpage` on their own line.
+- **Date lines:** `18. Oktober 2026` at a line start stays a date instead of a numbered list
+  starting at 18 (only when every "item" starts with a de/en month name, also abbreviated);
+  several such lines stay separate lines.
+
+### Changed
+- **Quotes stay exactly as typed** (cmarker `smart-punctuation: false`): the automatic replacement
+  turned straight `"…"` into English “…” even in German text. Consequence: `--` and `...` also
+  stay as typed instead of becoming – and ….
+- `example.md` shows callouts, the task table and highlighting.
+
 ## [26.10.0] - 2026-10-13
 
 First step of making rf-document the single PDF tool for meeting notes written in Zettlr (the

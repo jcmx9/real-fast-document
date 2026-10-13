@@ -17,6 +17,15 @@
 
 
 #set table(inset: 7pt, stroke: none)
+// Gemeinsame Tabellen-Gestaltung (allgemeine Tabellen + Aufgabentabelle):
+// leichtes Zebra ab der 1. Datenzeile, senkrechte Trennlinien innen, eine Linie
+// unter der Kopfzeile. Die fill-Funktion ist zugleich der Rekursions-Guard der
+// #show table-Regel (umgebaute Tabellen haben fill != none).
+#let rfd-table-fill = (_, y) => if y > 0 and calc.even(y) { luma(96%) } else { none }
+#let rfd-table-stroke = (x, y) => (
+  left: if x > 0 { 0.4pt + luma(80%) } else { 0pt },
+  top: if y == 1 { 0.7pt + luma(45%) } else { 0pt },
+)
 // Tabellen über die volle Satzspiegelbreite; Kopf zentriert + fett, Inhalte
 // linksbündig (auch Zahlen/Währungen), leichter Zebra-Hintergrund, senkrechte
 // Trennlinien und eine Linie unter der Kopfzeile.
@@ -63,15 +72,8 @@
       table(
         columns: cols,
         align: (_, y) => if y == 0 { center } else { left },
-        // Leichter Zeilen-Hintergrundwechsel (Zebra); zugleich der Guard-Marker
-        // (fill ist eine Funktion != none).
-        fill: (_, y) => if y > 0 and calc.even(y) { luma(96%) } else { none },
-        // Nur senkrechte Trennlinien (innen) und eine Linie unter der Kopfzeile –
-        // keine waagerechten Zeilenlinien.
-        stroke: (x, y) => (
-          left: if x > 0 { 0.4pt + luma(80%) } else { 0pt },
-          top: if y == 1 { 0.7pt + luma(45%) } else { 0pt },
-        ),
+        fill: rfd-table-fill,
+        stroke: rfd-table-stroke,
         ..it.children,
       )
     }))
@@ -123,7 +125,10 @@
 #let logo-height-raw = sys.inputs.at("logo_height", default: "")
 
 // Markdown vorverarbeiten (lib/markdown.typ).
-#let body-markdown = if source-path == none { "" } else { preprocess(read(source-path)) }
+// hard_breaks: true -> jede Zeile bleibt eine Zeile (Frontmatter oder --hard-breaks).
+#let body-markdown = if source-path == none { "" } else {
+  preprocess(read(source-path), hard-breaks: sys.inputs.at("hard_breaks", default: "false") == "true")
+}
 // Sichtbarer Dokumenttitel nur aus dem Frontmatter (title:): Titelblock oben +
 // Kopfzeile ab Seite 1. Leer = kein Titel; ein "# …" ist immer ein Kapitel.
 #let title-text = sys.inputs.at("doctitle", default: "")
@@ -264,8 +269,10 @@
 
 // Beschriftungen je Sprache (de, sonst en).
 #let labels = (
-  de: (page: "Seite", contents: "Inhalt"),
-  en: (page: "Page", contents: "Contents"),
+  de: (page: "Seite", contents: "Inhalt", task: "Aufgabe", owner: "Wer", due: "Bis", status: "Status",
+       note: "Info", tip: "Tipp", important: "Wichtig", warning: "Hinweis", caution: "Achtung"),
+  en: (page: "Page", contents: "Contents", task: "Task", owner: "Owner", due: "Due", status: "Status",
+       note: "Note", tip: "Tip", important: "Important", warning: "Warning", caution: "Caution"),
 )
 #let label-text(key) = labels.at(doc-lang.slice(0, calc.min(2, doc-lang.len())), default: labels.en).at(key)
 
@@ -411,9 +418,25 @@
 // (statt der ebenenabhängigen Standardzeichen •/‣/–). Als Typst-Form gezeichnet
 // (font-unabhängig, exakte Größe/Farbe), leicht angehoben zur optischen Mitte.
 // Gemischte Listen (normale Punkte + Tasks) löst cmarker nativ: Task-Items nutzen
-// den task-list-marker unten, Nicht-Task-Items diesen Quadrat-Marker.
-#let rfd-list-marker = box(baseline: -0.2em, square(size: 0.32em, fill: luma(20%)))
-#set list(marker: rfd-list-marker)
+// das Aufgaben-Kästchen (task-box), Nicht-Task-Items diesen Quadrat-Marker.
+// Beide sitzen in einem Feld gleicher Breite (marker-slot) -> der Text aller
+// Einträge beginnt bündig, das Quadrat steht mittig über dem Kästchen.
+#let marker-slot = 0.72em
+#let rfd-list-marker = box(width: marker-slot,
+  align(center, box(baseline: -0.2em, square(size: 0.32em, fill: luma(20%)))))
+#set list(marker: rfd-list-marker, body-indent: 0.4em)
+
+// Aufgaben-Kästchen (Liste und Aufgabentabelle): offen = leerer Rahmen,
+// erledigt = dunkel gefüllt mit weißem Häkchen. Gezeichnet statt ☐/☒-Glyphen.
+#let task-box(done) = box(
+  width: marker-slot, height: marker-slot, baseline: 0.1em, radius: 1.5pt,
+  stroke: 0.7pt + luma(35%),
+  fill: if done { luma(20%) } else { none },
+  if done { align(center + horizon, text(fill: white, size: 0.62em, weight: 700)[✓]) },
+)
+
+// Markierung (==Text== -> <mark>): gelblicher Hintergrund.
+#set highlight(fill: rgb("#fbeab0"))
 
 // Blockzitate heben sich ab: schmaler als der Satzspiegel (beidseitig
 // eingerückt) und kursiv.
@@ -516,12 +539,74 @@
   }
 }
 
-// Task-Listen-Marker als Checkbox aus dem Zeichensatz (Noto-Fallback, monochrom
-// und PDF/A-tauglich): leeres Kästchen ☐ = offen, angekreuztes ☒ = erledigt.
-// Bewusst ein Kreuz (kein gefülltes Klötzchen), damit „erledigt" erkennbar ist.
-#let rfd-task-marker(checked) = {
-  box(text(fill: luma(20%), if checked [☒] else [☐]))
-  h(0.3em)
+// Task-Listen-Marker (gemischte Listen): das gezeichnete Kästchen ersetzt den
+// Aufzählungspunkt.
+#let rfd-task-marker(checked) = task-box(checked)
+
+// Hinweisboxen (> [!NOTE] … bzw. > [!HINWEIS] …, aus lib/markdown.typ als
+// <rfd-alert kind="…">). Farben WCAG-AA auf Weiß; warning bewusst ruhiges
+// Orange statt Warnrot. Fläche stark aufgehellt, links ein 2,5-pt-Balken, Titel
+// klein, gesperrt, in Versalien. breakable: false -> der Titel steht nie allein
+// am Seitenfuß.
+#let alert-colors = (
+  note: rgb("#2f6aa8"),
+  tip: rgb("#3b7d3a"),
+  important: rgb("#7a4fb0"),
+  warning: rgb("#b05a1a"),
+  caution: rgb("#b5452b"),
+)
+#let rfd-alert(attrs, body) = {
+  let kind = attrs.at("kind", default: "note")
+  let color = alert-colors.at(kind, default: alert-colors.note)
+  block(
+    width: 100%, breakable: false,
+    fill: color.lighten(93%),
+    stroke: (left: 2.5pt + color),
+    radius: (right: 3pt),
+    inset: (left: 12pt, right: 10pt, y: 8pt),
+    above: 1.2em, below: 1.2em,
+    {
+      set par(spacing: 0.7em)
+      block(below: 0.6em, text(size: 0.8em, weight: 600, tracking: 0.06em, fill: color,
+        upper(label-text(kind))))
+      body
+    },
+  )
+}
+
+// Aufgabentabelle (reine Aufgabenliste, aus lib/markdown.typ als <rfd-tasks>
+// mit <rfd-task done owner due>). Jede <rfd-task> liefert ein Metadatum; die
+// Tabelle sammelt sie ein. Spalten fest: Aufgabe 56 %, Wer 20 %, Bis 14 %,
+// Status 10 % (zentriert); eine überall leere Spalte entfällt und ihr Anteil
+// geht an die Aufgabenspalte.
+#let rfd-task(attrs, body) = metadata((
+  done: attrs.at("done", default: "false") == "true",
+  owner: attrs.at("owner", default: ""),
+  due: attrs.at("due", default: ""),
+  body: body,
+))
+#let rfd-tasks(attrs, body) = {
+  let children = if body.func() == metadata { (body,) } else if body.has("children") { body.children } else { () }
+  let tasks = children.filter(c => c.func() == metadata).map(c => c.value)
+  let cols = ((key: "task", width: 56%),)
+  if tasks.any(t => t.owner != "") { cols.push((key: "owner", width: 20%)) }
+  if tasks.any(t => t.due != "") { cols.push((key: "due", width: 14%)) }
+  cols.push((key: "status", width: 10%))
+  let rest = 100% - cols.map(c => c.width).sum()
+  cols.at(0).width += rest
+  let status-x = cols.len() - 1
+  let cell(t, key) = if key == "task" { t.body } else if key == "status" { task-box(t.done) } else { t.at(key) }
+  block(above: 1.2em, below: 1.4em, breakable: true, table(
+    columns: cols.map(c => c.width),
+    align: (x, y) => if x == status-x { center + horizon } else { left + horizon },
+    fill: rfd-table-fill,
+    stroke: rfd-table-stroke,
+    table.header(..cols.map(c => label-text(c.key))),
+    ..tasks.map(t => cols.map(c => {
+      set par(spacing: 0pt)
+      cell(t, c.key)
+    })).flatten(),
+  ))
 }
 
 // `terms`-Override für Definitionslisten (aus cmarker <dl>): Begriff fett auf
@@ -573,6 +658,11 @@
   h1-level: 1,
   set-document-title: false,
   math: mitex,
+  // Keine Smart-Quote-Automatik: getippte Anführungszeichen („ “ ‚ ‘ » «) und
+  // gerade " ' bleiben exakt wie getippt (die Automatik setzte sonst englische
+  // “…” auch in deutschen Text). Ebenso bleiben -- und ... wie getippt.
+  smart-punctuation: false,
   task-list-marker: rfd-task-marker,
+  html: (rfd-alert: rfd-alert, rfd-tasks: rfd-tasks, rfd-task: rfd-task),
   scope: (image: safe-image, divider: () => horizontalrule, terms: rfd-terms),
 )
