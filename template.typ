@@ -250,6 +250,13 @@
 #let heading-font = ("Source Serif 4", ..fallback-fonts)
 #let code-font = ("SourceCodeVF", ..fallback-fonts)
 
+// Strichstärken (wght-Achse der variablen Schriften). PDF-Viewer (Vorschau)
+// zeichnen die variablen Source-Schriften kräftiger als Browser/Editor; leicht
+// unter den Nennwerten wirkt das PDF wie der Editor: Text 380, Überschriften 470,
+// Fett 560 (= Text + strong.delta 180).
+#let weight-text = 380
+#let weight-heading = 470
+
 // Seitengeometrie (zentral, von Seite UND Header-Logik genutzt)
 #let margin-top = 35mm
 #let margin-bottom = 20mm
@@ -305,7 +312,8 @@
   }
   // Kopf-Text: Sans (nicht Serif wie die Überschriften), 13pt, ohne grafisches
   // Element. Kopf und Fuß bleiben bewusst serifenlos.
-  let chapter = text(font: body-font, weight: 450, size: 13pt, fill: head-color)[#current]
+  let chapter = text(font: body-font, weight: weight-text, size: 13pt, fill: head-color,
+    number-type: "lining")[#current]
   grid(
     columns: (1fr, auto),
     column-gutter: 6mm,
@@ -372,7 +380,7 @@
   let page-num = [#label-text("page") #n / #total]
   line(length: 100%, stroke: rule-stroke)
   v(2pt)
-  set text(font: body-font, size: 9pt, fill: head-color)
+  set text(font: body-font, size: 9pt, fill: head-color, number-type: "lining")
   if date-disp == none {
     // 2-spaltig: Name links, Seitenzahl rechts (bzw. mittig, wenn kein Name).
     if show-name {
@@ -427,7 +435,10 @@
 // Default hinaus verteuert, sodass Typst sie vermeidet (eine Zeile mitnimmt).
 // runt = einzelnes kurzes Wort allein auf der letzten Absatzzeile (im Blocksatz
 // unschön) – ebenfalls verteuert, damit Typst umbricht/trennt statt es stehen zu lassen.
-#set text(font: body-font, size: 11pt, lang: doc-lang, hyphenate: true, fill: luma(13%),
+// Mediävalziffern im Fließtext und in Überschriften (Tabellen: Versalziffern
+// gleicher Breite, Code: neutral, Kopf/Fuß: Versalziffern).
+#set text(font: body-font, size: 11pt, weight: weight-text, number-type: "old-style",
+  lang: doc-lang, hyphenate: true, fill: luma(13%),
   costs: (orphan: 200%, widow: 200%, runt: 200%))
 #set par(justify: true, leading: 0.85em, spacing: 1.1em)
 
@@ -502,6 +513,10 @@
 
 // Schrift/Farbe für alle Überschriften (Serif; Gewicht je Ebene: H1/„Inhalt"
 // halbfett bzw. Book-Schnitt der variablen Schrift).
+// Fett: Typst ADDIERT strong.delta zur aktuellen Stärke (Standard +300 -> 680,
+// fast schwarz). Nie zusätzlich eine Stärke in `show strong` setzen.
+#set strong(delta: 180)
+
 #let heading-text(size, weight, body) = text(
   font: heading-font, weight: weight, fill: heading-color, size: size, body,
 )
@@ -528,15 +543,19 @@
     // aber below groß genug, dass der Text nicht klebt (~above/2).
     block(width: 100%, above: 2.0em, below: 0.6em, sticky: true, {
       set par(spacing: 2pt)
-      heading-text(16pt, 450, it)
+      heading-text(15pt, weight-heading, it)
       line(length: 100%, stroke: hairline-stroke)
     })
   } else if it.level == 2 {
-    block(width: 100%, above: 1.5em, below: 0.7em, sticky: true, heading-text(14pt, 450, it))
+    block(width: 100%, above: 1.5em, below: 0.7em, sticky: true, heading-text(13pt, weight-heading, it))
+  } else if it.level == 3 {
+    // H3: Body-Größe (11pt), schlank; eine feine Unterstreichung setzt sie ab.
+    block(width: 100%, above: 1.25em, below: 0.55em, sticky: true,
+      underline(stroke: 0.5pt + heading-color, offset: 2pt, heading-text(11pt, weight-text, it)))
   } else {
-    // H3 und tiefer: Body-Größe (11pt), Serif; nur Gewicht 450 setzt sie vom
-    // Fließtext ab. Kein H4-Sonderfall mehr – H4+ rendert identisch zu H3.
-    block(width: 100%, above: 1.25em, below: 0.55em, sticky: true, heading-text(11pt, 450, it))
+    // H4 und tiefer: Body-Größe, kursiv.
+    block(width: 100%, above: 1.25em, below: 0.55em, sticky: true,
+      text(style: "italic", heading-text(11pt, weight-text, it)))
   }
 }
 
@@ -544,13 +563,13 @@
 // knapp über Fließtextgröße (Book, wght 450 – Default-Bold der H1 neutralisiert).
 #let toc-entry(body) = block(above: 0.55em, below: 0pt, {
   show strong: s => s.body
-  set text(font: body-font, weight: 450, size: 12pt)
+  set text(font: body-font, weight: weight-text, size: 12pt)
   body
 })
 #show outline.entry.where(level: 1): it => toc-entry(it)
 #show outline.entry.where(level: 2): it => toc-entry(it)
 
-#show raw: set text(font: code-font, size: 10pt)
+#show raw: set text(font: code-font, size: 10pt, number-type: auto, number-width: auto)
 #show raw.where(block: true): it => block(
   fill: luma(245),
   inset: 8pt,
@@ -681,7 +700,7 @@
     above: 1.2em, below: 1.2em,
     {
       set par(spacing: 0.7em)
-      block(below: 0.6em, text(size: 0.8em, weight: 600, tracking: 0.06em, fill: color,
+      block(below: 0.6em, text(size: 0.8em, weight: weight-text + 180, tracking: 0.06em, fill: color,
         upper(label-text(kind))))
       body
     },
@@ -731,7 +750,7 @@
 // Typst 0.15 nicht (Begriff und Beschreibung liefen sonst in einer Zeile).
 #let rfd-terms(..pairs) = for p in pairs.pos() {
   block(breakable: false, above: 0.9em, below: 0.9em, {
-    text(weight: "bold", p.at(0))
+    strong(p.at(0))
     block(inset: (left: 1.5em), above: 0.45em, p.at(1))
   })
 }
@@ -749,10 +768,10 @@
         upper(client-text)))
     }
     if title-text != "" {
-      block(below: 0.5em, heading-text(21pt, "semibold", title-text))
+      block(below: 0.5em, heading-text(18pt, weight-heading, title-text))
     }
     if subtitle-text != "" {
-      block(below: 0.6em, text(font: heading-font, size: 14pt, fill: head-color, subtitle-text))
+      block(below: 0.6em, text(font: heading-font, size: 13pt, fill: head-color, subtitle-text))
     }
     // Datum/Autor-Zeile nur, wenn ein Autor gesetzt ist – das Datum allein
     // steht wie bisher rechts in der Fußzeile.
@@ -763,7 +782,7 @@
 }
 #context {
   if want-toc() {
-    block(above: 2.0em, below: 1.0em, heading-text(16pt, "semibold", label-text("contents")))
+    block(above: 2.0em, below: 1.0em, heading-text(15pt, weight-heading, label-text("contents")))
     outline(title: none, depth: 2)
     pagebreak(weak: true)
   }

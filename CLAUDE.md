@@ -407,15 +407,21 @@ via `build.sh` only.
   basename.
 - **H1 = chapter** — the top content heading: serif, a fine full-width hairline right below it, a
   page break before it (`h1_break`), and the active H1 threaded into the running header.
-- **H2 / H3** = subsections (serif, no line). **H4 and deeper render identically to H3** (body size
-  11pt, `wght` 450, left-aligned) — there is no separate bold H4 branch anymore.
+- **H2 / H3** = subsections (serif, no line). **H3** is body size (11pt) at `weight-text`, finely
+  underlined; **H4 and deeper** are body size, italic.
+- **Weights/figures (Zettlr-matched, 26.10.4):** `weight-text` 380 (body, H3+, header, TOC entries),
+  `weight-heading` 470 (title, H1, H2, "Inhalt"); bold = 380 + **`set strong(delta: 180)`** = 560.
+  **Never set a weight in `show strong`** — Typst *adds* `strong.delta` to the current weight. PDF
+  viewers draw the variable Source fonts heavier than browsers/editors, hence the slightly-below-
+  nominal values. Sizes: title 18, H1 15, H2 13, H3+ 11 pt. Figures: body `number-type:
+  "old-style"`; tables `lining` + `tabular`; header/footer `lining`; `raw` neutral (`auto`).
 - **Visual language:** all headings **serif** (`Source Serif 4`), `luma(8%)`, left-aligned
   (`justify: false`), **no accent bars**; only **H1** carries a hairline (`luma(60%)`) right below.
   Every heading uses space-above > space-below so it binds to the following text — but the `below`
   is sized ~`above`/2 (H1 2.0/0.6, H2 1.5/0.7, H3+ 1.25/0.55 em) so the body no longer
   hugs the heading. **All above/below em are body-size-em (11pt)** (resolved against the body size at
-  block creation, *not* the heading size) — so the rhythm is level-independent; edit the three block()
-  calls in the `#show heading` rule (H1, H2, H3+). Sizes: H1 16pt, H2 14pt, H3+ 11pt (= body); body
+  block creation, *not* the heading size) — so the rhythm is level-independent; edit the four block()
+  calls in the `#show heading` rule (H1, H2, H3, H4+). Sizes: H1 15pt, H2 13pt, H3+ 11pt (= body); body
   text is 11pt with `leading: 0.85em`. Header **and** footer
   text are Sans (`Source Sans 3`). Fonts come from `body-font`/`heading-font`/`code-font`. Unordered
   lists use one small drawn square marker at **all** levels; ordered lists keep numbers; task items
@@ -423,8 +429,8 @@ via `build.sh` only.
 - **Page-break hygiene (widows/orphans, sticky headings, unbreakable figures):**
   - **Headings never sit alone at a page foot.** Typst sets `sticky: true` on heading blocks *by
     default* — but our `#show heading` rule builds its **own** `block(...)`, which **drops** that
-    default. So every heading block here must set `sticky: true` explicitly (all three branches —
-    H1, H2, H3+ — do);
+    default. So every heading block here must set `sticky: true` explicitly (all four branches —
+    H1, H2, H3, H4+ — do);
     omitting it silently re-introduces orphaned headings. Verified via A/B (same doc, `sticky` on
     vs off): off strands the heading at the page foot, on pushes it to the next page.
   - **Figure + caption stay together** — the `#show figure` rule sets `breakable: false`, so an
