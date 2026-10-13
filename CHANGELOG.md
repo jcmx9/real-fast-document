@@ -6,6 +6,19 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.4] - 2026-10-13
+
+Stage 5 of the Zettlr port: typography.
+
+### Changed
+- **Lighter weights, closer to how the editor shows the text:** body 380, headings 470, bold 560
+  via `set strong(delta: 180)` (Typst adds the delta to the current weight; the default +300 made
+  bold almost black). PDF viewers draw the variable Source fonts heavier than browsers do.
+- **Heading sizes:** title 18 pt, `#` 15 pt, `##` 13 pt, from `###` on 11 pt; `###` finely
+  underlined, `####` and deeper italic. Headings stay slim — the serif already sets them apart.
+- **Figures:** old-style figures in running text and headings, equal-width lining figures in
+  tables, lining in header/footer, neutral figures in code.
+
 ## [26.10.3] - 2026-10-13
 
 Stage 4 of the Zettlr port: images, paths and offline diagrams.

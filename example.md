@@ -234,11 +234,18 @@ Die Ebenen haben feste Rollen:
   entspricht `title:` (ersatzweise dem Dateinamen).
 - **H1** ist ein **Kapitel**: trägt eine feine Linie, beginnt bei `h1_break` auf einer neuen Seite
   und läuft oben im Seitenkopf mit — sofern kein fester `header` gesetzt ist.
-- **H2** und **H3** sind Unterabschnitte; **H4** und tiefer werden identisch zu **H3** in Body-Größe gesetzt.
+- **H2** und **H3** sind Unterabschnitte; **H3** steht in Body-Größe mit feiner Unterstreichung,
+  **H4** und tiefer kursiv.
 
 ### Ein H3-Unterabschnitt
 
-Die dritte Ebene und tiefer teilen sich denselben Schnitt in Body-Größe (Serif, `wght` 450) — ohne eigene Linie.
+Die dritte Ebene steht in Body-Größe und schlankem Schnitt; eine feine Unterstreichung setzt sie
+vom Fließtext ab. Im Text stehen Mediävalziffern (1, 2, 3 … 2026), in Tabellen Versalziffern gleicher
+Breite.
+
+#### Eine vierte Ebene
+
+Ab der vierten Ebene kursiv in Body-Größe.
 
 Ab mehr als fünf H1-/H2-Überschriften schaltet das Dokument automatisch in den strukturierten
 Modus (Inhaltsverzeichnis voran, jedes Kapitel auf neuer Seite) — hier zusätzlich per Frontmatter
