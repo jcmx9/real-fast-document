@@ -249,7 +249,7 @@ zwei Leerzeichen oder `\` am Zeilenende erzwingen einen Umbruch. Mit `hard_break
   beides einzeln.
 - **Kopfzeile:** `header:` (fester Text) vor aktuellem Kapitel vor Titel.
 - **Fußzeile:** links Dateiname bzw. „Kunde · Titel“ (sobald `client` oder `subtitle`
-  gesetzt ist), Seitenzahl, rechts das Datum. Lange Angaben brechen um.
+  gesetzt ist), Seitenzahl, rechts das Datum. Zu lange Angaben werden mit „…“ gekürzt.
 
 ### Listen und Aufgaben
 

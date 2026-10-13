@@ -5,4 +5,4 @@ subtitle: "Workshop"
 date: 2026-10-13
 ---
 
-Lange Angaben in der Fußzeile brechen um, statt in die Seitenzahl zu laufen.
+Lange Angaben in der Fußzeile werden auf eine Zeile gekürzt („…“), statt in die Seitenzahl zu laufen.

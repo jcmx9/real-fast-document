@@ -26,7 +26,8 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ### Fixed
 - **Footer:** a long "client · title" ran up to the page number. The footer columns now keep an
-  8 mm gap; a long entry wraps within its column (checked in `scripts/test-pdf.sh`).
+  8 mm gap and a long entry is shortened to one line ending in "…" (checked in
+  `scripts/test-pdf.sh`).
 
 ## [26.10.9] - 2026-10-13
 

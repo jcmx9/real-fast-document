@@ -247,7 +247,7 @@ line.
   and each chapter starts on a new page. `toc` and `h1_break` switch both individually.
 - **Header:** `header:` (fixed text) before the current chapter before the title.
 - **Footer:** left the file name or “client · title” (as soon as `client` or `subtitle` is
-  set), page number, right the date. Long entries wrap.
+  set), page number, right the date. Entries that are too long are shortened with “…”.
 
 ### Lists and tasks
 

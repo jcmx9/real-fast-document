@@ -240,6 +240,9 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   Inhalt/Contents; default `de`); `header:` → fixed header text
   (from page 1, overrides the running header); `watermark:` → diagonal page-background watermark.
   The footer is 2-col without a date (name | page) and 3-col with one (name | page centered | date).
+  The columns keep an 8 mm `column-gutter`; the left entry is cut to one line by `fit-line`
+  (binary search over grapheme clusters with `measure`, ends in "…", trailing separators dropped) —
+  the user explicitly wants truncation, **not** wrapping.
   The bool keys are
   parsed **YAML-1.1-tolerant** via `fm_bool`/`Get-FmBool` (case-insensitive `true/false/yes/no/
   on/off`, quotes; `toc`/`h1_break` also `auto`): an **empty value is ignored silently**, an

@@ -331,19 +331,34 @@
   parts.slice(0, calc.min(2, parts.len())).join(" · ")
 } else { doc-filename }
 
+// Text auf eine Zeile der verfügbaren Breite kürzen: passt er nicht, wird er
+// zeichenweise (Graphem-Cluster) gekürzt und endet mit „…“; ein am Ende
+// stehender Trenner (" · ", Komma, Strich) entfällt dabei.
+#let fit-line(s, w) = {
+  if measure(s).width <= w { return s }
+  let cs = s.clusters()
+  let (lo, hi) = (0, cs.len())
+  while lo < hi {
+    let mid = calc.div-euclid(lo + hi + 1, 2)
+    if measure(cs.slice(0, mid).sum(default: "") + "…").width <= w { lo = mid } else { hi = mid - 1 }
+  }
+  cs.slice(0, lo).sum(default: "").trim(regex("[\\s·,–—-]+"), at: end) + "…"
+}
+
 #let doc-footer = context {
   let n = counter(page).at(here()).first()
   let total = counter(page).final().first()
   let date-disp = date-display
-  let name = if show-name { footer-left } else { [] }
   let page-num = [#label-text("page") #n / #total]
   line(length: 100%, stroke: rule-stroke)
   v(2pt)
   set text(font: body-font, size: 9pt, fill: head-color, number-type: "lining")
-  // Fester Abstand zwischen den Spalten: ein langer Name (Kunde · Titel) bricht
-  // in seiner Spalte um, statt bis an die Seitenzahl zu laufen.
+  // Fester Abstand zwischen den Spalten; ein langer Name (Kunde · Titel) wird
+  // in seiner Spalte auf eine Zeile gekürzt („…“), statt umzubrechen oder bis
+  // an die Seitenzahl zu laufen.
   set par(justify: false)
   let gap = 8mm
+  let name = if show-name { layout(size => fit-line(footer-left, size.width)) } else { [] }
   if date-disp == none {
     // 2-spaltig: Name links, Seitenzahl rechts (bzw. mittig, wenn kein Name).
     if show-name {
