@@ -142,11 +142,11 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\real-fast-document"  # Windows
 ```bash
 bash scripts/build.sh                 # example.md  -> example.pdf
 bash scripts/build.sh document.md     # document.md -> document.pdf
-bash scripts/build.sh in.md out.pdf   # explicit output (exactly this path, no prefix)
-bash scripts/build.sh --no-source in.md out.pdf  # without the embedded Markdown source
-bash scripts/build.sh --hard-breaks note.md      # every line stays a line
-bash scripts/build.sh --help          # show options + frontmatter keys
-bash scripts/build.sh --version       # show rf-document and Typst version
+bash scripts/build.sh in.md out.pdf   # exactly this output path
+bash scripts/build.sh --no-source a.md # without embedded source
+bash scripts/build.sh --hard-breaks a.md  # every line stays a line
+bash scripts/build.sh --help          # options + keys
+bash scripts/build.sh --version       # show versions
 ```
 
 Without a second argument the output lands next to the source. If a `date` is set in the
@@ -313,7 +313,7 @@ Body text with **emphasis** and a footnote.[^1]
 | Headings | **Source Serif 4**, `luma(8%)`, left-aligned, no bars; **only H1** carries a fine hairline right below, all others are set apart by size/spacing |
 | Watermark | optional (`watermark:`): diagonal, letter-spaced, bold, light gray (single-channel gray → clean K in print), **beneath** everything |
 | Body text | Source Sans 3, 11 pt, justified with hyphenation (line spacing 0.85em), `luma(13%)` |
-| Tables | full width, **columns sized proportionally to content** (narrow columns stay narrow, text-heavy ones get more room); header centered + bold with a line below; light row zebra, vertical separators, no horizontal row lines; **header row repeats** across page breaks |
+| Tables | **column widths by content** (like HTML tables): if everything fits, the table keeps its content width; otherwise every column gets at least its longest word and text-heavy columns get the rest. Number/amount columns right-aligned, alignment from the separator row (`:--`, `--:`, `:-:`) wins; equal-width lining figures; ragged right; header centered + bold with a line below; light row zebra, vertical separators, no horizontal row lines; **header row repeats** across page breaks |
 | Code | Source Code Pro, 10 pt, with syntax highlighting |
 | Lists | unordered: small square at **all** levels; ordered: numbers; tasks (`- [ ]`): drawn box (done: filled dark with a white check mark), aligned with the bullets; task-only lists as a table (Task 56 % · Owner 20 % · Due 14 % · Status 10 %) |
 | Callouts | light fill, 2.5 pt bar on the left, small letter-spaced uppercase title; colors: Info `#2f6aa8`, Tip `#3b7d3a`, Important `#7a4fb0`, Warning `#b05a1a`, Caution `#b5452b` |

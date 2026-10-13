@@ -96,15 +96,27 @@ Quadrat, die Aufgaben zeigen bündig das Kästchen (erledigt: gefüllt mit Häkc
 
 # Tabellen
 
-Tabellen folgen der gewohnten Pipe-Syntax und werden über die volle Breite gesetzt — Kopfzeile
-zentriert und fett, Inhalte linksbündig, mit leichtem Zeilen-Zebra und dünnen Linien.
+Tabellen folgen der gewohnten Pipe-Syntax. Jede Spalte wird so breit wie ihr Inhalt; kleine
+Tabellen bleiben schmal, textreiche Spalten nehmen den restlichen Platz und brechen um. Kopfzeile
+zentriert und fett, leichtes Zeilen-Zebra, dünne Linien.
 
 | Element       | Schrift         | Beispiel        |
 | ------------- | --------------- | --------------- |
 | Fließtext     | Source Sans 3   | dieser Absatz   |
 | Überschriften | Source Serif 4  | „Tabellen“      |
 | Code          | Source Code Pro | `print("hi")`   |
-| Zahlenwert    | linksbündig     | 1.234,56 €      |
+| Zahlenwert    | Versalziffern   | 1.234,56 €      |
+
+## Preisliste
+
+Spalten, die nur Zahlen oder Beträge enthalten, stehen rechtsbündig; die Ausrichtung aus der
+Trennzeile (`:--`, `--:`, `:-:`) hat Vorrang:
+
+| Pos. | Leistung                                   | Menge   | Betrag     |
+| ---- | ------------------------------------------ | ------- | ---------- |
+| 1    | Konzeption und Abstimmung des Layouts      | 4 Std.  | 520,00 €   |
+| 2    | Gestaltung aller Seiten inklusive Varianten | 12 Std. | 1.250,00 € |
+| 3    | Druckdaten                                 | 1       | 9,50 €     |
 
 ## Zweite Tabelle
 

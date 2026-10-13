@@ -6,6 +6,22 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.2] - 2026-10-13
+
+Stage 3 of the Zettlr port: table column widths.
+
+### Changed
+- **Table columns are sized like HTML tables** instead of "full width, proportional to content":
+  each column's minimum (longest word, measured with its bold/italic/code styling) and natural
+  width are measured. If all natural widths fit, the table keeps its content width (small tables
+  are no longer stretched across the page); otherwise every column gets its minimum and the rest is
+  shared by (natural − minimum), so narrow number/date/abbreviation columns stay as narrow as their
+  content and text-heavy columns wrap — no column shrinks below its longest word.
+- **Alignment from the Markdown separator row** (`:--`, `--:`, `:-:`) is respected; columns without
+  one whose cells are all numbers/amounts (`1.250,00 €`, `4 Std.`, `12 %`) are right-aligned.
+- **Equal-width lining figures** in tables (task table too) and ragged-right text in cells (justified
+  text tore gaps into narrow cells).
+
 ## [26.10.1] - 2026-10-13
 
 Stage 2 of the Zettlr port: Markdown read the way Zettlr shows it.
