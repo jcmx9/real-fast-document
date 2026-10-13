@@ -103,7 +103,9 @@ rf-document note.md    # -> 2026-10-13_note.pdf next to the note
 ```
 
 A template with **all** settings is [`header.md`](header.md); a tour of every feature is
-[`example.md`](example.md).
+[`example.md`](example.md). What a real document looks like is shown by [`demo.md`](demo.md): the
+kick-off minutes for a coffee roastery's online shop — with callouts, range and budget tables, a
+roasting formula, process and schedule diagrams, a task table and a glossary (in German).
 
 ## Usage
 
@@ -318,7 +320,9 @@ flowchart LR
 ````
 
 Mermaid diagrams are drawn offline (Typst package **mmdr**), in calm colors and with the
-variable Source Sans 3. Broken syntax does not abort the export.
+variable Source Sans 3 — flowcharts, sequences, states, schedules (Gantt) and more. A diagram is
+fitted proportionally to the text width and at most 12 cm height. Broken syntax does not abort
+the export.
 
 ### Math, code, footnotes, definition lists
 
@@ -408,6 +412,7 @@ scripts/test-pdf.sh         end-to-end tests (macOS/Linux)
 scripts/test-windows.ps1    Windows tests (CI, Windows PowerShell 5.1)
 tests/fixtures/             test notes, incl. tables-showcase.md (every table form)
 example.md                  tour of every feature
+demo.md                     example document: kick-off minutes of a coffee roastery
 header.md                   frontmatter template with every key
 fonts/, assets/, logo.svg   fonts, example graphic, default logo
 ```

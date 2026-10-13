@@ -6,6 +6,19 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.14] - 2026-10-13
+
+### Added
+- **`demo.md`** — a realistic example document: kick-off minutes for a coffee roastery's online
+  shop with title block, callouts, product and budget tables, a roasting formula, process, state
+  and Gantt diagrams, task table, open questions, glossary, JSON snippet and date lines. Built in
+  CI and checked in `scripts/test-pdf.sh`.
+
+### Changed
+- **Mermaid diagrams are fitted** proportionally to the text width and at most 12 cm height, with
+  more compact spacing (`node_spacing` 25, `rank_spacing` 35) — a vertical flowchart no longer
+  fills a whole page, and labels stay readable.
+
 ## [26.10.13] - 2026-10-13
 
 ### Changed

@@ -284,6 +284,15 @@ test_fixtures() {
   reject mermaid.md "${text}" "flowchart LR" "sequenceDiagram" "-->"
   ok mermaid.md
 
+  # Beispieldokument demo.md (Repo-Wurzel): baut ohne Warnung, zentrale Inhalte da.
+  (cd "${root_dir}" && bash "${build}" demo.md "${out_dir}/demo.pdf" >/dev/null 2>"${out_dir}/demo.err") ||
+    die "demo.md: Export fehlgeschlagen: $(cat "${out_dir}/demo.err")"
+  if grep -q "Warnung" "${out_dir}/demo.err"; then die "demo.md: unerwartete Warnung: $(cat "${out_dir}/demo.err")"; fi
+  text="$(pdf_text "${out_dir}/demo.pdf")"
+  expect demo.md "${text}" "Kick-off: Online-Shop" "Espresso Lüneburg" "29.512,00 €" "Bestellung" \
+    "Vom Kick-off zum Go-live" "Shop-Anbieter für Abos prüfen" "Röstgrad"
+  ok demo.md
+
   # Lange Fußzeile (Kunde · Titel): auf eine Zeile mit „…“ gekürzt, Abstand zur
   # Seitenzahl bleibt.
   text="$(render long-footer.md)"
