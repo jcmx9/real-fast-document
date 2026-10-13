@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.8] - 2026-10-13
+
+### Changed
+- **Calmer tables:** column widths come from Typst's own `auto` columns again. The hand-made
+  HTML-auto-layout measuring of 26.10.2 looked almost identical side by side but was far more
+  complex; it is gone. Number/amount columns stay right-aligned, separator-row alignment is still
+  respected, small tables keep their content width.
+- **Compact table type:** Source Sans 3 at 9 pt Medium (`wght` 500) with tracking −2 % (Adobe has no
+  condensed Source Sans; the variable font only has a weight axis), code in cells 8.5 pt — also in
+  the task table.
+
 ## [26.10.7] - 2026-10-13
 
 ### Fixed

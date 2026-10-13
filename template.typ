@@ -27,40 +27,30 @@
   left: if x > 0 { 0.4pt + luma(80%) } else { 0pt },
   top: if y == 1 { 0.7pt + luma(45%) } else { 0pt },
 )
-// Allgemeine Tabellen (aus Markdown): Spaltenbreiten wie bei HTML-Tabellen
-// ("auto layout"). Je Spalte werden zwei Breiten gemessen:
-//   min = breitestes Wort (darunter würden Wörter zerbrechen),
-//   max = natürliche Breite ohne Umbruch.
-// Passt die Summe der max-Breiten in den Satzspiegel, bleibt die Tabelle in
-// Inhaltsbreite (kleine Tabellen werden nicht auf volle Breite gezogen). Sonst
-// erhält jede Spalte ihre min-Breite und der Rest wird nach (max − min)
-// verteilt: schmale Spalten (Zahlen, Daten, Kürzel) bleiben so schmal wie ihr
-// Inhalt, textreiche Spalten bekommen den Rest und brechen um.
+// Tabellen: kompakte Tabellenschrift – Source Sans 3 in 9 pt Medium mit leicht
+// engerer Laufweite (Adobe liefert keinen Condensed-Schnitt; die variable
+// Source Sans 3 hat nur die wght-Achse). Ziffern als Versalziffern gleicher
+// Breite, Flattersatz (Blocksatz reißt in schmalen Zellen Lücken).
+#let table-text = (size: 9pt, weight: 500, tracking: -0.02em,
+  number-type: "lining", number-width: "tabular")
+#let cell-inset = 7pt
+
+// Allgemeine Tabellen (aus Markdown): Spaltenbreiten macht Typst selbst
+// (auto-Spalten) – jede Spalte so breit wie ihr Inhalt; passt die Tabelle nicht,
+// verteilt Typst den Platz und textreiche Spalten brechen um. Kleine Tabellen
+// bleiben in Inhaltsbreite. (Ein eigenes Messverfahren war aufwendiger und
+// sah kaum anders aus.)
 // Ausrichtung: die der Markdown-Trennzeile (:--, --:, :-:); ohne Angabe werden
 // reine Zahlen-/Betragsspalten rechtsbündig, alles andere linksbündig. Kopf
 // zentriert + fett, leichtes Zebra, senkrechte Trennlinien, Linie unter dem Kopf.
-#let cell-inset = 7pt
-// Klartext einer Zelle (für die Zahlenerkennung).
+// Klartext einer Zelle (für die Zahlenerkennung). .sum statt .join: join auf
+// einem leeren Array liefert none (leere Zellen).
 #let plain-text(c) = {
   if c.has("text") { c.text }
   else if c.has("children") { c.children.map(plain-text).sum(default: "") }
   else if c.has("body") { plain-text(c.body) }
   else if c == [ ] { " " }
   else { "" }
-}
-// Zelleninhalt in Wörter zerlegen, Auszeichnung (fett, kursiv, Code) bleibt
-// erhalten, damit die Messung stimmt. Getrennt wird nur an Leerzeichen und
-// Zeilenumbrüchen, nicht an geschützten Leerzeichen.
-#let cell-words(c) = {
-  let split(t) = t.split(regex("[ \t\n]+")).filter(w => w != "")
-  if c.func() == text { split(c.text).map(w => text(w)) }
-  else if c.func() == raw { split(c.text).map(w => raw(w)) }
-  else if c.func() == strong { cell-words(c.body).map(w => strong(w)) }
-  else if c.func() == emph { cell-words(c.body).map(w => emph(w)) }
-  else if c.has("children") { c.children.map(cell-words).flatten() }
-  else if c.has("body") { cell-words(c.body) }
-  else if c == [ ] or c.func() in (linebreak, parbreak) { () }
-  else { (c,) }
 }
 #let number-re = regex("^[+\-−]?\s*(?:[€$£]\s*)?[0-9][0-9.,'\u{2009}\u{00A0} ]*(?:\s*(?:%|€|\$|£|EUR|CHF|USD|Std\.?|h|Tage?|Stk\.?))?$")
 #let is-number(c) = plain-text(c).trim().match(number-re) != none
@@ -72,66 +62,34 @@
     it
   } else {
     let n = if type(it.columns) == int { it.columns } else { it.columns.len() }
-    // Zellinhalte in Lesereihenfolge (Kopfzeile aus table.header ausgepackt) –
-    // nur zum Messen; gerendert wird weiter ..it.children (der table.header
-    // wiederholt sich so bei Seitenumbruch).
+    // Datenzellen spaltenweise (Kopfzeile aus table.header übersprungen) – nur
+    // für die Zahlenerkennung; gerendert wird weiter ..it.children (der
+    // table.header wiederholt sich so bei Seitenumbruch).
     let cell-body = c => if c.func() == table.cell { c.body } else { c }
-    let header = ()
-    let bodies = ()
-    for c in it.children {
-      if c.func() == table.header { for hc in c.children { header.push(cell-body(hc)) } }
-      else { bodies.push(cell-body(c)) }
-    }
-    let rows = bodies.chunks(n)
-    let column(i) = rows.map(r => r.at(i, default: []))
-    // Ausrichtung je Spalte: Markdown-Angabe, sonst Zahlen rechts, Text links.
+    let rows = it.children.filter(c => c.func() != table.header).map(cell-body).chunks(n)
     let md-align = if type(it.align) == array { it.align } else { (auto,) * n }
     let aligns = range(n).map(i => {
       let a = md-align.at(i, default: auto)
       if a != auto { a }
       else {
-        let cells = column(i).filter(c => plain-text(c).trim() != "")
+        let cells = rows.map(r => r.at(i, default: [])).filter(c => plain-text(c).trim() != "")
         if cells.len() > 0 and cells.all(is-number) { right } else { left }
       }
     })
-    block(above: 1.2em, below: 1.4em, breakable: true, layout(size => {
-      let pad = 2 * cell-inset
-      let mins = (0pt,) * n
-      let maxs = (0pt,) * n
-      let cells = header.map(h => strong(h)) + bodies
-      for (k, body) in cells.enumerate() {
-        let col = calc.rem(k, n)
-        let words = cell-words(body)
-        let mn = if words.len() == 0 { 0pt } else { calc.max(..words.map(w => measure(w).width)) }
-        let mx = measure(body).width
-        if mn > mins.at(col) { mins.at(col) = mn }
-        if mx > maxs.at(col) { maxs.at(col) = mx }
-      }
-      let mins = mins.map(w => calc.min(w, size.width) + pad)
-      let maxs = maxs.enumerate().map(((i, w)) => calc.max(calc.min(w, size.width) + pad, mins.at(i)))
-      let avail = size.width
-      let widths = if maxs.sum() <= avail {
-        maxs                                       // passt: Inhaltsbreite
-      } else if mins.sum() >= avail {
-        mins.map(w => w / mins.sum() * avail)      // zu viele Spalten: anteilig
-      } else {
-        let spare = avail - mins.sum()
-        let flex = maxs.sum() - mins.sum()
-        range(n).map(i => mins.at(i) + spare * ((maxs.at(i) - mins.at(i)) / flex))
-      }
-      // Zahlen in Tabellen: Versalziffern in gleicher Breite (stehen untereinander).
-      // Flattersatz statt Blocksatz – in schmalen Zellen reißt Blocksatz Lücken.
-      set text(number-type: "lining", number-width: "tabular")
+    block(above: 1.2em, below: 1.4em, breakable: true, {
+      set text(..table-text)
       set par(justify: false)
+      // Code in Zellen optisch gleich groß wie der 9-pt-Tabellentext.
+      show raw: set text(size: 8.5pt)
       table(
-        columns: widths,
+        columns: (auto,) * n,
         inset: cell-inset,
         align: (x, y) => if y == 0 { center } else { aligns.at(x) },
         fill: rfd-table-fill,
         stroke: rfd-table-stroke,
         ..it.children,
       )
-    }))
+    })
   }
 }
 #show table.cell.where(y: 0): strong
@@ -730,7 +688,8 @@
   let status-x = cols.len() - 1
   let cell(t, key) = if key == "task" { t.body } else if key == "status" { task-box(t.done) } else { t.at(key) }
   set par(justify: false)
-  set text(number-type: "lining", number-width: "tabular")
+  set text(..table-text)
+  show raw: set text(size: 8.5pt)
   block(above: 1.2em, below: 1.4em, breakable: true, table(
     columns: cols.map(c => c.width),
     align: (x, y) => if x == status-x { center + horizon } else { left + horizon },
