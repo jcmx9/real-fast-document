@@ -11,14 +11,12 @@
 
   Hinweis: Diese Datei muss reines ASCII bleiben (kein BOM) - Windows
   PowerShell 5.1 liest sie sonst in CP1252 falsch.
+
+  Bewusst OHNE param()-Block: die Argumente werden selbst aus $args gelesen.
+  Mit PowerShell-Parameterbindung ([CmdletBinding()]) wuerden POSIX-Optionen
+  wie --no-source oder --hard-breaks (so ruft der Zettlr-Bote ueber den
+  rf-document.cmd-Shim auf) als unbekannte Parameternamen abgelehnt.
 #>
-[CmdletBinding()]
-param(
-  [switch]$Version,
-  [switch]$Help,
-  [Parameter(ValueFromRemainingArguments = $true)]
-  [string[]]$Path
-)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -69,20 +67,33 @@ Optionale YAML-Frontmatter-Schluessel:
   hard_breaks
 
 Environment:
-  RFD_NO_OPEN=1   Das PDF nach dem Build nicht oeffnen (Batch/Cron)
+  RFD_NO_OPEN=1         Das PDF nach dem Build nicht oeffnen (Batch/Cron)
+  RFD_BASE_DIR=ordner   Relative Bild-/Logopfade gelten relativ zu diesem Ordner
+                        statt zum Ordner der Quelle (Zettlr: temporaere Kopie)
 "@
 }
 
-# POSIX-Formen aus den Restargumenten herausfiltern (die PS-Switches -Version/
-# -Help binden bereits selbst).
-$NoSource = $false
-$HardBreaks = $false
-if ($Path) {
-  if (($Path -contains '--version') -or ($Path -contains '-V')) { $Version = $true }
-  if (($Path -contains '--help')    -or ($Path -contains '-h')) { $Help    = $true }
-  if ($Path -contains '--no-source') { $NoSource = $true }
-  if ($Path -contains '--hard-breaks') { $HardBreaks = $true }
-  $Path = @($Path | Where-Object { $_ -notin @('--version', '-V', '--help', '-h', '--no-source', '--hard-breaks') })
+# Argumente selbst auswerten (siehe Kopfkommentar): Optionen in POSIX- und
+# PowerShell-Schreibweise, alles andere sind Pfade. Eine unbekannte Option
+# endet wie in build.sh mit Exit 2.
+$Version = $false; $Help = $false; $NoSource = $false; $HardBreaks = $false
+$Path = @()
+foreach ($a in $args) {
+  $arg = [string]$a
+  switch -CaseSensitive ($arg) {
+    { $_ -in @('--version', '-V', '-Version', '-version') } { $Version = $true; continue }
+    { $_ -in @('--help', '-h', '-Help', '-help', '-?') }    { $Help = $true; continue }
+    '--no-source'   { $NoSource = $true; continue }
+    '--hard-breaks' { $HardBreaks = $true; continue }
+    default {
+      if ($arg.StartsWith('-')) {
+        [Console]::Error.WriteLine("Error: unbekannte Option $arg")
+        [Console]::Error.WriteLine('Aufruf: rf-document --help')
+        exit 2
+      }
+      $Path += $arg
+    }
+  }
 }
 
 if ($Version) {
@@ -96,11 +107,21 @@ if ($Help) { Show-RfdHelp; exit 0 }
 if (-not $Path -or $Path.Count -eq 0) {
   $Path = @(Join-Path $InstallRoot 'example.md')
 }
+# Pfad aus der Befehlszeile absolut machen. [IO.Path]::Combine statt
+# Join-Path: Combine uebernimmt einen absoluten zweiten Pfad unveraendert,
+# Join-Path haengt ihn an ("C:\Notizen\C:\...\notiz.pdf" -> GetFullPath:
+# "Das angegebene Pfadformat wird nicht unterstuetzt"). Der Zettlr-Bote
+# uebergibt Ein- und Ausgabe immer absolut, oft mit Leerzeichen.
+function ConvertTo-FullPath {
+  param([string]$P)
+  return [IO.Path]::GetFullPath([IO.Path]::Combine((Get-Location).Path, $P))
+}
+
 # Genau zwei Argumente, das zweite eine .pdf: ausdruecklicher Ausgabepfad
 # (Paritaet zu 'build.sh SOURCE.md OUTPUT.pdf', z. B. fuer den Zettlr-Export).
 $ExplicitOut = ''
 if ($Path.Count -eq 2 -and [IO.Path]::GetExtension($Path[1]) -eq '.pdf') {
-  $ExplicitOut = [IO.Path]::GetFullPath((Join-Path (Get-Location).Path $Path[1]))
+  $ExplicitOut = ConvertTo-FullPath $Path[1]
   $Path = @($Path[0])
 }
 
@@ -200,12 +221,24 @@ function ConvertTo-IsoDate {
 function Convert-One {
   param([string]$Src)
 
-  $Src = (Resolve-Path -LiteralPath $Src).Path
+  $Src = ConvertTo-FullPath $Src
+  if (-not (Test-Path -LiteralPath $Src -PathType Leaf)) {
+    throw "Quelle nicht gefunden: $Src"
+  }
   if ([IO.Path]::GetExtension($Src) -notin @('.md', '.markdown')) {
     throw "Keine Markdown-Datei: $Src"
   }
 
   $srcDir = Split-Path -Parent $Src
+  # Basisordner fuer relative Bild- und Logopfade: RFD_BASE_DIR, falls gesetzt
+  # (Zettlr uebergibt bei ungespeicherten Aenderungen eine temporaere Kopie der
+  # Notiz, die Bilder liegen aber neben dem Original), sonst der Ordner der Quelle.
+  $baseDir = $srcDir
+  if ($env:RFD_BASE_DIR) {
+    $b = ConvertTo-FullPath $env:RFD_BASE_DIR
+    if (Test-Path -LiteralPath $b -PathType Container) { $baseDir = $b }
+    else { Write-Warning "RFD_BASE_DIR ist kein Ordner: $($env:RFD_BASE_DIR) - nutze den Ordner der Quelle." }
+  }
   $base   = [IO.Path]::GetFileNameWithoutExtension($Src)
   # UTF-8 explizit lesen: Windows PowerShell 5.1 liest Get-Content sonst in der
   # ANSI-Codepage (CP1252) und verstuemmelt UTF-8-Umlaute (ae/oe/ue/ss -> Mojibake).
@@ -273,7 +306,7 @@ function Convert-One {
       Write-Warning "Remote-Logo wird nicht geladen (kein Netzzugriff): $fmLogo"
     } else {
       $noteLogo = Expand-NotePath $fmLogo
-      if (-not [IO.Path]::IsPathRooted($noteLogo)) { $noteLogo = Join-Path $srcDir $noteLogo }
+      if (-not [IO.Path]::IsPathRooted($noteLogo)) { $noteLogo = Join-Path $baseDir $noteLogo }
       if (Test-Path -LiteralPath $noteLogo -PathType Leaf) { $logoArg = $noteLogo }
       else { Write-Warning "Logo nicht gefunden: $fmLogo - nutze das Standard-Logo." }
     }
@@ -296,7 +329,7 @@ function Convert-One {
   # in wurzel-relative Typst-Pfade wandeln (Backslashes -> '/', Laufwerk weg);
   # siehe ConvertTo-TypstPath. Die CLI-fs-Argumente bleiben unveraendert.
   $srcFwd       = ConvertTo-TypstPath $Src
-  $srcDirFwd    = ConvertTo-TypstPath $srcDir
+  $srcDirFwd    = ConvertTo-TypstPath $baseDir
   $logoFwd      = ConvertTo-TypstPath $logoArg
   $attachFwd    = if ($fmEmbed -ne 'false') { $srcFwd } else { '' }
   $inputs = @(
@@ -350,7 +383,7 @@ function Convert-One {
     [void][int]::TryParse([string]$probe[0], [ref]$stripped)
     foreach ($raw in ($probe | Select-Object -Skip 1)) {
       $img = Expand-NotePath ([string]$raw)
-      if (-not [IO.Path]::IsPathRooted($img)) { $img = Join-Path $srcDir $img }
+      if (-not [IO.Path]::IsPathRooted($img)) { $img = Join-Path $baseDir $img }
       $img = [IO.Path]::GetFullPath($img)
       $sameDrive = [IO.Path]::GetPathRoot($img) -eq $Root
       if ($sameDrive -and (Test-Path -LiteralPath $img -PathType Leaf)) {
@@ -362,7 +395,9 @@ function Convert-One {
       }
     }
   }
-  $imagesJson = Join-Path ([IO.Path]::GetTempPath()) ('rfd-images-' + [Guid]::NewGuid().ToString('N') + '.json')
+  # Im Installordner statt im Temp-Ordner ablegen: Typst liest nur auf dem
+  # Laufwerk von --root (= Laufwerk der Installation); %TEMP% kann woanders liegen.
+  $imagesJson = Join-Path $InstallRoot ('.rfd-images-' + [Guid]::NewGuid().ToString('N') + '.json')
   [IO.File]::WriteAllText($imagesJson, ($imageMap | ConvertTo-Json -Compress), (New-Object Text.UTF8Encoding $false))
   $inputs += @('--input', ('images=' + (ConvertTo-TypstPath $imagesJson)))
 

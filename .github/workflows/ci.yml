@@ -78,3 +78,32 @@ jobs:
             fi
           done
           echo "All builds are PDF/A-3b."
+
+  # Windows: convert.ps1 und der rf-document.cmd-Shim laufen unter Windows
+  # PowerShell 5.1 (powershell.exe) – genau so ruft der Zettlr-Bote auf.
+  # install.ps1 lädt Fonts + Packages und legt den Shim an (wird dabei selbst
+  # ausgeführt); scripts/test-windows.ps1 prüft absolute Pfade mit
+  # Leerzeichen, POSIX-Optionen, RFD_BASE_DIR und die Exit-Codes.
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Typst ${{ env.TYPST_VERSION }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $url = "https://github.com/typst/typst/releases/download/v$env:TYPST_VERSION/typst-x86_64-pc-windows-msvc.zip"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\typst.zip" -UseBasicParsing
+          Expand-Archive -LiteralPath "$env:RUNNER_TEMP\typst.zip" -DestinationPath "$env:RUNNER_TEMP\typst" -Force
+          $exe = Get-ChildItem -LiteralPath "$env:RUNNER_TEMP\typst" -Recurse -Filter typst.exe | Select-Object -First 1
+          Add-Content -Path $env:GITHUB_PATH -Value $exe.DirectoryName
+          & $exe.FullName --version
+
+      - name: Fonts, packages and rf-document shim (install.ps1)
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install.ps1 -Fonts -Packages -Cli
+
+      - name: Windows smoke tests (scripts/test-windows.ps1)
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-windows.ps1
