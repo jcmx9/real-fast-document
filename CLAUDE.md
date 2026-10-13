@@ -279,7 +279,7 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   code by splitting on backticks). The custom tags are rendered by the `html:` callbacks of
   `cmarker.render`: `rfd-alert` builds the box; `rfd-task` returns a `metadata` value and
   `rfd-tasks` collects them from its body (`body.children.filter(c => c.func() == metadata)`) into
-  a fixed-width table that reuses `rfd-table-fill`/`rfd-table-stroke` (the `fill` function is also
+  a table with Typst `auto` columns and `table-text` (like every table) that reuses `rfd-table-fill`/`rfd-table-stroke` (the `fill` function is also
   the guard that keeps the general `#show table` rebuild away). cmarker runs with
   **`smart-punctuation: false`**: typed quotes stay exact (the automatic replacement put English
   “…” into German text); `--`/`...` therefore stay as typed too. The **original** `.md`
@@ -484,20 +484,22 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
 - `outline(title: [..])` renders its title as a *heading*, which re-triggers the heading
   show rule → recursion. Use `outline(title: none)` and render the "Inhalt" label as plain
   text.
-- The **table** show rule rebuilds every cmarker table with **HTML-auto-layout column widths**:
-  inside `layout(size => …)` it measures per column a **min** width (the widest *word*:
-  `cell-words` splits a cell into words while keeping `strong`/`emph`/`raw` styling, header cells
-  measured as `strong`) and a **max** width (natural `measure(body)`), both + `2 * cell-inset`.
-  `Σmax ≤ avail` → columns = max (table keeps its **content width**, not stretched); `Σmin ≥ avail`
-  → proportional to min; else `min + spare · (max − min) / Σ(max − min)`. **Trap:**
-  `measure(width: X, body)` does *not* give the min width — it returns the constraint X itself, so
-  the word split is the only way. **Alignment:** `it.align` is an array from cmarker (`auto` where
-  the separator row has no `:`); `auto` columns whose non-empty cells all match `number-re`
-  (`plain-text` of the cell) become `right`, others `left`; header row always centered/bold.
-  Tables set `number-type: "lining", number-width: "tabular"` and `par(justify: false)`.
-  `plain-text` must use `.sum(default: "")`, not `.join("")` — `join` on an empty array returns
-  `none` and empty cells then crash `.trim()`. Zebra/stroke come from `rfd-table-fill`/
-  `rfd-table-stroke` (shared with the task table).
+- The **table** show rule rebuilds every cmarker table with **Typst's own `auto` columns**
+  (`columns: (auto,) * n`) — each column as wide as its content, Typst shares the space and wraps
+  text-heavy columns when the table doesn't fit; small tables keep their content width. **History:**
+  26.10.2–26.10.7 used a hand-made HTML-auto-layout (measure min = widest word via a styled word
+  split, max = natural width, distribute the rest); side by side with plain `auto` it looked almost
+  identical, so the user judged it over-engineered ("übersteuert") — **don't reintroduce custom
+  width measuring.** Table type is `table-text`: Source Sans 3 **9 pt, weight 500, tracking
+  −0.02em**, lining tabular figures, ragged right; code in cells 8.5 pt (`show raw: set text(...)`
+  inside the table block — the global raw size is 10 pt). Adobe has **no condensed** Source Sans (the
+  VF only has a `wght` axis); the user chose tracking instead of another font. The task table uses the
+  same `table-text`. **Alignment:** `it.align` is an array from cmarker (`auto` where the separator
+  row has no `:`); `auto` columns whose non-empty cells all match `number-re` (`plain-text` of the
+  cell) become `right`, others `left`; header row always centered/bold. `plain-text` must use
+  `.sum(default: "")`, not `.join("")` — `join` on an empty array returns `none` and empty cells then
+  crash `.trim()`. Zebra/stroke come from `rfd-table-fill`/`rfd-table-stroke` (shared with the task
+  table).
   Emitting a `table` inside `#show table:` recurses → guard on a field the rebuild sets but
   cmarker never does: `if it.fill != none { it } else { …rebuild… }` (the guard is a **field
   check**, so it survives the `layout`/`context` boundary — unlike the built-in heading

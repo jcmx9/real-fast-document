@@ -271,9 +271,9 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Überschriften | **Source Serif 4**, `luma(8%)`, linksbündig, ohne Balken; **nur H1** trägt eine feine Hairline dicht darunter, alle anderen grenzen sich über Größe/Abstand ab |
 | Wasserzeichen | optional (`watermark:`): diagonal, gespreizt, fett, hellgrau (Einkanal-Grau → sauberes K im Druck), **unter** allem |
 | Fließtext | Source Sans 3, 11 pt, `wght` 380, Mediävalziffern, Blocksatz mit Silbentrennung (Zeilenabstand 0.85em), `luma(13%)`; **fett** = 560 (`strong.delta` 180) |
-| Tabellen | **Spaltenbreiten nach Inhalt** (wie HTML-Tabellen): passt alles, bleibt die Tabelle in Inhaltsbreite; sonst erhält jede Spalte mindestens ihr längstes Wort und textreiche Spalten den Rest. Zahlen-/Betragsspalten rechtsbündig, Ausrichtung aus der Trennzeile (`:--`, `--:`, `:-:`) hat Vorrang; Ziffern gleich breit (Versalziffern); Flattersatz; Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien; **Kopfzeile wiederholt sich** bei Seitenumbruch |
+| Tabellen | kompakte Tabellenschrift (Source Sans 3, 9 pt Medium, Laufweite −2 %); **Spaltenbreiten nach Inhalt** über Typsts `auto`-Spalten: kleine Tabellen bleiben schmal, bei Platzmangel verteilt Typst den Raum und textreiche Spalten brechen um. Zahlen-/Betragsspalten rechtsbündig, Ausrichtung aus der Trennzeile (`:--`, `--:`, `:-:`) hat Vorrang; Ziffern gleich breit (Versalziffern); Flattersatz; Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien; **Kopfzeile wiederholt sich** bei Seitenumbruch |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
-| Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): gezeichnetes Kästchen (erledigt: dunkel gefüllt mit weißem Häkchen), bündig mit den Punkten; reine Aufgabenlisten als Tabelle (Aufgabe 56 % · Wer 20 % · Bis 14 % · Status 10 %) |
+| Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): gezeichnetes Kästchen (erledigt: dunkel gefüllt mit weißem Häkchen), bündig mit den Punkten; reine Aufgabenlisten als Tabelle *Aufgabe · Wer · Bis · Status* (Spaltenbreiten nach Inhalt, wie alle Tabellen) |
 | Hinweisboxen | Fläche aufgehellt, 2,5-pt-Balken links, Titel klein + gesperrt in Versalien; Farben: Info `#2f6aa8`, Tipp `#3b7d3a`, Wichtig `#7a4fb0`, Hinweis `#b05a1a`, Achtung `#b5452b` |
 | Bilder | lokal: nummerierte Abbildung mit Untertitel, Breite per `{width=…}`; fehlend: „[Bild fehlt: pfad]“ statt Abbruch; remote (`http(s)`, `//host`, `data:`) offline automatisch entfernt |
 | Diagramme | ` ```mermaid ` offline per mmdr, mittig, Flächen `#f4f2ee`, Rahmen `#b9b2a6`, Linien `#6b6b6b`, Text `#2b2b2b`, Notizen `#fbeab0`; Beschriftung Source Sans 3 (variabel, Medium) |
@@ -294,6 +294,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | TOC-Titel „Inhalt" | Source Serif 4 (`wght` 470) | 15 pt |
 | TOC-Einträge (H1 + H2) | Source Sans 3 (`wght` 380) | 12 pt, gleiche Zeilenabstände |
 | Kopf (Text) | Source Sans 3 (`wght` 380) | 13 pt |
+| Tabellen | Source Sans 3 Medium (`wght` 500), Laufweite −2 %; Code 8,5 pt | 9 pt |
 | Bildunterschrift | Source Sans 3 | 10 pt |
 | Code | Source Code Pro | 10 pt |
 | Fußzeile | Source Sans 3 | 9 pt |

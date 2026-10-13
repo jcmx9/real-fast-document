@@ -6,6 +6,33 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.8] - 2026-10-13
+
+### Changed
+- **Calmer tables:** column widths come from Typst's own `auto` columns again. The hand-made
+  HTML-auto-layout measuring of 26.10.2 looked almost identical side by side but was far more
+  complex; it is gone. Number/amount columns stay right-aligned, separator-row alignment is still
+  respected, small tables keep their content width.
+- **Compact table type:** Source Sans 3 at 9 pt Medium (`wght` 500) with tracking −2 % (Adobe has no
+  condensed Source Sans; the variable font only has a weight axis), code in cells 8.5 pt — also in
+  the task table.
+- **Task tables use the same rules as all tables:** Typst `auto` columns instead of the fixed
+  56/20/14/10 % split, header centered, status centered, table type 9 pt Medium.
+- **No hyphenation inside table cells** — with many narrow columns Typst split words such as
+  "Besu-che"; table text now never hyphenates.
+
+### Added
+- **`tests/fixtures/tables-showcase.md`** — extensive table collection: offer with totals, quarterly
+  figures with negative values, twelve narrow month columns, technical values with units, schedule,
+  two text-heavy columns, glossary, code/emphasis/symbols/links in cells, separator-row alignment,
+  empty cells, single-column table, long words/URLs and a 30-row table across pages; checked in
+  `scripts/test-pdf.sh`. Includes a task chapter: owner and due, owner only, due only (`due`/`by`),
+  checklist, loose list, long task texts, en/em dash and hyphen, mixed list, twelve tasks.
+
+### Fixed
+- **Task with a due date but no owner** (`- [ ] Draft – due 17 Oct`) put "due 17 Oct" into the
+  owner column; it now lands in the due column and the empty owner column is dropped.
+
 ## [26.10.7] - 2026-10-13
 
 ### Fixed

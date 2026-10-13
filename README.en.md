@@ -268,9 +268,9 @@ Body text with **emphasis** and a footnote.[^1]
 | Headings | **Source Serif 4**, `luma(8%)`, left-aligned, no bars; **only H1** carries a fine hairline right below, all others are set apart by size/spacing |
 | Watermark | optional (`watermark:`): diagonal, letter-spaced, bold, light gray (single-channel gray → clean K in print), **beneath** everything |
 | Body text | Source Sans 3, 11 pt, `wght` 380, old-style figures, justified with hyphenation (line spacing 0.85em), `luma(13%)`; **bold** = 560 (`strong.delta` 180) |
-| Tables | **column widths by content** (like HTML tables): if everything fits, the table keeps its content width; otherwise every column gets at least its longest word and text-heavy columns get the rest. Number/amount columns right-aligned, alignment from the separator row (`:--`, `--:`, `:-:`) wins; equal-width lining figures; ragged right; header centered + bold with a line below; light row zebra, vertical separators, no horizontal row lines; **header row repeats** across page breaks |
+| Tables | compact table type (Source Sans 3, 9 pt Medium, tracking −2 %); **column widths by content** via Typst's `auto` columns: small tables stay narrow, when space runs out Typst shares it and text-heavy columns wrap. Number/amount columns right-aligned, alignment from the separator row (`:--`, `--:`, `:-:`) wins; equal-width lining figures; ragged right; header centered + bold with a line below; light row zebra, vertical separators, no horizontal row lines; **header row repeats** across page breaks |
 | Code | Source Code Pro, 10 pt, with syntax highlighting |
-| Lists | unordered: small square at **all** levels; ordered: numbers; tasks (`- [ ]`): drawn box (done: filled dark with a white check mark), aligned with the bullets; task-only lists as a table (Task 56 % · Owner 20 % · Due 14 % · Status 10 %) |
+| Lists | unordered: small square at **all** levels; ordered: numbers; tasks (`- [ ]`): drawn box (done: filled dark with a white check mark), aligned with the bullets; task-only lists as a table *Task · Owner · Due · Status* (column widths by content, like all tables) |
 | Callouts | light fill, 2.5 pt bar on the left, small letter-spaced uppercase title; colors: Info `#2f6aa8`, Tip `#3b7d3a`, Important `#7a4fb0`, Warning `#b05a1a`, Caution `#b5452b` |
 | Images | local: numbered figure with caption, width via `{width=…}`; missing: "[Image missing: path]" instead of an abort; remote (`http(s)`, `//host`, `data:`) removed automatically offline |
 | Diagrams | ` ```mermaid ` offline via mmdr, centered, fills `#f4f2ee`, borders `#b9b2a6`, lines `#6b6b6b`, text `#2b2b2b`, notes `#fbeab0`; labels in Source Sans 3 (variable, Medium) |
@@ -291,6 +291,7 @@ Body text with **emphasis** and a footnote.[^1]
 | TOC title "Inhalt" | Source Serif 4 (`wght` 470) | 15 pt |
 | TOC entries (H1 + H2) | Source Sans 3 (`wght` 380) | 12 pt, uniform line spacing |
 | Header (text) | Source Sans 3 (`wght` 380) | 13 pt |
+| Tables | Source Sans 3 Medium (`wght` 500), tracking −2 %; code 8.5 pt | 9 pt |
 | Caption | Source Sans 3 | 10 pt |
 | Code | Source Code Pro | 10 pt |
 | Footer | Source Sans 3 | 9 pt |
