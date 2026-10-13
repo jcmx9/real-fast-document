@@ -6,6 +6,29 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.10] - 2026-10-13
+
+### Changed
+- **Body text 10 pt** (was 11 pt) with the scale title 16 / H1 14 / H2 12 / H3+ 10 pt; header text
+  11 pt, TOC title 14 / entries 11 pt, code and captions 9 pt; tables and footer stay 9 pt.
+- **Margins left 35 mm / right 30 mm** (was 30 / 20 mm): a 145 mm text block with about 95
+  characters per line instead of about 105 at 10 pt.
+- **Table cell padding** horizontally 5 pt (was 7 pt) — with the narrower text block a 13-column
+  table overflowed and the first column ran into the second; `scripts/test-pdf.sh` now checks it.
+
+- **README.md / README.en.md rewritten** along the features: overview, installation, usage
+  (terminal, right-click, other programs), frontmatter with defaults, Markdown per feature (text &
+  typography, structure, lists and tasks, callouts, tables, images, diagrams, math/code/footnotes),
+  layout, PDF/A, fonts, customizing, development.
+- **`example.md` rewritten** as a tour of every feature in its variants (incl. all callout
+  keywords, four task-table variants, image width/without caption/missing/remote, two diagrams).
+- `header.md`: comments state that the listed values are the defaults and mention quotes by `lang`.
+
+### Fixed
+- **Footer:** a long "client · title" ran up to the page number. The footer columns now keep an
+  8 mm gap and a long entry is shortened to one line ending in "…" (checked in
+  `scripts/test-pdf.sh`).
+
 ## [26.10.9] - 2026-10-13
 
 ### Changed

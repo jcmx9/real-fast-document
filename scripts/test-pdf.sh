@@ -92,6 +92,11 @@ reject() {
 
 ok() { printf 'ok   %s\n' "$*"; }
 
+# xmin <pdf> <wort>: linke Kante (pt) des ersten Vorkommens (pdftotext -bbox).
+xmin() {
+  pdftotext -bbox "$1" - | grep -F ">$2<" | head -n 1 | sed -E 's/.*xMin="([0-9.]+)".*/\1/'
+}
+
 # xmax <pdf> <wort>: rechte Kante (pt) jedes Vorkommens des Wortes (pdftotext -bbox).
 xmax() {
   pdftotext -bbox "$1" - | grep -F ">$2<" | sed -E 's/.*xMax="([0-9.]+)".*/\1/'
@@ -230,6 +235,9 @@ test_fixtures() {
     edges="$(for w in 1.245.300 −987.200 258.100; do xmax "${sc}" "${w}"; done |
       awk 'NR == 1 { a = $1 } { d = $1 - a; if (d < 0) d = -d; if (d > 0.5) bad = 1 } END { print bad + 0 }')"
     [[ "${edges}" == 0 ]] || die "tables-showcase.md: Quartalszahlen nicht rechtsbündig"
+    # 13 schmale Spalten: die erste Spalte darf nicht in die zweite laufen.
+    awk -v a="$(xmax "${sc}" Besuche | head -n 1)" -v b="$(xmin "${sc}" 1.204)" 'BEGIN { exit !(a < b) }' ||
+      die "tables-showcase.md: Monatstabelle – Spalten überlappen"
   fi
   # Aufgaben-Kapitel: Wer/Bis-Varianten, Termin ohne Namen (due/by), Checkliste,
   # lose Liste, Strich-Varianten, gemischte Liste bleibt Liste.
@@ -265,6 +273,17 @@ test_fixtures() {
     "Text nach dem Diagramm."
   reject mermaid.md "${text}" "flowchart LR" "sequenceDiagram" "-->"
   ok mermaid.md
+
+  # Lange Fußzeile (Kunde · Titel): auf eine Zeile mit „…“ gekürzt, Abstand zur
+  # Seitenzahl bleibt.
+  text="$(render long-footer.md)"
+  expect long-footer.md "${text}" "Muster Beratungsgesellschaft mbH · Kick…" "Seite 1 / 1"
+  if command -v pdftotext >/dev/null 2>&1; then
+    awk -v a="$(xmax "${out_dir}/long-footer.pdf" Kick… | tail -n 1)" \
+        -v b="$(xmin "${out_dir}/long-footer.pdf" Seite)" 'BEGIN { exit !(a != "" && b != "" && a + 15 < b) }' ||
+      die "long-footer.md: Fußzeilentext läuft an die Seitenzahl heran"
+  fi
+  ok long-footer.md
 
   # Frontmatter: Inline-Kommentare, Quotes, Listen, auto und leere Bool-Werte –
   # ohne eine einzige Warnung.

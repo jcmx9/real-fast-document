@@ -1,274 +1,348 @@
 ---
-date: 2026-07-01
+title: "Beispiel: von Markdown zu PDF/A"
+subtitle: "Rundgang durch alle Funktionen"
+client: "real·fast·document"
+author: [Anna Beispiel, Ben Probe]
+date: 2026-10-13
+lang: de
 toc: true
 h1_break: true
-print_filename: true
-lang: de
-title: "Beispiel: von Markdown zu PDF/A"
 watermark: "BEISPIEL"
 ---
 
+Dieses Dokument ist zugleich **Vorlage**, **Schaustück** und **Falltest**: Es ist mit genau der
+Pipeline gesetzt, die es beschreibt, und zeigt jede Funktion in ihren Varianten.[^pipeline]
+Die Markdown-Quelle liegt als Anhang im PDF und lässt sich jederzeit wieder herauslösen.[^attach]
 
-Dieses Dokument ist zugleich **Vorlage**, **Schaustück** und **Falltest**: Es ist mit genau
-der Pipeline gesetzt, die es beschreibt, und deckt jedes unterstützte Element mindestens
-einmal ab.[^pipeline] Wer eigene Dokumente schreibt, findet hier eine vollständige Referenz
-dessen, was Markdown im Alltag hergibt — und wie es im fertigen PDF aussieht.
+[^pipeline]: Markdown → Typst (Packages *cmarker*, *mitex*, *mmdr*) → PDF/A-3b, vollständig offline.
 
-Die Idee dahinter ist schlicht: Inhalt gehört in reinen Text, die Form ins Template. Dieselbe
-Quelle ergibt so immer dasselbe, einheitlich gestaltete Ergebnis — **ohne Textverarbeitung,
-ohne manuelles Layout**. Zusätzlich trägt jedes erzeugte PDF seine eigene Markdown-Quelle als
-Anhang in sich und bleibt damit jederzeit verlustfrei in Text rückführbar.[^attach]
+[^attach]: Zum Beispiel mit `mutool extract datei.pdf`.
 
-[^pipeline]: Der Ablauf in einem Satz: Markdown → Typst (Package *cmarker*) → PDF/A-3b.
-    Fußnoten fluchten am unteren Seitenrand mit hängendem Einzug.
+# Kopf, Titel und Fuß
 
-[^attach]: Herauslösen z. B. mit `mutool extract datei.pdf`.
+Der **Titelblock** oben entsteht aus dem Frontmatter: `client` (klein, gesperrt), `title`,
+`subtitle` und die Zeile „Datum · Autor“ aus `date` und `author`. Die **Kopfzeile** zeigt ab
+Seite 1 das aktuelle Kapitel, rechts das Logo (höchstens 20 × 60 mm). Die **Fußzeile** zeigt
+links „Kunde · Titel“ (weil `client` gesetzt ist), in der Mitte die Seitenzahl und rechts das
+Datum. Das **Wasserzeichen** „BEISPIEL“ liegt unter allem.
 
-# Überblick
+Varianten, die dieses Dokument nicht zeigt:
 
-Wer Inhalt schreibt, soll sich nicht um Ränder, Schriften oder Kopfzeilen kümmern müssen. Die
-Pipeline verfolgt drei Ziele, die sich im ganzen Dokument wiederfinden.
+- `header: "Vertraulich"` ersetzt das laufende Kapitel durch festen Text.
+- Ohne `client` und `subtitle` steht links unten der Dateiname; `print_filename: false` blendet
+  ihn aus.
+- `lang: en` stellt Datum, Beschriftungen und Anführungszeichen auf Englisch um.
+- `logo: kunde.png` setzt ein Logo nur für dieses Dokument.
 
-## Reproduzierbare Gestaltung
+Alle Schlüssel mit Standardwerten stehen in `header.md`.
 
-Dieselbe Quelle ergibt immer dasselbe Layout. Schriften, Ränder und Farben liegen zentral im
-Template; die Quelle enthält ausschließlich Inhalt und einen optionalen Frontmatter für die
-wenigen dokumentweiten Schalter.
+# Text & Typografie
 
-## Langzeitarchivierung
+## Auszeichnung
 
-Das Ergebnis ist *PDF/A-3b*, ein ISO-Standard für die dauerhafte Ablage. Schriften sind
-eingebettet, Farben definiert, und die Markdown-Quelle liegt als Dateianhang bei.
+Im Fließtext funktionieren *kursiv*, **fett**, ***beides***, `Inline-Code`, ~~durchgestrichen~~,
+==markiert== und [Verweise](https://typst.app). Längere Absätze stehen im **Blocksatz mit
+Silbentrennung**; im Text erscheinen Mediävalziffern (1, 2, 3 … 2026), in Tabellen Versalziffern.
 
-## Minimale Quelldateien
+## Anführungszeichen, Striche, Auslassungen
 
-Eine `.md`, sonst nichts — Bilder und ein optionales Logo ausgenommen. Genau das macht die
-Quelle diff-bar, versionierbar und für Menschen wie Maschinen gleichermaßen lesbar.
+| Getippt | Ergebnis |
+|---------|----------|
+| `"gerade"` und `'einfach'` | "gerade" und 'einfach' |
+| `das geht's` | das geht's |
+| `„deutsch“ »französisch« “englisch”` | „deutsch“ »französisch« “englisch” |
+| `Seite 3--5` (Bis-Strich) | Seite 3--5 |
+| `9--17 Uhr` (Bis-Strich) | 9--17 Uhr |
+| `Pause -- dann weiter` (Gedankenstrich) | Pause -- dann weiter |
+| `Gedanke---Strich` (Geviertstrich) | Gedanke---Strich |
+| `Moment...` (Auslassungszeichen) | Moment... |
 
-# Text & Auszeichnung
+Gerade Anführungszeichen werden nach Sprache gesetzt, getippte typografische bleiben exakt
+erhalten. Code bleibt unberührt: `echo "x" --flag ...`.
 
-Im Fließtext funktionieren *kursiv*, **fett**, ***beides***, `inline-code`, ~~durchgestrichen~~,
-==markiert== sowie [externe Verweise](https://typst.app) ohne jeden Zusatzaufwand. Längere Absätze werden im
-**Blocksatz mit Silbentrennung** gesetzt, sodass der rechte Rand ruhig bleibt und der Grauwert
-der Seite gleichmäßig wirkt — auch über mehrere Zeilen hinweg und mit eingestreuten
-Fachbegriffen wie `PDF/A`, `sys.inputs` oder `--font-path`.
+## Geschützte Leerzeichen
 
-Absätze werden durch eine Leerzeile getrennt. Ein einzelner Zeilenumbruch in der Quelle wird zu
-einem Leerzeichen; das hält den Quelltext angenehm schmal, ohne die Ausgabe zu beeinflussen.[^umbruch]
-Gerade Anführungszeichen werden je nach Sprache gesetzt ("gerade" wird „gerade“), getippte bleiben
-exakt erhalten: „deutsch“, ‚einfach‘, »französisch«. Aus `--` wird ein Halbgeviertstrich (Seite 3--5),
-aus `...` ein Auslassungszeichen...
+Zwischen Abkürzungen wie z. B., d. h. oder u. a. und zwischen Zahl und Einheit — 12 pt, 5 %,
+1.234,56 €, 300 dpi, 20 °C — bricht keine Zeile um.
 
-[^umbruch]: Zwei Leerzeichen am Zeilenende erzwingen bei Bedarf einen harten Umbruch. Mit
-    `hard_breaks: true` im Frontmatter bleibt jede Zeile eine Zeile — praktisch für Mitschriften.
+## Zeilenumbrüche
+
+Ein einzelner Zeilenumbruch in der Quelle
+wird zum Leerzeichen (CommonMark). Zwei Leerzeichen am Zeilenende  
+oder ein Backslash\
+erzwingen einen Umbruch. Mit `hard_breaks: true` im Frontmatter (oder `--hard-breaks`) bleibt
+jede Zeile eine Zeile — praktisch für Mitschriften.
+
+## Datumszeilen
+
+18. Oktober 2026
+19. Okt. 2026
+
+Zeilen, die mit Zahl, Punkt und Monatsnamen beginnen, bleiben Datumsangaben und werden nicht
+zur nummerierten Liste.
+
+# Überschriften
+
+Die Ebenen haben feste Rollen: Der **Titel** kommt aus `title:`, `#` ist ein **Kapitel** (feine
+Linie, Kopfzeile, neue Seite bei `h1_break`), darunter folgen Unterabschnitte.
+
+## Zweite Ebene
+
+Serif, ohne Linie.
+
+### Dritte Ebene
+
+In Fließtextgröße, fein unterstrichen.
+
+#### Vierte Ebene
+
+In Fließtextgröße, kursiv; tiefere Ebenen ebenso.
+
+##### Fünfte Ebene
+
+Wie die vierte.
 
 # Listen
 
-## Geordnet & verschachtelt
+## Aufzählungen
 
-Nummerierte und verschachtelte Listen werden sauber gesetzt und korrekt eingerückt:
+- Erste Ebene mit kleinem Quadrat
+  - Zweite Ebene, gleicher Marker
+    - Dritte Ebene, gleicher Marker
+- Zurück auf der ersten Ebene
+
+## Nummeriert und verschachtelt
 
 1. Quelle in Markdown schreiben.
-2. Optional einen Frontmatter ergänzen:
-   - `date` für Datum in der Fußzeile **und** einen ISO-Präfix am Dateinamen,
-   - `toc` für das Inhaltsverzeichnis,
-   - `h1_break` für den Kapitelumbruch,
-     - und tiefere Ebenen behalten denselben Marker.
+2. Frontmatter ergänzen:
+   1. `title` und `date`,
+   2. bei Bedarf `toc` und `h1_break`.
 3. Bauen lassen — fertig.
 
-## Aufgaben als Tabelle
+Eine Liste darf mit beliebiger Zahl beginnen:
 
-Eine Liste, die nur aus Aufgaben besteht, wird zur Tabelle. Wer und bis wann stehen hinter einem
-Gedankenstrich (`– Name, bis Datum`); Spalten, die überall leer wären, entfallen:
+7. Siebter Punkt
+8. Achter Punkt
 
-- [x] Konzept festlegen – Anna Beispiel, bis 30.06.
+## Gemischte Liste
 
-- [x] Pipeline umsetzen – Ben Probe
+Normale Punkte und Aufgaben dürfen sich mischen; das Kästchen steht bündig mit den Punkten:
 
-- [ ] Letzter Feinschliff am Layout – Anna Beispiel, bis 15.07.
+- Ergebnis des Workshops
+- [x] Farbwelt festgelegt
+- [ ] Schriftwahl offen – Anna Beispiel, bis 09.11.
+- Nächster Termin folgt
 
-## Gemischte Listen
+# Aufgaben
 
-Normale Punkte und Aufgaben dürfen sich in einer Liste mischen — die Punkte behalten ihr
-Quadrat, die Aufgaben zeigen bündig das Kästchen (erledigt: gefüllt mit Häkchen):
+Eine Liste, die **nur** aus Aufgaben besteht, wird zur Tabelle. Wer und bis wann stehen hinter
+einem Gedankenstrich: `- [ ] Aufgabe – Name, bis Datum`.
 
-- Ein normaler Aufzählungspunkt
-- [x] Eine erledigte Aufgabe
-- [ ] Eine offene Aufgabe
+## Mit Wer und Bis
+
+- [x] Konzept festlegen – Anna Beispiel, bis 30.09.
+- [x] Pipeline umsetzen – Ben Probe, bis 07.10.
+- [ ] Feinschliff am Layout – Anna Beispiel, bis KW 44
+- [ ] Bildrechte klären – Kundin, bis Freitag
+
+## Nur Wer
+
+- [ ] Logo liefern – Kundin
+- [x] Farbwerte prüfen – Ben Probe
+
+## Nur Bis
+
+- [ ] Sitemap abstimmen – bis 24.10.
+- [ ] Texte freigeben – bis 31.10.
+
+## Checkliste
+
+- [ ] Impressum aktualisieren
+- [x] Datenschutzerklärung prüfen
+- [ ] Favicon austauschen
+
+# Hinweisboxen
+
+GitHub-Schlüsselwörter:
+
+> [!NOTE]
+> Ergänzende Information.
+
+> [!TIP]
+> Ein hilfreicher Tipp.
+
+> [!IMPORTANT]
+> Etwas, das nicht übersehen werden darf.
+
+> [!WARNING]
+> Ruhiges Orange statt Warnrot.
+
+> [!CAUTION]
+> Folgen bedenken.
+
+Deutsche Schlüsselwörter, auch mit Text in derselben Zeile und mehreren Absätzen:
+
+> [!HINWEIS] Text darf direkt hinter dem Schlüsselwort beginnen.
+>
+> Ein zweiter Absatz mit **Auszeichnung** und einer Liste:
+>
+> - erster Punkt
+> - zweiter Punkt
+
+> [!INFO]
+> Gleichwertig zu `[!NOTE]`; ebenso `[!TIPP]`, `[!WICHTIG]` und `[!ACHTUNG]`.
+
+Ein Zitat ohne Schlüsselwort bleibt ein eingerücktes, kursives Zitat:
+
+> Inhalt gehört in reinen Text, die Form ins Template.
 
 # Tabellen
 
-Tabellen folgen der gewohnten Pipe-Syntax. Jede Spalte wird so breit wie ihr Inhalt; kleine
-Tabellen bleiben schmal, textreiche Spalten nehmen den restlichen Platz und brechen um. Kopfzeile
-zentriert und fett, leichtes Zeilen-Zebra, dünne Linien.
+## Angebot mit Summe
 
-| Element       | Schrift         | Beispiel        |
-| ------------- | --------------- | --------------- |
-| Fließtext     | Source Sans 3   | dieser Absatz   |
-| Überschriften | Source Serif 4  | „Tabellen“      |
-| Code          | Source Code Pro | `print("hi")`   |
-| Zahlenwert    | Versalziffern   | 1.234,56 €      |
+Zahlen- und Betragsspalten stehen automatisch rechtsbündig, die Spalten so breit wie ihr Inhalt:
 
-## Preisliste
+| Pos. | Leistung | Menge | Einzelpreis | Gesamt |
+| ---- | -------- | ----- | ----------- | ------ |
+| 1 | Konzeption und Workshop | 8 Std. | 120,00 € | 960,00 € |
+| 2 | Gestaltung aller Seiten | 12 Std. | 110,00 € | 1.320,00 € |
+| 3 | Lizenz Bildmaterial | 1 | 89,90 € | 89,90 € |
+| | **Summe netto** | | | **2.369,90 €** |
 
-Spalten, die nur Zahlen oder Beträge enthalten, stehen rechtsbündig; die Ausrichtung aus der
-Trennzeile (`:--`, `--:`, `:-:`) hat Vorrang:
+## Ausrichtung aus der Trennzeile
 
-| Pos. | Leistung                                   | Menge   | Betrag     |
-| ---- | ------------------------------------------ | ------- | ---------- |
-| 1    | Konzeption und Abstimmung des Layouts      | 4 Std.  | 520,00 €   |
-| 2    | Gestaltung aller Seiten inklusive Varianten | 12 Std. | 1.250,00 € |
-| 3    | Druckdaten                                 | 1       | 9,50 €     |
+| links | zentriert | rechts | ohne Angabe |
+| :---- | :-------: | -----: | ----------- |
+| A | B | C | Text bleibt links |
+| längerer Text | mittig | 99,5 % | 1.234 |
 
-## Zweite Tabelle
+## Textreiche Spalten
 
-Auch mehr Spalten und kurze Werte bleiben lesbar:
+| ID | Anforderung | Priorität |
+| -- | ----------- | :-------: |
+| A-01 | Die Startseite zeigt die drei wichtigsten Leistungen mit je einem Bild und einem kurzen Text, ohne dass gescrollt werden muss. | hoch |
+| A-02 | Ein Newsletter-Anmeldefeld im Fuß. | mittel |
 
-| Kürzel | Bedeutung          | Default | Bereich   |
-| ------ | ------------------ | ------- | --------- |
-| `toc`  | Inhaltsverzeichnis | auto    | an/aus    |
-| `date` | Präfix + Fußzeile  | leer    | ISO-Datum |
-| `lang` | Sprache            | `de`    | `de`/`en` |
+## Auszeichnung und Symbole in Zellen
+
+| Element | Schrift | Beispiel | Status |
+| ------- | ------- | -------- | :----: |
+| Fließtext | Source Sans 3 | **fett**, *kursiv* | ✓ |
+| Überschriften | Source Serif 4 | „Kapitel“ | ✓ |
+| Code | Source Code Pro | `print("hi")` | ⚠ |
+
+Weitere Tabellenformen — Quartalszahlen, zwölf Monatsspalten, lange Tabellen über mehrere
+Seiten — zeigt `tests/fixtures/tables-showcase.md`.
 
 # Abbildungen
 
-Ein lokales Bild wird als nummerierte *Abbildung* mit Untertitel gesetzt; relative Pfade lösen
-sich gegen das Dokumentverzeichnis auf:
+Ein lokales Bild mit Alt-Text wird zur nummerierten Abbildung mit Unterschrift:
 
-![Der Ablauf der Pipeline in vier Schritten — vom reinen Text bis zum Archiv-PDF.](assets/pipeline.svg)
+![Der Ablauf der Pipeline — vom reinen Text bis zum Archiv-PDF.](assets/pipeline.svg)
 
-Bilder mit **Remote-Adresse** (`http(s)://`) lassen sich offline nicht laden — Typst hat bewusst
-keinen Netzzugriff — und werden automatisch entfernt; der Build meldet, wie viele Bilder er
-übersprungen hat:
+Mit `{width=…}` lässt sich die Breite setzen, hier 50 %:
 
-[![Dieses Logo liegt im Netz und wird beim Offline-Build entfernt.](https://typst.app/assets/logo.svg)](https://typst.app)
+![Dieselbe Grafik in halber Breite.](assets/pipeline.svg){width=50%}
+
+Ohne Alt-Text erscheint nur das Bild, hier 6 cm breit:
+
+![](assets/pipeline.svg){width=6cm}
+
+Ein **fehlendes Bild** bricht den Export nicht ab, sondern hinterlässt einen Hinweis (der Build
+meldet es zusätzlich als Warnung):
+
+![Gibt es nicht](bilder/fehlt.png)
+
+**Remote-Bilder** lassen sich offline nicht laden und entfallen; der Build meldet ihre Zahl:
+
+![Dieses Logo liegt im Netz und wird beim Offline-Build entfernt.](https://typst.app/assets/logo.svg)
 
 # Diagramme
 
-Mermaid-Diagramme werden offline gezeichnet — ohne Netz, in ruhigen Farben:
+Mermaid-Diagramme werden offline gezeichnet. Ein Ablauf:
 
 ```mermaid
 flowchart LR
   A[Markdown] --> B[Typst]
   B --> C{PDF/A-3b}
-  C --> D[Archiv]
+  C -- prüfen --> D[Archiv]
+  C -- Fehler --> A
 ```
 
-# Definitionslisten
+Ein Ablauf zwischen Beteiligten:
 
-Begriff und Erläuterung stehen als Definitionsliste — der Begriff fett, die Erläuterung
-eingerückt:
+```mermaid
+sequenceDiagram
+  Kunde->>Agentur: Briefing
+  Agentur-->>Kunde: Angebot
+  Kunde->>Agentur: Freigabe
+```
 
-PDF/A-3b
-: Archivformat mit erlaubten Dateianhängen — hier die Markdown-Quelle. Erlaubt Inline-Auszeichnung
-  wie `code` in der Beschreibung.
+# Formeln
 
-Variable Schrift
-: Eine Schriftdatei, die über eine Achse (`wght`) beliebige Strichstärken liefert — Grundlage der
-  halbfetten Überschriften.
+Formeln stehen im Text wie $E = mc^2$ oder $a^2 + b^2 = c^2$ oder abgesetzt:
 
-# Code & Technisches
+$$
+\int_{a}^{b} f(x)\,\mathrm{d}x = F(b) - F(a)
+$$
 
-Codeblöcke erhalten Syntax-Hervorhebung. Ein kurzes Python-Beispiel:
+$$
+\sum_{i=1}^{n} i = \frac{n\,(n+1)}{2}
+$$
+
+# Code
+
+Codeblöcke erhalten Syntax-Hervorhebung:
 
 ```python
 from pathlib import Path
 
 def render(src: Path) -> Path:
     """Markdown -> PDF/A; gibt den Ausgabepfad zurück."""
-    out = src.with_suffix(".pdf")
-    print(f"{src} -> {out}")
-    return out
+    return src.with_suffix(".pdf")
 ```
-
-Und der Aufruf der Pipeline selbst:
 
 ```bash
-rf-document dokument.md      # -> dokument.pdf neben der Quelle
+rf-document --no-source --hard-breaks notiz.md ziel.pdf
 ```
 
-> [!HINWEIS]
-> Voraussetzung ist Typst ≥ 0.15. Erst diese Version rendert die gebündelten
-> variablen Schriften, aus deren `wght`-Achse der halbfette Schnitt der Überschriften stammt.
+```json
+{ "title": "Beispiel", "lang": "de", "toc": true }
+```
 
-# Hinweisboxen
+# Definitionslisten
 
-Zitatblöcke mit einem Schlüsselwort werden zu farbigen Boxen — GitHub-Syntax (`[!NOTE]`, `[!TIP]`,
-`[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`) oder deutsch (`[!INFO]`, `[!TIPP]`, `[!WICHTIG]`,
-`[!HINWEIS]`, `[!ACHTUNG]`):
+PDF/A-3b
+: Archivformat mit erlaubten Dateianhängen — hier die Markdown-Quelle. Erlaubt Auszeichnung wie
+  `code` in der Beschreibung.
 
-> [!INFO]
-> Ergänzende Information.
-
-> [!TIPP]
-> Ein hilfreicher Tipp.
-
-> [!WICHTIG]
-> Etwas, das nicht übersehen werden darf.
-
-> [!ACHTUNG]
-> Folgen bedenken.
-
-Ein gewöhnliches Zitat bleibt ein eingerücktes, kursives Zitat:
-
-> Inhalt gehört in reinen Text, die Form ins Template.
-
-# Mathematik
-
-Formeln werden ohne zusätzliche Schrift gesetzt — inline wie $E = mc^2$ oder abgesetzt:
-
-$$
-\int_{a}^{b} f(x)\,\mathrm{d}x = F(b) - F(a)
-$$
-
-Auch Brüche, Indizes und Summen sind möglich:
-
-$$
-\sum_{i=1}^{n} i = \frac{n\,(n+1)}{2}
-$$
-
-# Struktur & Layout
-
-Die Ebenen haben feste Rollen:
-
-- Der **Titel** kommt aus dem Frontmatter (`title:`) — zentriert oben, zusätzlich in der Kopfzeile
-  ab Seite 1. Er ist kein Heading und erscheint nicht im Inhaltsverzeichnis; der PDF-Metadatentitel
-  entspricht `title:` (ersatzweise dem Dateinamen).
-- **H1** ist ein **Kapitel**: trägt eine feine Linie, beginnt bei `h1_break` auf einer neuen Seite
-  und läuft oben im Seitenkopf mit — sofern kein fester `header` gesetzt ist.
-- **H2** und **H3** sind Unterabschnitte; **H3** steht in Body-Größe mit feiner Unterstreichung,
-  **H4** und tiefer kursiv.
-
-### Ein H3-Unterabschnitt
-
-Die dritte Ebene steht in Body-Größe und schlankem Schnitt; eine feine Unterstreichung setzt sie
-vom Fließtext ab. Im Text stehen Mediävalziffern (1, 2, 3 … 2026), in Tabellen Versalziffern gleicher
-Breite.
-
-#### Eine vierte Ebene
-
-Ab der vierten Ebene kursiv in Body-Größe.
-
-Ab mehr als fünf H1-/H2-Überschriften schaltet das Dokument automatisch in den strukturierten
-Modus (Inhaltsverzeichnis voran, jedes Kapitel auf neuer Seite) — hier zusätzlich per Frontmatter
-erzwungen. Ist ein `date` gesetzt, erhält die Ausgabedatei einen ISO-Präfix
-(`2026-07-01_example.pdf`) und das Datum erscheint rechts in der Fußzeile.
+Variable Schrift
+: Eine Schriftdatei, die über eine Achse (`wght`) beliebige Strichstärken liefert.
 
 # Sonderzeichen & Emoji
 
-Normaler Text bleibt **Source Sans 3**; nur Zeichen, die Source nicht kennt, fallen pro Glyph
-monochrom auf **Noto Emoji** und **Noto Sans Symbols 2** zurück — PDF/A-3b-konform. Dass dieser
-Abschnitt fehlerfrei baut, belegt den Fallback:
+Normaler Text bleibt **Source Sans 3**; nur Zeichen, die Source nicht kennt, kommen einzeln aus
+**Noto Emoji** und **Noto Sans Symbols 2** — einfarbig und PDF/A-tauglich:
 
 - Objekte und Status: 🚀 📊 📝 🔑 🔍 📌 ☑ ✗ ⚠ 💡 ◎ 🔒.
 - Gesten und Natur: ☺ 👍 👎 👀 🥽 ✿ ⚡ ❄ ☾ ☆ 🔥 🌱.
-- Pfeile: → ← ↑ ↓ ⇒ ⇐ ⇔ ➤ —.
+- Pfeile: → ← ↑ ↓ ⇒ ⇐ ⇔ ➤.
 - Häkchen und Marker: ✓ ✔ ✗ ✘ ☑ ☐ ★ ☆ • ▪ ▸.
 - Mathe und Technik: ± × ÷ ≤ ≥ ≠ ≈ ∞ √ ∫ ∑ ∂ ∈ ⊆ ½ m² H₂O CO₂.
 - Währung und Recht: € £ ¥ $ ₿ № § ¶ © ® ™ ‰.
-- Geometrie und Spiel: ■ □ ▲ △ ● ○ ♦ ◇ ♠ ♥ ♦ ♣ ♛ ♞.
+- Geometrie und Spiel: ■ □ ▲ △ ● ○ ♦ ◇ ♠ ♥ ♣ ♛ ♞.
+
+# Seitenumbruch
+
+Ein Seitenumbruch lässt sich mit `<!-- pagebreak -->` oder `\newpage` auf einer eigenen Zeile
+erzwingen. Nach dieser Zeile folgt eine neue Seite.
+
+<!-- pagebreak -->
+
+Damit ist der Rundgang abgeschlossen: eine Markdown-Quelle, ein archivfähiges PDF, die Quelle
+inklusive.
 
 ---
 
-Damit ist der Rundgang abgeschlossen: eine einzige Markdown-Quelle, ein archivfähiges PDF, die
-Quelle inklusive — und ein Wasserzeichen, das dieses Dokument als *Beispiel* ausweist.
+*Zum Nachschlagen:* alle Einstellungen in `header.md`, alle Tabellenformen in
+`tests/fixtures/tables-showcase.md`, die vollständige Beschreibung in der README.
