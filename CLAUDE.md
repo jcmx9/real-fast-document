@@ -90,11 +90,19 @@ exit codes (missing source, unknown option), embedded attachment name / `--no-so
 already proves no compile error, no missing-glyph abort, and PDF/A-3b conformance — the README builds
 also exercise the date-less `SOURCE_DATE_EPOCH` metadata path. CI can't catch *visual* regressions
 (layout, spacing) — those still need the PNG eyeball loop below.
-There is **one** render fixture in the root: `example.md` (the default build target). It is a
-full showcase and doubles as the regression probe for every supported element — structured/TOC
-mode (`#H2 + #H3 > 5`), task lists, tables, math, the emoji/symbol glyph fallback, a local
-captioned figure, definition lists, **and** a remote image that the template must strip (see
-below). Use it to eyeball layout changes; its `*.pdf` is git-ignored.
+`example.md` (the default build target) is the **feature tour**: one chapter per feature, each in
+its variants (title block/header/footer, typography table input→output, headings H1–H5, list
+forms, four task-table variants, all ten callout keywords, tables, images with/without caption,
+`{width=…}`, a **deliberately missing** image and a remote image, Mermaid, math, code,
+definition lists, emoji/symbol fallback, page break). It forces `toc`/`h1_break`, so it also
+exercises structured mode. Building it prints one expected warning (`Bild nicht gefunden:
+bilder/fehlt.png`) and the remote-skip note. `README.md`/`README.en.md` are organized by feature
+(overview → install → usage → frontmatter → Markdown per feature → layout → PDF/A → fonts →
+customizing → development) and must keep identical structure; they have no frontmatter (GitHub
+would render it), so they build with `lang: de` — write English quotes in `README.en.md` prose as
+typed “…” or the typography step would set German „…“. Never write a bare `--` in README prose
+(it becomes –); options always in backticks. Use it to eyeball layout changes; its `*.pdf` is
+git-ignored.
 
 To render PNGs directly, compile `template.typ` with the same inputs `build.sh` passes (the
 Markdown preprocessing runs inside the template, so `source=` is the original `.md`; absolute

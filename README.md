@@ -7,20 +7,29 @@
 > Aus einer Markdown-Datei ein archivfähiges, einheitlich gestaltetes **PDF/A-3b** —
 > ohne Textverarbeitung, ohne manuelles Layout.
 
-Markdown → **Typst** (Packages **cmarker** + **mitex** + **mmdr**) → **PDF/A** mit festem
-Corporate-Layout: DIN A4 Hochformat, laufender Kopf mit Kapitel und Logo, Fußzeile mit
-Dateiname, Seitenzählung und optionalem Datum. Die Markdown-Quelle wird ins PDF eingebettet.
-**Kein Pandoc nötig** — die gesamte Konvertierung läuft in Typst.
+real·fast·document (Befehl `rf-document`) setzt Markdown mit **Typst** in ein festes
+Corporate-Layout: DIN A4, Titelblock, laufender Kopf mit Kapitel und Logo, Fußzeile mit
+Seitenzählung. Das Ergebnis ist **PDF/A-3b** mit eingebetteter Markdown-Quelle. Alles läuft
+**offline** — Schriften und Typst-Packages liegen im Projekt, Pandoc wird nicht gebraucht.
 
-## Voraussetzungen
+![Markdown → Typst → PDF/A-3b: vom reinen Text bis zum Archiv-PDF.](assets/pipeline.svg)
 
-- [typst](https://typst.app) ≥ 0.15 (PDF/A-Export + variable Fonts — die `wght`-Achse
-  liefert den halbfetten Schnitt der Überschriften; `build.sh` bricht unter 0.15 ab)
-- [git](https://git-scm.com) zum Klonen
+## Was es kann
 
-Die Typst-Packages **cmarker** (Markdown → Typst), **mitex** (Formeln) und **mmdr** (Mermaid-Diagramme) sowie die Fonts
-werden vom Installer offline ins Projekt gelegt (`vendor/`, `fonts/`) — kein Registry-Zugriff
-zur Build-Zeit.
+- **Dokumente mit festem Layout:** Titelblock mit Kunde, Titel, Untertitel, Datum und Autor;
+  Kopfzeile mit aktuellem Kapitel und Logo; Fußzeile mit Name, Seite und Datum;
+  Inhaltsverzeichnis und Kapitel-Seitenumbruch automatisch ab längeren Dokumenten;
+  optionales Wasserzeichen.
+- **Markdown wie gewohnt — und mehr:** CommonMark mit Tabellen, Fußnoten, Formeln, Code und
+  Definitionslisten, dazu Hinweisboxen (`> [!NOTE]`, `> [!HINWEIS]`), Aufgabentabellen
+  (`- [ ] Aufgabe – Name, bis Datum`), Markierungen (`==Text==`), Seitenumbrüche,
+  Datumszeilen, Mermaid-Diagramme und auf Wunsch harte Zeilenumbrüche.
+- **Saubere Typografie:** variable Adobe-Source-Schriften, Anführungszeichen nach Sprache,
+  Halbgeviert- und Geviertstriche, Auslassungszeichen, geschützte Leerzeichen, Mediävalziffern
+  im Text und Versalziffern in Tabellen.
+- **Archivfähig:** PDF/A-3b, Quelle als Anhang (abschaltbar), reproduzierbares PDF-Datum.
+- **Überall nutzbar:** Terminal-Befehl `rf-document`, Rechtsklick im Dateimanager und Aufruf
+  aus anderen Programmen (z. B. als Zettlr-Export) — auf macOS, Linux und Windows.
 
 ## Installation & Update
 
@@ -39,16 +48,15 @@ irm https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/boot
 ```
 
 Beim ersten Aufruf klont der Befehl das Projekt nach `~/.local/share/real-fast-document`
-(Windows: `%LOCALAPPDATA%\real-fast-document`), installiert typst, lädt Fonts und
-Typst-Packages und richtet den Rechtsklick-Eintrag sowie den Terminal-Befehl `rf-document` ein.
-Jeder weitere Aufruf aktualisiert die Installation (`git pull --ff-only`, danach dieselbe
-Einrichtung; schon vorhandene Fonts und Packages werden nicht erneut geladen).
+(Windows: `%LOCALAPPDATA%\real-fast-document`), installiert Typst (≥ 0.15), lädt Schriften
+und Typst-Packages und richtet den Rechtsklick-Eintrag sowie den Terminal-Befehl
+`rf-document` ein. Jeder weitere Aufruf aktualisiert die Installation; schon vorhandene
+Schriften und Packages werden nicht erneut geladen.
 
-typst kommt über den System-Paketmanager (Homebrew / apt / dnf / pacman / winget). Fehlt es
-dort oder ist es älter als 0.15 (häufig unter Linux), lädt der Installer das offizielle
-typst-Binary nach `./bin` und nutzt es automatisch.
+Typst kommt über den System-Paketmanager (Homebrew, apt, dnf, pacman, winget). Fehlt es dort
+oder ist es älter als 0.15, lädt der Installer das offizielle Typst-Binary nach `./bin`.
 
-### Manuell (für die Entwicklung)
+**Manuell (für die Entwicklung):**
 
 ```bash
 git clone https://github.com/jcmx9/real-fast-document.git
@@ -59,8 +67,8 @@ bash scripts/install.sh      # Windows: ./scripts/install.ps1
 ## Deinstallation
 
 Ein Befehl entfernt den Rechtsklick-Eintrag, den Terminal-Befehl `rf-document` **und** den
-Installordner (Programm, Fonts, Packages, Logo — ein eigenes Logo vorher sichern). typst bleibt,
-es gehört dem Paketmanager.
+Installordner (Programm, Schriften, Packages, Logo — ein eigenes Logo vorher sichern). Typst
+bleibt, es gehört dem Paketmanager.
 
 **macOS / Linux:**
 
@@ -74,293 +82,337 @@ curl -fsSL https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scrip
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/jcmx9/real-fast-document/main/scripts/bootstrap.ps1))) -Uninstall
 ```
 
-## Verwendung
-
-### macOS / Linux
-
-```bash
-bash scripts/build.sh                 # example.md  -> example.pdf
-bash scripts/build.sh dokument.md     # dokument.md -> dokument.pdf
-bash scripts/build.sh in.md out.pdf   # exakt dieser Ausgabepfad
-bash scripts/build.sh --no-source a.md # ohne eingebettete Quelle
-bash scripts/build.sh --hard-breaks a.md  # Zeile bleibt Zeile
-bash scripts/build.sh --help          # Optionen + Schlüssel
-bash scripts/build.sh --version       # Versionen anzeigen
-```
-
-Ohne zweites Argument landet die Ausgabe neben der Quelle. Ist im Frontmatter ein `date`
-gesetzt, bekommt die Datei automatisch einen ISO-Präfix (`2026-06-19_dokument.pdf`);
-`isodate_praefix: false` schaltet dieses Präfix ab (das Datum bleibt in der Fußzeile). Ein
-ausdrücklich angegebener Ausgabepfad wird exakt so geschrieben, ohne Präfix.
-
-**Aufruf aus anderen Programmen** (z. B. als Zettlr-Exportziel): Der Exit-Code ist nur bei
-Erfolg 0, Fehler und Warnungen gehen kurz auf stderr. `build.sh` findet Typst auch mit
-minimalem `PATH` (GUI-Apps), weil es den vom Installer gemerkten Typst-Ordner selbst lädt.
-Ein- und Ausgabe dürfen absolute Pfade mit Leerzeichen sein; relative Pfade gelten relativ zum
-Aufrufverzeichnis, Bilder und Logo relativ zur Notiz. Ist die Umgebungsvariable **`RFD_BASE_DIR`**
-gesetzt, gelten Bild- und Logopfade relativ zu diesem Ordner — für Programme wie Zettlr, die bei
-ungespeicherten Änderungen eine temporäre Kopie der Notiz übergeben. Unter Windows läuft derselbe
-Aufruf über `rf-document.cmd`, inklusive `--no-source` und `--hard-breaks`; die CI prüft das unter
-Windows PowerShell 5.1.
-
-Der globale Befehl versteht dieselben Optionen: `rf-document --help` bzw. `rf-document --version`
-(`-h` / `-V` als Kurzform). Unter Windows zusätzlich als PowerShell-Switch: `rf-document -Help`
-bzw. `rf-document -Version`.
-
-| Option | Beschreibung |
-|--------|--------------|
-| `--hard-breaks` | Jede Zeile bleibt eine Zeile, wie im Editor getippt; wie `hard_breaks: true` |
-| `--no-source` | Markdown-Quelle **nicht** ins PDF einbetten (z. B. für Kunden-PDFs); wie `embed_source: false` |
-| `--version`, `-V` | rf-document- und Typst-Version ausgeben und beenden |
-| `--help`, `-h` | Hilfe (Optionen, Frontmatter-Schlüssel, Umgebungsvariablen) ausgeben und beenden |
-
-Die erzeugte PDF wird nach erfolgreichem Build automatisch im Standardprogramm geöffnet
-(Terminal und Rechtsklick, alle drei Systeme). Für Batch-/Cron-Läufe lässt sich das mit
-der Umgebungsvariable `RFD_NO_OPEN=1` abschalten.
-
-### Ohne Terminal (Rechtsklick)
-
-Nach der Einrichtung steht auf allen drei Systemen ein Rechtsklick-Eintrag bereit; die
-PDF/A landet jeweils neben der Quelle:
-
-- **Windows:** `.md` markieren → Rechtsklick → **Senden an → „Nach PDF-A (real-fast-document)"**
-- **macOS:** `.md` rechtsklicken → **Dienste / Quick Actions → „Nach PDF-A (real-fast-document)"**
-- **Linux:** `.md` rechtsklicken → **Öffnen mit → „Nach PDF-A (real-fast-document)"**
-
-## Frontmatter (optional)
-
-Ein YAML-Block am Dateianfang steuert einzelne Dokumente. Alle Schlüssel sind optional.
-**[`header.md`](header.md)** ist eine Vorlage mit allen Schlüsseln, ihren Standardwerten und
-Kommentaren — kopieren und anpassen:
-
-```yaml
----
-title: "Mein Dokument"  # Titelblock oben + Titel in der Kopfzeile ab Seite 1
-subtitle: "Workshop"    # Untertitel unter dem Titel
-client: "Muster GmbH"   # Kunde: klein und gesperrt über dem Titel
-author: "Ben Probe"     # Autor(en) unter dem Titel: "Datum · Autor"
-date: 2026-06-19        # Datum (ISO oder 19.06.2026): Präfix am Dateinamen + Datum unten rechts
-isodate_praefix: false  # ISO-Präfix am Dateinamen abschalten (Default: an, wenn date gesetzt)
-toc: true               # Inhaltsverzeichnis erzwingen (true) / unterdrücken (false)
-h1_break: false         # Kapitel-Seitenumbruch (vor jedem # H1) erzwingen / unterdrücken
-print_filename: false   # Dateiname unten links ausblenden (Default: true)
-lang: de                # Dokumentsprache (Datumsformat); Default de
-header: "Vertraulich"   # fester Kopfzeilentext ab Seite 1 (übersteuert den Running Header)
-watermark: "ENTWURF"    # diagonales Wasserzeichen unter allem
-logo: logo-kunde.png    # Logo nur für dieses Dokument (relativ zur Notiz oder absolut)
-logo-height: 15mm       # maximale Logohöhe (nur absolute Längen; Default 20mm, max. 25mm)
-embed_source: false     # Markdown-Quelle nicht einbetten (Default: true)
-hard_breaks: true       # jede Zeile bleibt eine Zeile (Default: false)
----
-```
-
-| Schlüssel | Werte | Wirkung |
-|-----------|-------|---------|
-| `title` | Text | **Dokumenttitel**: zentrierter Titelblock oben, zusätzlich in der Kopfzeile ab Seite 1, und PDF/A-Metadatentitel. Ohne `title` bleibt der Metadatentitel der Dateiname und es gibt keinen Titelblock. |
-| `subtitle` | Text | Untertitel unter dem Titel. |
-| `client` | Text | Kunde/Firma, klein und gesperrt über dem Titel. |
-| `author` | Text oder `[A, B]` | Zeile unter dem Titel: „Datum · Autor“ (nur was gesetzt ist). |
-| `date` | ISO oder `T.M.JJJJ` | Gesetzt → Ausgabedatei erhält den ISO-Präfix `JJJJ-MM-TT_name.pdf`, das Datum erscheint unten rechts, lokalisiert nach `lang` (de „19. Juni 2026", en „June 19, 2026"), **und** es wird als reproduzierbares PDF-Metadatendatum (`CreateDate`) gesetzt. Die Fußzeile wird dann 3-spaltig (Name · Seite mittig · Datum). Ohne `date` trägt das Metadatendatum die **Änderungszeit der Quelldatei** (nicht den Build-Zeitpunkt); ein gesetztes `SOURCE_DATE_EPOCH` gewinnt. |
-| `isodate_praefix` | `true` / `false` | Steuert nur den ISO-Präfix am **Dateinamen**. Ohne Angabe präfixt ein gesetztes `date` automatisch (rückwärtskompatibel); `false` schaltet das Präfix ab, ohne das Datum in der Fußzeile zu berühren. Ohne `date` wirkungslos. |
-| `toc` | `true` / `false` | Inhaltsverzeichnis erzwingen / unterdrücken. Ohne Angabe greift der Struktur-Automatismus (siehe unten). |
-| `h1_break` | `true` / `false` | Kapitel-Seitenumbruch (vor jedem `# H1`) erzwingen / unterdrücken. Ohne Angabe greift derselbe Automatismus, unabhängig von `toc`. |
-| `print_filename` | `true` / `false` | Angabe unten links anzeigen (Dateiname bzw. „Kunde · Titel“, siehe unten). Default `true`. |
-| `lang` | Sprachcode | Dokumentsprache, Datumsformat und Beschriftungen (Seite/Page, Inhalt/Contents, …): `de`, `en`, …. Default `de`. |
-| `header` | Text | Fester Kopfzeilentext ab **Seite 1**; übersteuert den Running Header (und den Titel im Kopf). |
-| `watermark` | Text | Diagonales, gespreiztes Wasserzeichen (fett, hellgrau) auf jeder Seite, **unter** allen anderen Elementen. |
-| `logo` | Pfad | Logo **nur für dieses Dokument** (PNG/JPG/SVG), relativ zur Notiz oder absolut; `~`, `$VAR`, `${VAR}` und `%VAR%` werden ersetzt. Überschreibt das globale Logo. Fehlt die Datei, warnt der Build und nimmt das globale Logo. |
-| `logo-height` | Länge | Maximale Logohöhe, nur absolute Längen (`15mm`, `1.2cm`, `40pt`); anderes wird ignoriert. Das Logo bleibt proportional und höchstens 60 mm breit. |
-| `hard_breaks` | `true` / `false` | Jeder Zeilenumbruch in der Quelle bleibt ein Zeilenumbruch (wie in Zettlr/Obsidian getippt). Default `false`: ein einzelner Umbruch wird zum Leerzeichen, wie in CommonMark. |
-| `embed_source` | `true` / `false` | Markdown-Quelle als Anhang einbetten. Default `true`; `false` (oder `--no-source`) für PDFs, die die Notiz nicht enthalten sollen. |
-
-Leere Werte (`subtitle: ""` oder nur `subtitle:`) werden ignoriert, nie ein Fehler.
-
-**Fußzeile links:** der Dateiname — sobald `client` oder `subtitle` gesetzt ist, stattdessen
-höchstens zwei Angaben aus Kunde, Titel und Untertitel in dieser Reihenfolge („Kunde · Titel“,
-ohne Kunde „Titel · Untertitel“).
-
-**Kopfzeile — Vorrang von oben:** (1) `header:` fester Text ab Seite 1; sonst (2) das jeweils
-aktive `# H1`-Kapitel als Running Header; davor, vor dem ersten Kapitel, (3) der **Titel**
-(`title:`), falls gesetzt. Text stets in Sans.
-
-**Struktur-Automatismus:** Ohne explizite Angabe entscheidet die Heuristik `#H1 + #H2 > 5`.
-Bei **mehr als fünf** Kapitel-/Unterüberschriften schaltet das Dokument in den *strukturierten
-Modus*: ein Inhaltsverzeichnis (nur H1 + H2) erscheint nach dem Titel **und** jedes Kapitel
-(`# H1`) beginnt auf einer neuen Seite. Bei **fünf oder weniger** bleibt es *kompakt* — kein
-Verzeichnis, die Kapitel laufen im Fluss. `toc` und `h1_break` schalten diese beiden Effekte
-**einzeln und unabhängig** (`true` erzwingt, `false` unterdrückt).
-
-Die Boolean-Schlüssel (`isodate_praefix`, `toc`, `h1_break`, `print_filename`, `embed_source`, `hard_breaks`) akzeptieren alle
-YAML-1.1-Schreibweisen, unabhängig von Groß-/Kleinschreibung: `true`/`false`, `yes`/`no`,
-`on`/`off` (sowie `"true"` in Anführungszeichen); `toc` und `h1_break` zusätzlich `auto`
-(= Automatismus). Ein leerer Wert wird still ignoriert, ein nicht erkannter Wert mit einer
-Warnung — in beiden Fällen greift der Default. Kommentare (`# …`) dürfen auf eigenen Zeilen und
-hinter Werten stehen.
-
-## Markdown — Kurzeinstieg
-
-Markdown deckt im Alltag fast alles ab: `*kursiv*`, `**fett**`, `` `inline-code` ``,
-Aufzählungen, nummerierte Listen, Aufgabenlisten (`- [ ]`), Tabellen, Zitate, Fußnoten,
-Definitionslisten und `[Links](https://typst.app)` funktionieren ohne Zusatzaufwand.
-Codeblöcke werden mit Syntax-Hervorhebung gesetzt, Formeln (`$…$`, `$$…$$`) über LaTeX-Syntax.
-Überschriften und Listen funktionieren auch ohne Leerzeile davor.
-
-**Zusätzlich zu CommonMark:**
-
-| Eingabe | Ergebnis |
-|---------|----------|
-| `==Text==` | Markierung (gelblicher Hintergrund) |
-| `> [!NOTE]` … `[!CAUTION]`, `> [!INFO]`, `[!TIPP]`, `[!WICHTIG]`, `[!HINWEIS]`, `[!ACHTUNG]` | Hinweisbox (Info, Tipp, Wichtig, Hinweis, Achtung; englisch bei `lang: en`), bricht nicht über die Seite |
-| Liste nur aus `- [ ] Aufgabe – Name, bis Datum` | Tabelle *Aufgabe · Wer · Bis · Status* (`bis`/`due`/`by`); überall leere Spalten entfallen |
-| gemischte Liste mit `- [ ]` / `- [x]` | Kästchen statt Aufzählungspunkt, bündig mit den Punkten |
-| `18. Oktober 2026` am Zeilenanfang | bleibt ein Datum, keine nummerierte Liste (Monatsnamen de/en, auch abgekürzt) |
-| `<!-- pagebreak -->`, `\newpage` (eigene Zeile) | Seitenumbruch |
-| `"…"`, `'…'`, `geht's` | gerade Anführungszeichen nach Sprache: `lang: de` „…“ ‚…‘, sonst “…” ‘…’; Apostroph ’ |
-| `„…“`, `‚…‘`, `»…«`, `“…”` | getippte typografische Zeichen bleiben exakt erhalten |
-| `--`, `---`, `...` | – (Halbgeviertstrich), — (Geviertstrich), … (Auslassungszeichen); nicht in Code, Formeln und HTML |
-
-Snippet-Vorlage für Aufgaben: `- [ ] ${1:Aufgabe} – ${2:Name}, bis ${3:Datum}$0`
-
-**Bilder:** `![Untertitel](pfad.svg)` wird als nummerierte Abbildung mit Untertitel gesetzt,
-`{width=50%}` (auch `8cm`, `80mm`, `300px`) dahinter setzt die Breite. Lokale Bilder werden
-eingebettet; relative Pfade sind **relativ zum Dokument**, absolute gehen auch, und `~`, `$VAR`,
-`${VAR}` sowie `%VAR%` werden ersetzt (`USER`↔`USERNAME`, `HOME`↔`USERPROFILE` als Rückfall).
-Ein **fehlendes Bild bricht den Export nie ab**: Im PDF steht kursiv „[Bild fehlt: pfad]“, auf
-stderr eine Warnung. Unter Windows sind nur Bilder auf dem Laufwerk der Installation erreichbar. **Remote-Bilder**
-(`http(s)://`, protokoll-relativ `//host`, `data:`) lassen sich offline nicht laden — Typst hat
-bewusst keinen Netzzugriff — und entfallen daher automatisch; der Build meldet, wie viele Bilder
-übersprungen wurden.
-
-**Diagramme:** Ein ` ```mermaid `-Codeblock wird offline gezeichnet (Typst-Package **mmdr**,
-kein Netz), in ruhigen Farben und mit der variablen Source Sans 3. Fehlerhafte Syntax bricht
-den Export nicht ab.
-
-Der **Dokumenttitel** kommt aus dem Frontmatter (`title:`), nicht aus dem Markdown. `# H1` ist das
-oberste **Kapitel** (feine Linie, Seitenumbruch bei `h1_break`, läuft im Seitenkopf mit); `## H2`
-und `### H3` sind Unterabschnitte (`###` in Body-Größe, fein unterstrichen); `#### H4` und tiefer kursiv in Body-Größe.
+## Schnellstart
 
 ```markdown
 ---
-title: "Dokumenttitel"
+title: "Kick-off Relaunch"
+client: "Muster GmbH"
+date: 2026-10-13
 ---
 
-# Erstes Kapitel
+# Agenda
 
-Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
+Besprechung mit dem Kunden.
 
-## Unterabschnitt
-
-- Punkt eins
-- Punkt zwei
-
-[^1]: Die Fußnote erscheint am unteren Seitenrand.
+- [ ] Sitemap erstellen – Ben Probe, bis 17.10.
 ```
 
-## Layout-Spezifikation
+```bash
+rf-document notiz.md    # -> 2026-10-13_notiz.pdf neben der Notiz
+```
+
+Eine Vorlage mit **allen** Einstellungen ist [`header.md`](header.md); ein Rundgang durch
+alle Funktionen ist [`example.md`](example.md).
+
+## Verwendung
+
+### Terminal
+
+```bash
+rf-document notiz.md                # PDF neben der Notiz
+rf-document notiz.md ziel.pdf       # genau dieser Pfad
+rf-document --no-source notiz.md    # ohne Quelle im PDF
+rf-document --hard-breaks notiz.md  # Zeile bleibt Zeile
+rf-document --help                  # alle Optionen
+```
+
+Im Projektordner funktioniert dasselbe mit `bash scripts/build.sh …` (ohne Argument wird
+`example.md` gebaut).
+
+**Ausgabename:** Ohne zweites Argument landet das PDF neben der Quelle. Mit `date:` im
+Frontmatter bekommt es einen ISO-Präfix (`2026-10-13_notiz.pdf`), abschaltbar mit
+`isodate_praefix: false`. Ein ausdrücklich angegebener Ausgabepfad wird exakt so geschrieben.
+Nach dem Build öffnet sich das PDF im Standardprogramm.
+
+| Option | Wirkung |
+|--------|---------|
+| `--no-source` | Markdown-Quelle **nicht** ins PDF einbetten (z. B. Kunden-PDFs); wie `embed_source: false` |
+| `--hard-breaks` | Jede Zeile bleibt eine Zeile, wie im Editor getippt; wie `hard_breaks: true` |
+| `--version`, `-V` | rf-document- und Typst-Version ausgeben |
+| `--help`, `-h` | Hilfe ausgeben |
+
+Unter Windows gelten dieselben Optionen, zusätzlich `-Version` und `-Help`.
+
+| Umgebungsvariable | Wirkung |
+|-------------------|---------|
+| `RFD_NO_OPEN=1` | PDF nach dem Build nicht öffnen (Batch, Cron, andere Programme) |
+| `RFD_BASE_DIR=ordner` | Bild- und Logopfade relativ zu diesem Ordner statt zum Ordner der Quelle |
+| `TYPST=/pfad/typst` | bestimmtes Typst-Binary verwenden (≥ 0.15) |
+| `SOURCE_DATE_EPOCH` | PDF-Datum festlegen, wenn kein `date:` gesetzt ist |
+
+### Rechtsklick
+
+Nach der Installation steht ein Rechtsklick-Eintrag bereit; das PDF landet neben der Quelle.
+
+- **macOS:** `.md` rechtsklicken → **Dienste / Quick Actions → „Nach PDF-A (real-fast-document)“**
+- **Linux:** `.md` rechtsklicken → **Öffnen mit → „Nach PDF-A (real-fast-document)“**
+- **Windows:** `.md` markieren → Rechtsklick → **Senden an → „Nach PDF-A (real-fast-document)“**
+
+### Aus anderen Programmen (z. B. Zettlr)
+
+`rf-document` ist als Exportziel gebaut:
+
+- Der Exit-Code ist nur bei Erfolg 0; Fehler und Warnungen gehen kurz und auf Deutsch auf stderr.
+- Typst wird auch mit minimalem `PATH` gefunden (Start aus einer GUI-App).
+- Ein- und Ausgabe dürfen absolute Pfade mit Leerzeichen sein, das Arbeitsverzeichnis ist egal.
+- Bei einer temporären Kopie der Notiz (Zettlr mit ungespeicherten Änderungen) zeigt
+  `RFD_BASE_DIR` auf den echten Notizordner, damit Bilder und Logo gefunden werden.
+- Unter Windows läuft derselbe Aufruf über `rf-document.cmd`; die CI prüft das unter Windows
+  PowerShell 5.1.
+
+```bash
+RFD_NO_OPEN=1 RFD_BASE_DIR="/pfad/zur/notiz" rf-document --no-source --hard-breaks "/pfad/notiz.md" "/pfad/ziel.pdf"
+```
+
+## Frontmatter
+
+Ein YAML-Block am Dateianfang steuert einzelne Dokumente. Alle Schlüssel sind optional;
+**[`header.md`](header.md)** enthält jeden Schlüssel mit Standardwert und Kommentar.
+
+```yaml
+---
+title: "Kick-off Relaunch"   # Titel: Titelblock, Kopfzeile, PDF-Titel
+subtitle: "Workshop"         # Untertitel
+client: "Muster GmbH"        # Kunde, klein und gesperrt über dem Titel
+author: [Anna, Ben]          # Autor(en): Zeile "Datum · Autor"
+date: 13.10.2026             # Datum (ISO oder T.M.JJJJ)
+lang: de                     # Sprache; Standard de
+watermark: "ENTWURF"         # Wasserzeichen
+embed_source: false          # Quelle nicht einbetten
+hard_breaks: true            # Zeile bleibt Zeile
+---
+```
+
+| Schlüssel | Werte | Standard | Wirkung |
+|-----------|-------|----------|---------|
+| `title` | Text | — | Titelblock oben, Kopfzeile ab Seite 1, PDF-Metadatentitel. Ohne `title` kein Titelblock; der PDF-Titel ist dann der Dateiname. `# …` im Text ist immer ein Kapitel, nie der Titel. |
+| `subtitle` | Text | — | Untertitel unter dem Titel. |
+| `client` | Text | — | Kunde/Firma, klein und gesperrt über dem Titel. |
+| `author` | Text oder `[A, B]` | — | Zeile unter dem Titel: „Datum · Autor“. |
+| `date` | `2026-10-13` oder `13.10.2026` | — | Datum unten rechts (nach `lang`), ISO-Präfix am Dateinamen, festes PDF-Datum. Ein nicht erkanntes Datum erscheint unverändert, ohne Präfix. |
+| `isodate_praefix` | `true` / `false` | `true` | ISO-Präfix am Dateinamen, wenn `date` gesetzt ist. |
+| `lang` | `de`, `en`, … | `de` | Sprache: Datum, Silbentrennung, Anführungszeichen, Beschriftungen (Seite/Page, Inhalt/Contents, Aufgabe/Task, Hinweisboxen). |
+| `toc` | `auto` / `true` / `false` | `auto` | Inhaltsverzeichnis (nur H1 + H2); `auto` ab mehr als fünf H1/H2. |
+| `h1_break` | `auto` / `true` / `false` | `auto` | Jedes Kapitel (`#`) auf neuer Seite; `auto` wie bei `toc`. |
+| `header` | Text | — | Fester Kopfzeilentext ab Seite 1 statt des laufenden Kapitels. |
+| `print_filename` | `true` / `false` | `true` | Angabe unten links (Dateiname bzw. „Kunde · Titel“) ein-/ausblenden. |
+| `watermark` | Text | — | Diagonales, hellgraues Wasserzeichen unter allem. |
+| `logo` | Pfad | globales Logo | Logo nur für dieses Dokument (PNG/JPG/SVG), relativ zur Notiz oder absolut. Fehlt die Datei: Warnung, globales Logo. |
+| `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximale Logohöhe (höchstens 25 mm); das Logo bleibt proportional und höchstens 60 mm breit. |
+| `embed_source` | `true` / `false` | `true` | Markdown-Quelle als Anhang ins PDF einbetten. |
+| `hard_breaks` | `true` / `false` | `false` | Jeder Zeilenumbruch bleibt einer (wie in Zettlr/Obsidian getippt). |
+
+**Regeln:** Leere Werte (`subtitle: ""` oder nur `subtitle:`) werden ignoriert, nie ein Fehler.
+Ja/Nein-Schlüssel verstehen `true`/`false`, `yes`/`no`, `on`/`off` in jeder Schreibweise; ein
+nicht erkannter Wert erzeugt eine Warnung, der Standard bleibt. Kommentare (`# …`) dürfen auf
+eigenen Zeilen und hinter Werten stehen. In Pfaden (`logo:`, Bilder) werden `~`, `$VAR`,
+`${VAR}` und `%VAR%` ersetzt.
+
+## Markdown
+
+CommonMark funktioniert wie gewohnt — `*kursiv*`, `**fett**`, `` `Code` ``, Links, Listen,
+Zitate, Fußnoten, Tabellen. Überschriften und Listen brauchen keine Leerzeile davor. Die
+folgenden Abschnitte beschreiben, was darüber hinaus gilt.
+
+### Text & Typografie
+
+| Eingabe | Ergebnis |
+|---------|----------|
+| `"Zitat"`, `'Zitat'` | nach Sprache: `lang: de` „Zitat“ ‚Zitat‘, sonst “Zitat” ‘Zitat’ |
+| `geht's` | geht’s (Apostroph) |
+| `„…“`, `‚…‘`, `»…«`, `“…”` | getippte Zeichen bleiben exakt erhalten |
+| `3--5`, `Wort---Wort`, `...` | 3–5, Wort—Wort, … |
+| `==Markierung==` | gelblich hinterlegt |
+| `~~durchgestrichen~~` | durchgestrichen |
+| `z. B.`, `5 %`, `12 pt`, `1.234,56 €` | geschützte Leerzeichen, kein Zeilenumbruch dazwischen |
+| `<!-- pagebreak -->`, `\newpage` | Seitenumbruch (eigene Zeile) |
+| `18. Oktober 2026` am Zeilenanfang | bleibt ein Datum, keine nummerierte Liste ab 18 |
+
+Code, Formeln und HTML bleiben von der Typografie unberührt. Im Fließtext stehen
+Mediävalziffern, in Tabellen Versalziffern gleicher Breite.
+
+**Zeilenumbrüche:** Standard ist CommonMark — ein einzelner Umbruch wird zum Leerzeichen,
+zwei Leerzeichen oder `\` am Zeilenende erzwingen einen Umbruch. Mit `hard_breaks: true`
+(oder `--hard-breaks`) bleibt jede Zeile eine Zeile.
+
+### Titel, Überschriften und Struktur
+
+- Der **Titel** kommt aus `title:` — zentriert oben, in der Kopfzeile, im PDF-Titel.
+- `#` ist ein **Kapitel**: feine Linie darunter, läuft in der Kopfzeile mit, auf Wunsch neue Seite.
+- `##` und `###` sind Unterabschnitte (`###` fein unterstrichen), `####` und tiefer kursiv.
+- **Automatik:** Bei mehr als fünf `#`/`##`-Überschriften erscheint ein Inhaltsverzeichnis
+  (H1 + H2) und jedes Kapitel beginnt auf einer neuen Seite. `toc` und `h1_break` schalten
+  beides einzeln.
+- **Kopfzeile:** `header:` (fester Text) vor aktuellem Kapitel vor Titel.
+- **Fußzeile:** links Dateiname bzw. „Kunde · Titel“ (sobald `client` oder `subtitle`
+  gesetzt ist), Seitenzahl, rechts das Datum. Lange Angaben brechen um.
+
+### Listen und Aufgaben
+
+Aufzählungen (auf allen Ebenen ein kleines Quadrat), nummerierte und verschachtelte Listen
+funktionieren wie gewohnt. **Aufgaben:**
+
+```markdown
+- [ ] Sitemap erstellen – Ben Probe, bis 17.10.
+- [x] Termin festlegen – Anna Beispiel
+- [ ] Bildrechte klären – bis Freitag
+```
+
+Eine Liste, die **nur** aus Aufgaben besteht, wird zur Tabelle *Aufgabe · Wer · Bis · Status*
+(englisch *Task · Owner · Due · Status*). Wer und Bis stehen hinter einem Gedankenstrich
+(`–`, `—` oder ` - `), der Termin hinter `bis`, `due` oder `by`. Spalten, die überall leer
+wären, entfallen. In gemischten Listen ersetzt ein Kästchen den Aufzählungspunkt; erledigt ist
+es dunkel gefüllt mit Häkchen.
+
+Snippet-Vorlage: `- [ ] ${1:Aufgabe} – ${2:Name}, bis ${3:Datum}$0`
+
+### Hinweisboxen
+
+```markdown
+> [!HINWEIS]
+> Text der Box, auch mit **Auszeichnung** und Listen.
+```
+
+| GitHub-Schlüsselwort | deutsches Schlüsselwort | Titel (de / en) | Farbe |
+|----------------------|-------------------------|-----------------|-------|
+| `[!NOTE]` | `[!INFO]` | Info / Note | Blau `#2f6aa8` |
+| `[!TIP]` | `[!TIPP]` | Tipp / Tip | Grün `#3b7d3a` |
+| `[!IMPORTANT]` | `[!WICHTIG]` | Wichtig / Important | Violett `#7a4fb0` |
+| `[!WARNING]` | `[!HINWEIS]` | Hinweis / Warning | Orange `#b05a1a` |
+| `[!CAUTION]` | `[!ACHTUNG]` | Achtung / Caution | Rot `#b5452b` |
+
+Eine Box bricht nie über eine Seite. Ein Zitat ohne Schlüsselwort bleibt ein eingerücktes,
+kursives Zitat.
+
+### Tabellen
+
+Pipe-Tabellen in kompakter Tabellenschrift (9 pt Medium). Jede Spalte ist so breit wie ihr
+Inhalt; kleine Tabellen bleiben schmal, bei Platzmangel brechen textreiche Spalten um. Spalten
+nur aus Zahlen oder Beträgen stehen rechtsbündig; die Ausrichtung aus der Trennzeile (`:--`,
+`--:`, `:-:`) hat Vorrang. Der Kopf wiederholt sich auf Folgeseiten; Wörter werden in Zellen
+nicht getrennt. Alle Tabellenformen zeigt
+[`tests/fixtures/tables-showcase.md`](tests/fixtures/tables-showcase.md).
+
+### Bilder
+
+```markdown
+![Bildunterschrift](bilder/foto.png){width=50%}
+```
+
+- Mit Alt-Text eine nummerierte Abbildung mit Unterschrift, ohne Alt-Text nur das Bild.
+- Breite per `{width=…}` in `%`, `mm`, `cm`, `in`, `pt` oder `px`.
+- Pfade relativ zur Notiz (bzw. zu `RFD_BASE_DIR`) oder absolut; `~`, `$VAR`, `${VAR}`,
+  `%VAR%` werden ersetzt.
+- Ein **fehlendes Bild bricht den Export nie ab**: Im PDF steht „[Bild fehlt: pfad]“, auf
+  stderr eine Warnung.
+- **Remote-Bilder** (`http(s)://`, `data:`) entfallen offline; der Build meldet ihre Anzahl.
+- Unter Windows sind nur Bilder auf dem Laufwerk der Installation erreichbar.
+
+### Diagramme
+
+````markdown
+```mermaid
+flowchart LR
+  A[Kick-off] --> B{Konzept ok?}
+  B -- ja --> C[Design]
+```
+````
+
+Mermaid-Diagramme werden offline gezeichnet (Typst-Package **mmdr**), in ruhigen Farben und
+mit der variablen Source Sans 3. Fehlerhafte Syntax bricht den Export nicht ab.
+
+### Formeln, Code, Fußnoten, Definitionslisten
+
+- **Formeln** in LaTeX-Syntax: `$E = mc^2$` im Text, `$$ … $$` abgesetzt.
+- **Code** mit Syntax-Hervorhebung in Source Code Pro.
+- **Fußnoten** (`[^1]`) stehen am Seitenfuß mit hängendem Einzug.
+- **Definitionslisten** im Pandoc-Stil: Begriff, darunter `: Erläuterung`.
+
+### Sonderzeichen und Emoji
+
+Zeichen, die Source nicht kennt, kommen einzeln aus **Noto Emoji** und **Noto Sans
+Symbols 2** — einfarbig, PDF/A-tauglich: 🚀 ✓ ⚠ → ★ ½ €.
+
+## Layout
 
 | Aspekt | Wert |
 |--------|------|
 | Format | DIN A4 Hochformat |
 | Ränder | links 35 mm · rechts 30 mm · oben 35 mm · unten 20 mm (Satzspiegel 145 mm, ~95 Zeichen je Zeile) |
-| PDF-Standard | PDF/A-3b, Schriften eingebettet, Quelle als Anhang |
-| **Titel** | aus `title:` — zentriert oben (Serif) + in der Kopfzeile ab Seite 1; kein Heading, nicht im TOC. Darüber optional der Kunde (klein, gesperrt), darunter Untertitel und „Datum · Autor“ |
-| **H1** | **Kapitel** (Serif, feine Linie dicht darunter); beginnt bei `h1_break` auf neuer Seite und läuft im Kopf mit |
-| **H2 / H3** | Unterabschnitte (Serif, ohne Linie); **H3** fein unterstrichen, **H4** und tiefer kursiv, beide in Body-Größe |
-| Kopf | `header:` fester Text · sonst aktives H1-Kapitel · vor dem 1. Kapitel der Titel. Text in **Sans** |
-| **TOC** | bedingt: ab `#H1 + #H2 > 5` → Inhaltsverzeichnis (nur H1 + H2) + Kapitel je neue Seite; per `toc`/`h1_break` übersteuerbar |
-| Kopf rechts | Logo (`logo:` pro Dokument, sonst `logo.svg` → `.png` → `.jpg`), proportional in 20 mm × 60 mm (Höhe per `logo-height`) — **optional** |
-| Fuß | **Sans**; ohne Datum: Name links · Seite rechts. Mit Datum: Name links · Seite mittig · Datum rechts. Name = Dateiname bzw. „Kunde · Titel“ |
-| Überschriften | **Source Serif 4**, `luma(8%)`, linksbündig, ohne Balken; **nur H1** trägt eine feine Hairline dicht darunter, alle anderen grenzen sich über Größe/Abstand ab |
-| Wasserzeichen | optional (`watermark:`): diagonal, gespreizt, fett, hellgrau (Einkanal-Grau → sauberes K im Druck), **unter** allem |
-| Fließtext | Source Sans 3, 10 pt, `wght` 380, Mediävalziffern, Blocksatz mit Silbentrennung (Zeilenabstand 0.85em), `luma(13%)`; **fett** = 560 (`strong.delta` 180) |
-| Tabellen | kompakte Tabellenschrift (Source Sans 3, 9 pt Medium, Laufweite −2 %); **Spaltenbreiten nach Inhalt** über Typsts `auto`-Spalten: kleine Tabellen bleiben schmal, bei Platzmangel verteilt Typst den Raum und textreiche Spalten brechen um. Zahlen-/Betragsspalten rechtsbündig, Ausrichtung aus der Trennzeile (`:--`, `--:`, `:-:`) hat Vorrang; Ziffern gleich breit (Versalziffern); Flattersatz; Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien; **Kopfzeile wiederholt sich** bei Seitenumbruch |
-| Code | Source Code Pro, 9 pt, mit Syntax-Hervorhebung |
-| Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): gezeichnetes Kästchen (erledigt: dunkel gefüllt mit weißem Häkchen), bündig mit den Punkten; reine Aufgabenlisten als Tabelle *Aufgabe · Wer · Bis · Status* (Spaltenbreiten nach Inhalt, wie alle Tabellen) |
-| Hinweisboxen | Fläche aufgehellt, 2,5-pt-Balken links, Titel klein + gesperrt in Versalien; Farben: Info `#2f6aa8`, Tipp `#3b7d3a`, Wichtig `#7a4fb0`, Hinweis `#b05a1a`, Achtung `#b5452b` |
-| Bilder | lokal: nummerierte Abbildung mit Untertitel, Breite per `{width=…}`; fehlend: „[Bild fehlt: pfad]“ statt Abbruch; remote (`http(s)`, `//host`, `data:`) offline automatisch entfernt |
-| Diagramme | ` ```mermaid ` offline per mmdr, mittig, Flächen `#f4f2ee`, Rahmen `#b9b2a6`, Linien `#6b6b6b`, Text `#2b2b2b`, Notizen `#fbeab0`; Beschriftung Source Sans 3 (variabel, Medium) |
-| Zitate | beidseitig eingerückt (schmaler als Satzspiegel) + kursiv |
-| Emoji/Symbole | zeichenbasierter Fallback: Noto Emoji + Noto Sans Symbols 2 (monochrom, nur für Zeichen ohne Source-Glyph) |
-| Umbruchschutz | Überschriften nie allein am Seitenfuß (sticky); Abbildung + Unterschrift bleiben zusammen; Schusterjungen/Hurenkinder/Runts vermieden (`costs`); **geschützte Leerzeichen** in deutschen Abkürzungen (z. B., d. h., u. a., …) und zwischen Zahl + Einheit/Prozent/Währung (12 pt, 5 %, 1.234,56 €) |
-
-### Typografie (Schriftgrade)
+| Kopf | Kapitel bzw. `header:` links (Sans), Logo rechts in höchstens 20 × 60 mm, Linie darunter |
+| Fuß | Linie; Name links · Seite · Datum rechts (ohne Datum: Name · Seite) |
+| Titelblock | zentriert: Kunde (gesperrt), Titel, Untertitel, „Datum · Autor“ |
+| Überschriften | Source Serif 4, linksbündig; nur H1 mit feiner Linie; bleiben nie allein am Seitenfuß |
+| Fließtext | Blocksatz mit Silbentrennung; Schusterjungen und Hurenkinder werden vermieden |
+| Tabellen | Kopf zentriert und fett mit Linie, leichtes Zebra, senkrechte Trennlinien |
+| Abbildungen | Bild und Unterschrift bleiben zusammen |
+| Wasserzeichen | diagonal, gespreizt, fett, hellgrau (reines Grau, sauber im Druck) |
 
 | Element | Schrift | Grad |
 |---------|---------|------|
-| Fließtext | Source Sans 3 (`wght` 380), fett 560 | 10 pt, Zeilenabstand 0.85em |
-| Titel (`title:`) | Source Serif 4 (`wght` 470) | 16 pt, zentriert |
-| Kapitel (H1) | Source Serif 4 (`wght` 470) | 14 pt, feine Linie darunter |
-| H2 | Source Serif 4 (`wght` 470) | 12 pt, ohne Linie |
-| H3 | Source Serif 4 (`wght` 380) | 10 pt, fein unterstrichen |
-| H4+ | Source Serif 4 (`wght` 380) kursiv | 10 pt |
-| TOC-Titel „Inhalt" | Source Serif 4 (`wght` 470) | 14 pt |
-| TOC-Einträge (H1 + H2) | Source Sans 3 (`wght` 380) | 11 pt, gleiche Zeilenabstände |
-| Kopf (Text) | Source Sans 3 (`wght` 380) | 11 pt |
-| Tabellen | Source Sans 3 Medium (`wght` 500), Laufweite −2 %; Code 8,5 pt | 9 pt |
-| Bildunterschrift | Source Sans 3 | 9 pt |
-| Code | Source Code Pro | 9 pt |
-| Fußzeile | Source Sans 3 | 9 pt |
+| Fließtext | Source Sans 3 (`wght` 380), fett 560 | 10 pt, Zeilenabstand 0,85 em |
+| Titel | Source Serif 4 (`wght` 470) | 16 pt |
+| Kapitel (H1) | Source Serif 4 (`wght` 470) | 14 pt |
+| H2 | Source Serif 4 (`wght` 470) | 12 pt |
+| H3 / H4+ | Source Serif 4 (`wght` 380), unterstrichen / kursiv | 10 pt |
+| Inhaltsverzeichnis | Source Serif 4 / Source Sans 3 | 14 pt / 11 pt |
+| Kopfzeile | Source Sans 3 | 11 pt |
+| Tabellen | Source Sans 3 Medium (`wght` 500), Laufweite −2 % | 9 pt |
+| Code / Bildunterschrift / Fußzeile | Source Code Pro / Source Sans 3 | 9 pt |
 
-## Aufbau
+## PDF/A, Quelle und Metadaten
 
-```
-template.typ                Typst-Template: Seitenlayout + ruft cmarker auf der Quelle auf
-lib/markdown.typ            Markdown-Vorverarbeitung in Typst (für alle Systeme gleich)
-scripts/build.sh            Pipeline Markdown -> PDF/A (macOS/Linux): Frontmatter, Pfade, Aufruf
-scripts/test-pdf.sh         End-to-End-Tests: baut tests/fixtures/*.md und prüft den PDF-Text
-scripts/convert.ps1         Windows-Konverter (von "Senden an" aufgerufen)
-scripts/fetch-fonts.sh      bündelt variable Source-Fonts nach ./fonts
-scripts/fetch-typst-packages.sh  vendort cmarker + mitex + mmdr nach ./vendor (offline)
-scripts/bootstrap.sh        Ein-Zeiler-Installer (macOS/Linux): klont + ruft install.sh
-scripts/bootstrap.ps1       Ein-Zeiler-Installer (Windows): klont + ruft install.ps1
-scripts/install.sh          macOS/Linux-Setup: Werkzeug + Fonts + Packages + Rechtsklick
-scripts/install.ps1         Windows-Setup: Werkzeug + Fonts + Packages + "Senden an"
-scripts/rfd-convert.sh      Konverter-Dispatcher der Rechtsklick-Integration (macOS/Linux)
-fonts/                      variable Source-OTF (Serif 4 / Sans 3 / Code Pro) + Noto-Fallbacks
-vendor/                     gevendorte Typst-Packages cmarker + mitex + mmdr (git-ignored)
-logo.svg                    Kopf-Logo (optional)
-assets/pipeline.svg         lokale Beispielabbildung für example.md
-example.md                  volle Beispiel-/Falltest-Datei (alle Elemente, dokumentierter Frontmatter)
-header.md                   Frontmatter-Vorlage: alle Schlüssel mit Standardwerten und Kommentaren
-tests/fixtures/             Testnotizen (je Funktion eine, plus Grenzfälle)
-```
+- **PDF/A-3b**, alle Schriften eingebettet.
+- Die **Markdown-Quelle** liegt als Anhang im PDF (unter ihrem Dateinamen, ohne lokalen Pfad)
+  und lässt sich z. B. mit `mutool extract datei.pdf` wieder herauslösen. Abschalten mit
+  `embed_source: false` oder `--no-source`.
+- Das **PDF-Datum** ist das `date:` der Notiz, sonst die Änderungszeit der Quelle — nie der
+  Zeitpunkt des Builds.
 
-**Tests:** `bash scripts/test-pdf.sh` baut alle Testnotizen und prüft den Text der PDFs sowie die
-Schnittstelle (exakter Ausgabepfad, Exit-Codes, eingebettete Quelle, minimaler `PATH`). Benötigt
-`pdftotext` (poppler) oder `mutool` (mupdf). Die CI führt die Tests bei jedem Push aus.
+## Schriften
+
+Nur die **variablen Source-Schriften von Adobe** (Source Serif 4, Source Sans 3, Source Code
+Pro; Stärken über die `wght`-Achse). Für Zeichen ohne Source-Glyph springen einzeln **Noto
+Emoji** (variabel) und **Noto Sans Symbols 2** ein, beide einfarbig. Details:
+[fonts/README.md](fonts/README.md).
 
 ## Anpassen
 
-- **Frontmatter** steuert einzelne Dokumente (Datum, TOC, Umbruch, Dateiname, Sprache) — siehe oben.
-- **Dateiname / Datum / Titel** werden zur Compile-Zeit als Typst-`--input` übergeben
-  (`scripts/build.sh`) und im Template über `sys.inputs` gelesen.
-- **Logo austauschen:** Das globale Logo liegt **im Installordner** und gilt für **alle**
-  Dokumente; ein einzelnes Dokument kann per `logo:` im Frontmatter ein eigenes setzen. Standardpfade nach der Schnellinstallation:
-  - macOS / Linux: `~/.local/share/real-fast-document/logo.svg`
-  - Windows: `%LOCALAPPDATA%\real-fast-document\logo.svg`
+- **Globales Logo:** `logo.svg`, `logo.png` oder `logo.jpg` im Installordner
+  (`~/.local/share/real-fast-document`, Windows `%LOCALAPPDATA%\real-fast-document`);
+  genommen wird die erste vorhandene Datei. Ohne Logo baut rf-document mit Hinweis weiter. Pro
+  Dokument: `logo:` im Frontmatter.
+- **Ränder, Schriften, Farben, Schriftgrade:** gesammelt oben in `template.typ`.
+- **PDF/A-Grad:** `standard` in `scripts/build.sh` (`a-1b`, `a-2b`, `a-3b`); das Einbetten der
+  Quelle setzt `a-3b` voraus.
+- **Package-Versionen:** cmarker, mitex und mmdr sind in `scripts/fetch-typst-packages.sh` und
+  `scripts/install.ps1` gepinnt.
 
-  Den Installpfad im Zweifel selbst ermitteln — der installierte Befehl verrät ihn:
+## Entwicklung
 
-  ```bash
-  cat "$(command -v rf-document)"                                  # macOS / Linux
-  ```
+```
+template.typ                Layout und Aufruf von cmarker
+lib/markdown.typ            Markdown-Vorverarbeitung (für alle Systeme gleich)
+scripts/build.sh            Konverter macOS/Linux: Frontmatter, Pfade, Aufruf
+scripts/convert.ps1         Konverter Windows ("Senden an", rf-document.cmd)
+scripts/install.sh|.ps1     Einrichtung: Typst, Schriften, Packages, Rechtsklick, Befehl
+scripts/bootstrap.sh|.ps1   Ein-Befehl-Installation, Update und Deinstallation
+scripts/rfd-convert.sh      Rechtsklick-Dispatcher (macOS/Linux)
+scripts/fetch-fonts.sh      lädt die Schriften nach ./fonts
+scripts/fetch-typst-packages.sh  lädt cmarker, mitex, mmdr nach ./vendor
+scripts/test-pdf.sh         End-to-End-Tests (macOS/Linux)
+scripts/test-windows.ps1    Windows-Tests (CI, Windows PowerShell 5.1)
+tests/fixtures/             Testnotizen, u. a. tables-showcase.md (alle Tabellenformen)
+example.md                  Rundgang durch alle Funktionen
+header.md                   Frontmatter-Vorlage mit allen Schlüsseln
+fonts/, assets/, logo.svg   Schriften, Beispielgrafik, Standard-Logo
+```
 
-  ```powershell
-  type "$env:LOCALAPPDATA\Microsoft\WindowsApps\rf-document.cmd"   # Windows
-  ```
-
-  Gewählt wird das **erste vorhandene** aus `logo.svg` → `logo.png` → `logo.jpg`; die
-  bestehende Datei ersetzen (oder die anderen Formate entfernen). Fehlt ein Logo, baut die
-  Pipeline mit Hinweis weiter. Maximale Höhe pro Dokument per `logo-height:`.
-- **Ränder, Fonts, Farben, Schriftgrade** stehen gesammelt oben in `template.typ`
-  (`#set page`, `#set text`, `head-color`, `heading-text`).
-- **Anderer PDF/A-Grad**: `standard` in `scripts/build.sh` ändern (`a-1b`, `a-2b`, `a-3b`).
-  Das Einbetten der Quelle setzt `a-3b` voraus.
-- **Quelle als Anhang**: Die Markdown-Datei wird via `pdf.attach` ins PDF eingebettet (unter
-  ihrem Dateinamen, ohne lokalen Pfad) und lässt sich z. B. mit `mutool extract datei.pdf`
-  wieder herauslösen. Abschalten mit `--no-source` oder `embed_source: false`.
-- **Package-Versionen**: cmarker/mitex/mmdr sind in `scripts/fetch-typst-packages.sh` und
-  `scripts/install.ps1` gepinnt; zum Aktualisieren dort die Version anheben und neu vendoren.
+**Tests:** `bash scripts/test-pdf.sh` baut alle Testnotizen und prüft den Text der PDFs, die
+Tabellengeometrie und die Schnittstelle (Ausgabepfad, Exit-Codes, eingebettete Quelle,
+minimaler `PATH`, Pfade mit Leerzeichen, `RFD_BASE_DIR`). Benötigt `pdftotext` (poppler) oder
+`mutool` (mupdf). Die CI führt sie auf Linux aus, dazu `scripts/test-windows.ps1` auf Windows.
 
 ## Versionierung
 
@@ -369,6 +421,6 @@ Schnittstelle (exakter Ausgabepfad, Exit-Codes, eingebettete Quelle, minimaler `
 
 ## Lizenz
 
-MIT — siehe [LICENSE](LICENSE). Die gebündelten Fonts unter `fonts/` stehen unter der
-SIL Open Font License 1.1 (siehe [fonts/README.md](fonts/README.md)). Die gevendorten Packages
-unter `vendor/` tragen ihre eigenen Lizenzen (cmarker: MIT, mitex: Apache-2.0, mmdr: MIT).
+MIT — siehe [LICENSE](LICENSE). Die Schriften unter `fonts/` stehen unter der SIL Open Font
+License 1.1 ([fonts/README.md](fonts/README.md)); die Packages unter `vendor/` tragen ihre
+eigenen Lizenzen (cmarker: MIT, mitex: Apache-2.0, mmdr: MIT).

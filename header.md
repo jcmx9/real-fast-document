@@ -1,8 +1,9 @@
 ---
 # Vorlage: alle Frontmatter-Schlüssel von rf-document mit ihren Standardwerten.
-# Kopieren, nicht benötigte Zeilen löschen oder leer lassen – leere Werte
-# ("" oder nichts hinter dem Doppelpunkt) werden ignoriert, nie ein Fehler.
-# Ja/Nein-Schlüssel verstehen true/false, yes/no, on/off.
+# Die eingetragenen Werte gelten auch, wenn ein Schlüssel fehlt – kopieren und
+# nur ändern, was abweichen soll. Leere Werte ("" oder nichts hinter dem
+# Doppelpunkt) werden ignoriert, nie ein Fehler. Ja/Nein-Schlüssel verstehen
+# true/false, yes/no, on/off. Beschreibung aller Schlüssel: README, "Frontmatter".
 
 # ---- Titelblock -------------------------------------------------------------
 # Dokumenttitel: mittig oben, in der Kopfzeile ab Seite 1, PDF-Metadatentitel.
@@ -13,7 +14,7 @@ title: ""
 subtitle: ""
 # Kunde/Firma: klein und gesperrt über dem Titel.
 client: ""
-# Autor(en) unter dem Titel als "Datum · Autor"; mehrere: [Anna, Ben]
+# Autor(en): Zeile "Datum · Autor" unter dem Titel; mehrere: [Anna, Ben]
 author: ""
 # Datum: 2026-10-13 oder 13.10.2026. Erscheint unten rechts, setzt das
 # PDF-Datum und stellt dem Dateinamen das ISO-Datum voran. Leer: kein Datum.
@@ -23,8 +24,9 @@ date: ""
 isodate_praefix: true
 
 # ---- Sprache & Struktur -----------------------------------------------------
-# Sprache: Datumsformat, Silbentrennung, Beschriftungen (de: Seite/Inhalt,
-# Info/Tipp/…; en: Page/Contents, Note/Tip/…).
+# Sprache: Datumsformat, Silbentrennung, Anführungszeichen ("x" -> de „x“,
+# en “x”) und Beschriftungen (de: Seite/Inhalt/Aufgabe, Info/Tipp/…;
+# en: Page/Contents/Task, Note/Tip/…). Standard: de.
 lang: de
 # Inhaltsverzeichnis: auto = ab mehr als fünf #/##-Überschriften; true/false erzwingt.
 toc: auto
@@ -44,8 +46,8 @@ watermark: ""
 # Logo nur für dieses Dokument (PNG/JPG/SVG), relativ zur Notiz oder absolut;
 # ~, $VAR, ${VAR} und %VAR% werden ersetzt. Leer: globales logo.svg/.png/.jpg.
 logo: ""
-# Maximale Logohöhe, nur absolute Längen (mm, cm, pt, in); höchstens 25mm.
-# Das Logo bleibt proportional und höchstens 60 mm breit.
+# Maximale Logohöhe, nur absolute Längen (mm, cm, pt, in); Standard 20mm,
+# höchstens 25mm. Das Logo bleibt proportional und höchstens 60 mm breit.
 logo-height: 20mm
 
 # ---- Ausgabe ----------------------------------------------------------------
