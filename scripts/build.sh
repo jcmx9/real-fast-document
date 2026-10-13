@@ -83,8 +83,10 @@ Optionale YAML-Frontmatter-Schlüssel:
 Exit-Code 0 nur bei Erfolg; Fehler und Warnungen gehen auf stderr.
 
 Environment:
-  RFD_NO_OPEN=1   Das PDF nach dem Build nicht öffnen (Batch/Cron)
-  TYPST=/pfad     Bestimmtes typst-Binary verwenden (>= 0.15 erforderlich)
+  RFD_NO_OPEN=1         Das PDF nach dem Build nicht öffnen (Batch/Cron)
+  RFD_BASE_DIR=ordner   Relative Bild-/Logopfade gelten relativ zu diesem Ordner
+                        statt zum Ordner der Quelle (Zettlr: temporäre Kopie)
+  TYPST=/pfad           Bestimmtes typst-Binary verwenden (>= 0.15 erforderlich)
 EOF
 }
 
@@ -304,6 +306,20 @@ if [[ -n "${cli_breaks}" ]]; then fm_breaks="${cli_breaks}"; fi
 # ---------------------------------------------------------------------------
 src_dir="$(cd "$(dirname "${src}")" && pwd)"
 src_abs="${src_dir}/$(basename "${src}")"
+
+# Basisordner für relative Bild- und Logopfade: RFD_BASE_DIR, falls gesetzt
+# (Zettlr übergibt bei ungespeicherten Änderungen eine temporäre Kopie der
+# Notiz, die Bilder liegen aber neben dem Original), sonst der Ordner der Quelle.
+# Ein relativer RFD_BASE_DIR gilt relativ zum Aufrufverzeichnis.
+base_dir="${src_dir}"
+if [[ -n "${RFD_BASE_DIR:-}" ]]; then
+  case "${RFD_BASE_DIR}" in /*) cand="${RFD_BASE_DIR}" ;; *) cand="${orig_pwd}/${RFD_BASE_DIR}" ;; esac
+  if [[ -d "${cand}" ]]; then
+    base_dir="$(cd "${cand}" && pwd)"
+  else
+    echo "Warnung: RFD_BASE_DIR ist kein Ordner: ${RFD_BASE_DIR} – nutze den Ordner der Quelle." >&2
+  fi
+fi
 date_iso="$(iso_date "${fm_date}")"
 if [[ -n "${2:-}" ]]; then
   case "${2}" in
@@ -326,7 +342,7 @@ if [[ -n "${fm_logo}" ]]; then
       echo "Warnung: Remote-Logo wird nicht geladen (kein Netzzugriff): ${fm_logo}" >&2 ;;
     *)
       note_logo="$(expand_path "${fm_logo}")"
-      case "${note_logo}" in /*) ;; *) note_logo="${src_dir}/${note_logo}" ;; esac
+      case "${note_logo}" in /*) ;; *) note_logo="${base_dir}/${note_logo}" ;; esac
       if [[ -f "${note_logo}" ]]; then
         logo="${note_logo}"
       else
@@ -368,7 +384,7 @@ typst_inputs=(
   --input "logo_height=${fm_logo_height}"
   --input "source=${src_abs}"
   --input "attach=${attach}"
-  --input "docdir=${src_dir}"
+  --input "docdir=${base_dir}"
   --input "date=${fm_date}"
   --input "toc=${fm_toc}"
   --input "h1_break=${fm_break}"
@@ -447,7 +463,7 @@ while IFS= read -r raw; do
   if (( first )); then stripped="${raw:-0}"; first=0; continue; fi
   [[ -n "${raw}" ]] || continue
   img="$(expand_path "${raw}")"
-  case "${img}" in /*) ;; *) img="${src_dir}/${img}" ;; esac
+  case "${img}" in /*) ;; *) img="${base_dir}/${img}" ;; esac
   if [[ -f "${img}" ]]; then
     resolved="$(json_escape "${img}")"
   else

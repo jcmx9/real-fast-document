@@ -261,7 +261,7 @@ test_fixtures() {
 }
 
 test_interface() {
-  local err code
+  local err code text
 
   # Ausdrücklich angegebene Ausgabe: exakt dieser Pfad, kein ISO-Präfix.
   (cd "${fixtures}" && bash "${build}" client-meta.md "${out_dir}/exakt.pdf" >/dev/null 2>&1)
@@ -302,6 +302,42 @@ test_interface() {
   else
     printf 'skip Einbettung (mutool fehlt)\n'
   fi
+
+  # Absolute Pfade mit Leerzeichen (so ruft der Zettlr-Bote auf), Aufruf aus
+  # einem fremden Arbeitsverzeichnis: das PDF entsteht genau am Zielpfad.
+  local in_dir="${out_dir}/Notiz Ordner" target_dir="${out_dir}/Aus gabe"
+  mkdir -p "${in_dir}/bilder" "${target_dir}"
+  cp "${fixtures}/edge-cases.md" "${in_dir}/meine notiz.md"
+  cp "${fixtures}/bilder/screenshot.png" "${in_dir}/bilder/"
+  (cd / && bash "${build}" --no-source --hard-breaks "${in_dir}/meine notiz.md" "${target_dir}/mein pdf.pdf" \
+    >/dev/null 2>"${out_dir}/spaces.err") || die "Pfade mit Leerzeichen: Export fehlgeschlagen: $(cat "${out_dir}/spaces.err")"
+  [[ -s "${target_dir}/mein pdf.pdf" ]] || die "Pfade mit Leerzeichen: PDF fehlt am Zielpfad"
+  ok "absolute Pfade mit Leerzeichen"
+
+  # Temporäre Kopie (Zettlr bei ungespeicherten Änderungen): Bilder gelten über
+  # RFD_BASE_DIR relativ zum Originalordner; Name in Fußzeile, PDF-Titel und
+  # Anhang bleibt der der Notiz (die Kopie trägt denselben Dateinamen).
+  local tmp_copy="${out_dir}/tmpkopie"
+  mkdir -p "${tmp_copy}"
+  cp "${fixtures}/edge-cases.md" "${tmp_copy}/edge-cases.md"
+  (cd "${fixtures}" && RFD_BASE_DIR="${fixtures}" bash "${build}" "${tmp_copy}/edge-cases.md" \
+    "${out_dir}/basis.pdf" >/dev/null 2>"${out_dir}/basis.err") ||
+    die "RFD_BASE_DIR: Export fehlgeschlagen: $(cat "${out_dir}/basis.err")"
+  text="$(pdf_text "${out_dir}/basis.pdf")"
+  reject "RFD_BASE_DIR" "${text}" "Bild fehlt"
+  expect "RFD_BASE_DIR" "${text}" "basis.pdf"
+  pdfinfo "${out_dir}/basis.pdf" | grep -q '^Title: *edge-cases$' || die "RFD_BASE_DIR: PDF-Titel ist nicht der Notizname"
+  if command -v mutool >/dev/null 2>&1; then
+    [[ "$(attachments "${out_dir}/basis.pdf")" == "edge-cases.md" ]] || die "RFD_BASE_DIR: Anhangsname falsch"
+  fi
+  # Gegenprobe: ohne RFD_BASE_DIR fehlt das Bild neben der Kopie.
+  (cd "${fixtures}" && bash "${build}" "${tmp_copy}/edge-cases.md" "${out_dir}/ohne-basis.pdf" >/dev/null 2>&1)
+  expect "ohne RFD_BASE_DIR" "$(pdf_text "${out_dir}/ohne-basis.pdf")" "Bild fehlt: bilder/screenshot.png"
+  # Ungültiger RFD_BASE_DIR: Warnung, Rückfall auf den Ordner der Quelle.
+  RFD_BASE_DIR="${out_dir}/gibt-es-nicht" bash "${build}" "${fixtures}/edge-cases.md" "${out_dir}/x.pdf" \
+    >/dev/null 2>"${out_dir}/basis2.err" || die "ungültiger RFD_BASE_DIR bricht den Export ab"
+  grep -q "RFD_BASE_DIR ist kein Ordner" "${out_dir}/basis2.err" || die "ungültiger RFD_BASE_DIR ohne Warnung"
+  ok "RFD_BASE_DIR (temporäre Kopie) + Dateiname"
 
   # Minimaler PATH wie bei einer GUI-App (Zettlr, Finder): typst muss über
   # bin/rfd-tools.env bzw. bin/typst gefunden werden.
