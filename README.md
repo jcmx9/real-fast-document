@@ -125,7 +125,9 @@ PDF/A landet jeweils neben der Quelle:
 
 ## Frontmatter (optional)
 
-Ein YAML-Block am Dateianfang steuert einzelne Dokumente. Alle Schlüssel sind optional:
+Ein YAML-Block am Dateianfang steuert einzelne Dokumente. Alle Schlüssel sind optional.
+**[`header.md`](header.md)** ist eine Vorlage mit allen Schlüsseln, ihren Standardwerten und
+Kommentaren — kopieren und anpassen:
 
 ```yaml
 ---
@@ -186,8 +188,10 @@ Verzeichnis, die Kapitel laufen im Fluss. `toc` und `h1_break` schalten diese be
 
 Die Boolean-Schlüssel (`isodate_praefix`, `toc`, `h1_break`, `print_filename`, `embed_source`, `hard_breaks`) akzeptieren alle
 YAML-1.1-Schreibweisen, unabhängig von Groß-/Kleinschreibung: `true`/`false`, `yes`/`no`,
-`on`/`off` (sowie `"true"` in Anführungszeichen). Ein nicht erkannter Wert wird mit einer
-Warnung ignoriert und der Default greift.
+`on`/`off` (sowie `"true"` in Anführungszeichen); `toc` und `h1_break` zusätzlich `auto`
+(= Automatismus). Ein leerer Wert wird still ignoriert, ein nicht erkannter Wert mit einer
+Warnung — in beiden Fällen greift der Default. Kommentare (`# …`) dürfen auf eigenen Zeilen und
+hinter Werten stehen.
 
 ## Markdown — Kurzeinstieg
 
@@ -310,6 +314,7 @@ vendor/                     gevendorte Typst-Packages cmarker + mitex + mmdr (gi
 logo.svg                    Kopf-Logo (optional)
 assets/pipeline.svg         lokale Beispielabbildung für example.md
 example.md                  volle Beispiel-/Falltest-Datei (alle Elemente, dokumentierter Frontmatter)
+header.md                   Frontmatter-Vorlage: alle Schlüssel mit Standardwerten und Kommentaren
 tests/fixtures/             Testnotizen (je Funktion eine, plus Grenzfälle)
 ```
 

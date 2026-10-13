@@ -125,7 +125,9 @@ source each time:
 
 ## Frontmatter (optional)
 
-A YAML block at the start of the file controls individual documents. All keys are optional:
+A YAML block at the start of the file controls individual documents. All keys are optional.
+**[`header.md`](header.md)** is a template with every key, its default value and a comment
+(comments in German) — copy and adapt it:
 
 ```yaml
 ---
@@ -184,8 +186,10 @@ a new page. With **five or fewer** it stays *compact* — no TOC, chapters run i
 suppresses).
 
 The boolean keys (`isodate_praefix`, `toc`, `h1_break`, `print_filename`, `embed_source`, `hard_breaks`) accept all YAML 1.1 spellings, regardless
-of case: `true`/`false`, `yes`/`no`, `on`/`off` (as well as `"true"` in quotes). An unrecognized
-value is ignored with a warning and the default applies.
+of case: `true`/`false`, `yes`/`no`, `on`/`off` (as well as `"true"` in quotes); `toc` and
+`h1_break` also accept `auto` (= the automatism). An empty value is ignored silently, an
+unrecognized one with a warning — in both cases the default applies. Comments (`# …`) may stand
+on their own lines and after values.
 
 ## Markdown — quick start
 
@@ -307,6 +311,7 @@ vendor/                     vendored Typst packages cmarker + mitex + mmdr (git-
 logo.svg                    header logo (optional)
 assets/pipeline.svg         local example figure for example.md
 example.md                  full example/probe file (all elements, documented frontmatter)
+header.md                   frontmatter template: every key with its default value and a comment
 tests/fixtures/             test notes (one per feature, plus edge cases)
 ```
 

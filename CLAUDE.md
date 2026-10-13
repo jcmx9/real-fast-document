@@ -228,9 +228,13 @@ via `build.sh` only.
   (from page 1, overrides the running header); `watermark:` → diagonal page-background watermark.
   The footer is 2-col without a date (name | page) and 3-col with one (name | page centered | date).
   The bool keys are
-  parsed **YAML-1.1-tolerant** (case-insensitive `true/false/yes/no/on/off`, quotes, inline
-  comments via `yaml_bool`/`ConvertTo-YamlBool`); an unrecognized value warns and keeps the
-  default. Typst does not localize month names (`[month repr:long]` is English only) → a manual
+  parsed **YAML-1.1-tolerant** via `fm_bool`/`Get-FmBool` (case-insensitive `true/false/yes/no/
+  on/off`, quotes; `toc`/`h1_break` also `auto`): an **empty value is ignored silently**, an
+  unrecognized one warns — both keep the default. String values go through `yaml_str`/
+  `ConvertTo-YamlStr`: inside quotes the value ends at the closing quote, otherwise an inline
+  `# comment` is cut off (before 26.10.6 a comment leaked into e.g. the title). `header.md` in
+  the root is the user-facing template with every key + default + comment; `test-pdf.sh` builds
+  it and fails on any `Warnung` — **a new frontmatter key must be added to `header.md` too.** Typst does not localize month names (`[month repr:long]` is English only) → a manual
   `months-de` array lives in `template.typ`; `parse-date` validates the string defensively
   because an invalid `datetime`/`int()` *panics* and aborts the whole build.
 - **Reproducible metadata date.** By default Typst (`document.date: auto`) writes the *build moment*

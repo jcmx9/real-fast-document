@@ -149,16 +149,40 @@ yaml_bool() {
   esac
 }
 
-# Einen YAML-String-Skalar säubern (Whitespace + umschließende Quotes weg).
-# Eine Inline-Liste [a, "b"] wird zu "a, b" (z. B. mehrere Autoren).
+# Einen YAML-String-Skalar säubern: Whitespace weg; in Anführungszeichen gilt
+# der Inhalt bis zum schließenden Zeichen, sonst wird ein Inline-Kommentar
+# (" # …") abgeschnitten. Eine Inline-Liste [a, "b"] wird zu "a, b" (Autoren).
 yaml_str() {
   local v
   v="$(printf '%s' "$1" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-  if [[ "${v}" == \[*\] ]]; then
-    v="$(printf '%s' "${v:1:${#v}-2}" | sed -e 's/["'\'']//g' -e 's/[[:space:]]*,[[:space:]]*/, /g' \
-                                           -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  case "${v}" in
+    \"*) v="${v#\"}"; v="${v%%\"*}" ;;
+    \'*) v="${v#\'}"; v="${v%%\'*}" ;;
+    \[*)
+      v="${v#\[}"; v="${v%%\]*}"
+      v="$(printf '%s' "${v}" | sed -e 's/["'\'']//g' -e 's/[[:space:]]*,[[:space:]]*/, /g' \
+                                  -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+      ;;
+    *) v="$(printf '%s' "${v}" | sed -e 's/[[:space:]]#.*$//' -e 's/[[:space:]]*$//')" ;;
+  esac
+  printf '%s' "${v}"
+}
+
+# Bool-Schlüssel auswerten: gibt true/false (bzw. auto, wenn erlaubt) aus.
+# Leerer Wert -> ignorieren (Exit 1, keine Warnung); ungültiger Wert ->
+# Warnung + Exit 1, der Default bleibt.
+fm_bool() {
+  local key="$1" raw="$2" allow_auto="${3:-}" v b
+  v="$(yaml_str "${raw}")"
+  [[ -n "${v}" ]] || return 1
+  if [[ -n "${allow_auto}" && "$(printf '%s' "${v}" | tr '[:upper:]' '[:lower:]')" == "auto" ]]; then
+    printf 'auto'
+    return 0
   fi
-  printf '%s' "${v}" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'\$//"
+  b="$(yaml_bool "${v}")"
+  if [[ -n "${b}" ]]; then printf '%s' "${b}"; return 0; fi
+  echo "Warnung: ungültiger Wert für '${key}' im Frontmatter: '${v}' – ignoriert (true/false${allow_auto:+/auto})." >&2
+  return 1
 }
 
 # Umgebungsvariable lesen; USER<->USERNAME und HOME<->USERPROFILE als Rückfall
@@ -236,9 +260,7 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
     case "${line}" in
       date:*)            fm_date="$(yaml_str "${line#date:}")" ;;
       isodate_praefix:*)
-        b="$(yaml_bool "${line#isodate_praefix:}")"
-        if [[ -n "${b}" ]]; then fm_isodate_praefix="${b}"
-        else echo "Warnung: ungültiger Wert für 'isodate_praefix' im Frontmatter: '${line#isodate_praefix:}' – ignoriert (true/false)." >&2; fi
+        if b="$(fm_bool isodate_praefix "${line#isodate_praefix:}")"; then fm_isodate_praefix="${b}"; fi
         ;;
       lang:*)
         v="$(yaml_str "${line#lang:}")"
@@ -247,14 +269,10 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
       header:*)          fm_header="$(yaml_str "${line#header:}")" ;;
       watermark:*)       fm_watermark="$(yaml_str "${line#watermark:}")" ;;
       toc:*)
-        b="$(yaml_bool "${line#toc:}")"
-        if [[ -n "${b}" ]]; then fm_toc="${b}"
-        else echo "Warnung: ungültiger Wert für 'toc' im Frontmatter: '${line#toc:}' – ignoriert (true/false)." >&2; fi
+        if b="$(fm_bool toc "${line#toc:}" auto)"; then fm_toc="${b}"; fi
         ;;
       h1_break:*)
-        b="$(yaml_bool "${line#h1_break:}")"
-        if [[ -n "${b}" ]]; then fm_break="${b}"
-        else echo "Warnung: ungültiger Wert für 'h1_break' im Frontmatter: '${line#h1_break:}' – ignoriert (true/false)." >&2; fi
+        if b="$(fm_bool h1_break "${line#h1_break:}" auto)"; then fm_break="${b}"; fi
         ;;
       title:*)           fm_title="$(yaml_str "${line#title:}")" ;;
       subtitle:*)        fm_subtitle="$(yaml_str "${line#subtitle:}")" ;;
@@ -263,23 +281,13 @@ if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
       logo:*)            fm_logo="$(yaml_str "${line#logo:}")" ;;
       logo-height:*)     fm_logo_height="$(yaml_str "${line#logo-height:}")" ;;
       print_filename:*)
-        b="$(yaml_bool "${line#print_filename:}")"
-        if [[ -n "${b}" ]]; then fm_showname="${b}"
-        else echo "Warnung: ungültiger Wert für 'print_filename' im Frontmatter: '${line#print_filename:}' – ignoriert (true/false)." >&2; fi
+        if b="$(fm_bool print_filename "${line#print_filename:}")"; then fm_showname="${b}"; fi
         ;;
       hard_breaks:*)
-        b="$(yaml_bool "${line#hard_breaks:}")"
-        if [[ -n "${b}" ]]; then fm_breaks="${b}"
-        elif [[ -n "$(yaml_str "${line#hard_breaks:}")" ]]; then
-          echo "Warnung: ungültiger Wert für 'hard_breaks' im Frontmatter: '${line#hard_breaks:}' – ignoriert (true/false)." >&2
-        fi
+        if b="$(fm_bool hard_breaks "${line#hard_breaks:}")"; then fm_breaks="${b}"; fi
         ;;
       embed_source:*)
-        b="$(yaml_bool "${line#embed_source:}")"
-        if [[ -n "${b}" ]]; then fm_embed="${b}"
-        elif [[ -n "$(yaml_str "${line#embed_source:}")" ]]; then
-          echo "Warnung: ungültiger Wert für 'embed_source' im Frontmatter: '${line#embed_source:}' – ignoriert (true/false)." >&2
-        fi
+        if b="$(fm_bool embed_source "${line#embed_source:}")"; then fm_embed="${b}"; fi
         ;;
     esac
   done <<< "${block}"
