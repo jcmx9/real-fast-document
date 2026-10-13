@@ -212,6 +212,22 @@ test_fixtures() {
   fi
   ok tables.md
 
+  # Tabellen-Sammlung: Zahlen (auch negativ, mit Einheiten), Text, Mischformen,
+  # Grenzfälle. Kein Wort wird in Zellen getrennt (keine Silbentrennung),
+  # Zahlenspalten rechtsbündig, lange Tabelle mit wiederholtem Kopf.
+  text="$(render tables-showcase.md)"
+  expect tables-showcase.md "${text}" "4.736,08 €" "−4.074.980 €" "+27,9 %" "Besuche" "Anfragen" \
+    "±0,5 mm" "Besprechungsraum 2" "Donaudampfschifffahrtsgesellschaftskapitänsmützenhalterung" \
+    "Schreibtischunterlage" "20.271,90 €"
+  reject tables-showcase.md "${text}" "Besu-" "Anfra-" "| --"
+  if command -v pdftotext >/dev/null 2>&1; then
+    local sc="${out_dir}/tables-showcase.pdf"
+    edges="$(for w in 1.245.300 −987.200 258.100; do xmax "${sc}" "${w}"; done |
+      awk 'NR == 1 { a = $1 } { d = $1 - a; if (d < 0) d = -d; if (d > 0.5) bad = 1 } END { print bad + 0 }')"
+    [[ "${edges}" == 0 ]] || die "tables-showcase.md: Quartalszahlen nicht rechtsbündig"
+  fi
+  ok tables-showcase.md
+
   # Bilder: Breite aus {width=…}, Remote-Bild übersprungen, Bildunterschrift.
   text="$(render images.md)"
   expect images.md "${text}" "Abbildung 1: Screenshot aus dem Termin" "Ende der Bilder."

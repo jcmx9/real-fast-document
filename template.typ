@@ -31,7 +31,7 @@
 // engerer Laufweite (Adobe liefert keinen Condensed-Schnitt; die variable
 // Source Sans 3 hat nur die wght-Achse). Ziffern als Versalziffern gleicher
 // Breite, Flattersatz (Blocksatz reißt in schmalen Zellen Lücken).
-#let table-text = (size: 9pt, weight: 500, tracking: -0.02em,
+#let table-text = (size: 9pt, weight: 500, tracking: -0.02em, hyphenate: false,
   number-type: "lining", number-width: "tabular")
 #let cell-inset = 7pt
 
