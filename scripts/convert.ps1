@@ -56,6 +56,8 @@ Arguments:
   OUTPUT.pdf   Bei genau einer Quelle: Ausgabepfad, wird exakt so geschrieben.
 
 Options:
+  --hard-breaks         Jede Zeile bleibt eine Zeile, wie im Editor getippt
+                        (Frontmatter: hard_breaks: true)
   --no-source           Markdown-Quelle NICHT ins PDF einbetten (Kunden-PDFs;
                         Frontmatter: embed_source: false)
   -Version, --version   rf-document- und Typst-Version ausgeben und beenden
@@ -63,7 +65,8 @@ Options:
 
 Optionale YAML-Frontmatter-Schluessel:
   title, subtitle, client, author, date, isodate_praefix, toc, h1_break,
-  print_filename, lang, header, watermark, logo, logo-height, embed_source
+  print_filename, lang, header, watermark, logo, logo-height, embed_source,
+  hard_breaks
 
 Environment:
   RFD_NO_OPEN=1   Das PDF nach dem Build nicht oeffnen (Batch/Cron)
@@ -73,11 +76,13 @@ Environment:
 # POSIX-Formen aus den Restargumenten herausfiltern (die PS-Switches -Version/
 # -Help binden bereits selbst).
 $NoSource = $false
+$HardBreaks = $false
 if ($Path) {
   if (($Path -contains '--version') -or ($Path -contains '-V')) { $Version = $true }
   if (($Path -contains '--help')    -or ($Path -contains '-h')) { $Help    = $true }
   if ($Path -contains '--no-source') { $NoSource = $true }
-  $Path = @($Path | Where-Object { $_ -notin @('--version', '-V', '--help', '-h', '--no-source') })
+  if ($Path -contains '--hard-breaks') { $HardBreaks = $true }
+  $Path = @($Path | Where-Object { $_ -notin @('--version', '-V', '--help', '-h', '--no-source', '--hard-breaks') })
 }
 
 if ($Version) {
@@ -197,7 +202,7 @@ function Convert-One {
   # werden ignoriert, nie ein Fehler.
   $fmDate = ''; $fmIsodatePraefix = ''; $fmToc = 'auto'; $fmBreak = 'auto'; $fmShowname = 'true'; $fmLang = 'de'
   $fmHeader = ''; $fmWatermark = ''; $fmTitle = ''
-  $fmSubtitle = ''; $fmClient = ''; $fmAuthor = ''; $fmLogo = ''; $fmLogoHeight = ''; $fmEmbed = 'true'
+  $fmSubtitle = ''; $fmClient = ''; $fmAuthor = ''; $fmLogo = ''; $fmLogoHeight = ''; $fmEmbed = 'true'; $fmBreaks = 'false'
   if ($lines.Count -gt 0 -and $lines[0].Trim() -eq '---') {
     for ($i = 1; $i -lt $lines.Count; $i++) {
       if ($lines[$i].Trim() -in @('---', '...')) { break }
@@ -218,6 +223,10 @@ function Convert-One {
       }
       elseif ($lines[$i] -match '^logo-height:\s*(.+?)\s*$') {
         $fmLogoHeight = ConvertTo-YamlStr $Matches[1]
+      }
+      elseif ($lines[$i] -match '^hard_breaks:\s*(.+?)\s*$') {
+        $b = ConvertTo-YamlBool $Matches[1]
+        if ($b) { $fmBreaks = $b } elseif (ConvertTo-YamlStr $Matches[1]) { Write-Warning "Ungueltiger Wert fuer 'hard_breaks': '$($Matches[1])' - ignoriert (true/false)." }
       }
       elseif ($lines[$i] -match '^embed_source:\s*(.+?)\s*$') {
         $b = ConvertTo-YamlBool $Matches[1]
@@ -255,6 +264,7 @@ function Convert-One {
   }
 
   if ($NoSource) { $fmEmbed = 'false' }
+  if ($HardBreaks) { $fmBreaks = 'true' }
 
   # Ausgabe: ausdruecklicher Pfad gewinnt (exakt, ohne Praefix). Sonst neben der
   # Quelle; bei erkennbarem Datum ISO-Praefix (sortierbar), ausser
@@ -321,7 +331,8 @@ function Convert-One {
     '--input', "showname=$fmShowname",
     '--input', "lang=$fmLang",
     '--input', "header=$fmHeader",
-    '--input', "watermark=$fmWatermark"
+    '--input', "watermark=$fmWatermark",
+    '--input', "hard_breaks=$fmBreaks"
   )
 
   # Reproduzierbarer Metadaten-Zeitstempel: ohne Frontmatter-date: nutzt das Template

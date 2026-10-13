@@ -187,8 +187,8 @@ via `build.sh` only.
     root-relative = just the file name (the file need not exist there since the data is given).
   - The **cmarker call** uses `h1-level: 1` (markdown `#` → Typst level-1 heading, styled as a
     *chapter*) and `set-document-title: false` (the PDF/A metadata title comes from `--input title`
-    = the frontmatter `title:` or the `.md` basename). `math: mitex`, `task-list-marker:` a
-    checkbox glyph (☐/☒ via Noto), and `scope:` overrides for `image` (`safe-image`), `divider` (the centered
+    = the frontmatter `title:` or the `.md` basename). `math: mitex`, `task-list-marker:` the drawn
+    `task-box` (same `marker-slot` width as the bullet square, so mixed lists align), and `scope:` overrides for `image` (`safe-image`), `divider` (the centered
     `horizontalrule`), and `terms` (`rfd-terms`: builds each term/description pair as plain blocks —
     term bold on its own line, description indented below, unbreakable. A `#show terms.item` rule
     does **not** fire in Typst 0.15, which is why the old approach silently ran term and description
@@ -246,10 +246,31 @@ via `build.sh` only.
   in `build.sh`/`convert.ps1` anymore. Rationale: one implementation for all platforms; the
   Windows path (never executed) can't drift. The shells only parse the frontmatter and handle
   paths. `preprocess(src)` works line-wise and skips fenced code (`code-mask`):
-  (1) strips the YAML frontmatter (CRLF-tolerant), (2) converts Pandoc-style definition lists (`Term` / `: def`) to HTML `<dl>` in **block form** (a
+  (1) strips the YAML frontmatter (CRLF-tolerant), then in this order: **`pagebreaks`**
+  (`<!-- pagebreak -->`/`\newpage`/`\pagebreak`/`\clearpage` alone on a line →
+  `<!--raw-typst #pagebreak(weak: true) -->`, cmarker evaluates raw-typst comments),
+  **`alerts`** (`> [!KIND]` blockquote → `<rfd-alert kind="…">` block-form HTML; `alert-kinds`
+  maps GitHub + German keywords), **`task-tables`** (a list made *only* of `- [ ]`/`- [x]` items,
+  no continuation/nested lines → `<rfd-tasks>` with one `<rfd-task done owner due>` per item;
+  owner/due from the **last** ` – `/` — `/` - ` and `, bis|due|by …`; mixed lists are copied
+  through untouched, including continuation lines), **`date-lines`** (a run of `N. Month …` lines
+  where *every* line starts with a month name → `N\.` escaped + `\` hard break between them),
+  then (2) converts Pandoc-style definition lists (`Term` / `: def`) to HTML `<dl>` in **block form** (a
   blank line after `<dd>`, so inline markdown renders; inline `<dd>x `code` y</dd>` would show
   literal backticks) and folds indented continuation lines into the `<dd>`. Loose task lists need no
-  workaround anymore — cmarker **0.1.10** fixed the `wasm unreachable` crash. The **original** `.md`
+  workaround anymore — cmarker **0.1.10** fixed the `wasm unreachable` crash. Then **`keep-line-breaks`**
+  (only with `hard_breaks`: appends `\` to a line when the next line *continues the same
+  paragraph* — never before a block start (`block-start-re`: list item, heading, `>`, table,
+  fence, `$$`, HTML, setext underline, footnote/deflist), never after a heading/table/HTML line,
+  and never inside code or `$$` math (`skip-mask`); a `\` before a new block would print a literal
+  backslash) and **`marks`** (`==x==` → `<mark>x</mark>` → cmarker `highlight`, skipping inline
+  code by splitting on backticks). The custom tags are rendered by the `html:` callbacks of
+  `cmarker.render`: `rfd-alert` builds the box; `rfd-task` returns a `metadata` value and
+  `rfd-tasks` collects them from its body (`body.children.filter(c => c.func() == metadata)`) into
+  a fixed-width table that reuses `rfd-table-fill`/`rfd-table-stroke` (the `fill` function is also
+  the guard that keeps the general `#show table` rebuild away). cmarker runs with
+  **`smart-punctuation: false`**: typed quotes stay exact (the automatic replacement put English
+  “…” into German text); `--`/`...` therefore stay as typed too. The **original** `.md`
   is both rendered (after preprocessing in memory) and embedded (`--input attach`). New Markdown
   transforms go into `lib/markdown.typ` (git-tracked via `!lib/*.typ` in `.gitignore`).
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the
@@ -383,7 +404,7 @@ via `build.sh` only.
   text is 11pt with `leading: 0.85em`. Header **and** footer
   text are Sans (`Source Sans 3`). Fonts come from `body-font`/`heading-font`/`code-font`. Unordered
   lists use one small drawn square marker at **all** levels; ordered lists keep numbers; task items
-  use a checkbox glyph (☐ open, ☒ done, via Noto). Blockquotes are indented both sides + italic.
+  use the drawn `task-box` (outline open, dark fill + white ✓ done); task-only lists become a table. Blockquotes are indented both sides + italic.
 - **Page-break hygiene (widows/orphans, sticky headings, unbreakable figures):**
   - **Headings never sit alone at a page foot.** Typst sets `sticky: true` on heading blocks *by
     default* — but our `#show heading` rule builds its **own** `block(...)`, which **drops** that

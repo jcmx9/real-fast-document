@@ -144,6 +144,7 @@ bash scripts/build.sh                 # example.md  -> example.pdf
 bash scripts/build.sh document.md     # document.md -> document.pdf
 bash scripts/build.sh in.md out.pdf   # explicit output (exactly this path, no prefix)
 bash scripts/build.sh --no-source in.md out.pdf  # without the embedded Markdown source
+bash scripts/build.sh --hard-breaks note.md      # every line stays a line
 bash scripts/build.sh --help          # show options + frontmatter keys
 bash scripts/build.sh --version       # show rf-document and Typst version
 ```
@@ -165,6 +166,7 @@ The global command understands the same options: `rf-document --help` or `rf-doc
 
 | Option | Description |
 |--------|-------------|
+| `--hard-breaks` | Every line stays a line, as typed in the editor; same as `hard_breaks: true` |
 | `--no-source` | Do **not** embed the Markdown source in the PDF (e.g. for client PDFs); same as `embed_source: false` |
 | `--version`, `-V` | Print rf-document and Typst version, then exit |
 | `--help`, `-h` | Print help (options, frontmatter keys, environment variables), then exit |
@@ -203,6 +205,7 @@ watermark: "DRAFT"      # diagonal watermark beneath everything
 logo: client-logo.png   # logo for this document only (relative to the note or absolute)
 logo-height: 15mm       # maximum logo height (absolute lengths only; default 13mm, max 25mm)
 embed_source: false     # do not embed the Markdown source (default: true)
+hard_breaks: true       # every line stays a line (default: false)
 ---
 ```
 
@@ -222,6 +225,7 @@ embed_source: false     # do not embed the Markdown source (default: true)
 | `watermark` | text | Diagonal, letter-spaced watermark (bold, light gray) on every page, **beneath** all other elements. |
 | `logo` | path | Logo **for this document only** (PNG/JPG/SVG), relative to the note or absolute; `~`, `$VAR`, `${VAR}` and `%VAR%` are expanded. Overrides the global logo. If the file is missing, the build warns and uses the global logo. |
 | `logo-height` | length | Maximum logo height, absolute lengths only (`15mm`, `1.2cm`, `40pt`); anything else is ignored. The logo keeps its proportions and is at most 60 mm wide. |
+| `hard_breaks` | `true` / `false` | Every line break in the source stays a line break (as typed in Zettlr/Obsidian). Default `false`: a single break becomes a space, as in CommonMark. |
 | `embed_source` | `true` / `false` | Embed the Markdown source as an attachment. Default `true`; `false` (or `--no-source`) for PDFs that must not contain the note. |
 
 Empty values (`subtitle: ""` or just `subtitle:`) are ignored, never an error.
@@ -240,7 +244,7 @@ a new page. With **five or fewer** it stays *compact* — no TOC, chapters run i
 `h1_break` toggle these two effects **individually and independently** (`true` forces, `false`
 suppresses).
 
-The boolean keys (`isodate_praefix`, `toc`, `h1_break`, `print_filename`, `embed_source`) accept all YAML 1.1 spellings, regardless
+The boolean keys (`isodate_praefix`, `toc`, `h1_break`, `print_filename`, `embed_source`, `hard_breaks`) accept all YAML 1.1 spellings, regardless
 of case: `true`/`false`, `yes`/`no`, `on`/`off` (as well as `"true"` in quotes). An unrecognized
 value is ignored with a warning and the default applies.
 
@@ -249,7 +253,22 @@ value is ignored with a warning and the default applies.
 Markdown covers almost everything day to day: `*italic*`, `**bold**`, `` `inline-code` ``,
 bullet lists, numbered lists, task lists (`- [ ]`), tables, quotes, footnotes, definition lists
 and `[links](https://typst.app)` work out of the box. Code blocks are set with syntax
-highlighting, formulas (`$…$`, `$$…$$`) via LaTeX syntax.
+highlighting, formulas (`$…$`, `$$…$$`) via LaTeX syntax. Headings and lists also work without a
+blank line before them.
+
+**In addition to CommonMark:**
+
+| Input | Result |
+|-------|--------|
+| `==text==` | Highlight (yellowish background) |
+| `> [!NOTE]` … `[!CAUTION]`, `> [!INFO]`, `[!TIPP]`, `[!WICHTIG]`, `[!HINWEIS]`, `[!ACHTUNG]` | Callout box (Info, Tipp, Wichtig, Hinweis, Achtung; English with `lang: en`), never split across pages |
+| list of only `- [ ] Task – Name, due date` | Table *Task · Owner · Due · Status* (`bis`/`due`/`by`); columns empty everywhere are dropped |
+| mixed list with `- [ ]` / `- [x]` | Box instead of the bullet, aligned with the bullets |
+| `18. Oktober 2026` at line start | stays a date, not a numbered list (month names de/en, also abbreviated) |
+| `<!-- pagebreak -->`, `\newpage` (own line) | Page break |
+| `„…“`, `‚…‘`, `»…«`, `"…"` | Quotes stay exactly as typed (no automatic replacement) |
+
+Snippet template for tasks: `- [ ] ${1:Task} – ${2:Name}, due ${3:Date}$0`
 
 **Images:** `![caption](path.svg)` is set as a numbered figure with a caption. Local images are
 embedded; relative paths are **relative to the document**. **Remote images** (`http(s)://`,
@@ -296,7 +315,8 @@ Body text with **emphasis** and a footnote.[^1]
 | Body text | Source Sans 3, 11 pt, justified with hyphenation (line spacing 0.85em), `luma(13%)` |
 | Tables | full width, **columns sized proportionally to content** (narrow columns stay narrow, text-heavy ones get more room); header centered + bold with a line below; light row zebra, vertical separators, no horizontal row lines; **header row repeats** across page breaks |
 | Code | Source Code Pro, 10 pt, with syntax highlighting |
-| Lists | unordered: small square at **all** levels; ordered: numbers; tasks (`- [ ]`): box ☐ open / ☒ done |
+| Lists | unordered: small square at **all** levels; ordered: numbers; tasks (`- [ ]`): drawn box (done: filled dark with a white check mark), aligned with the bullets; task-only lists as a table (Task 56 % · Owner 20 % · Due 14 % · Status 10 %) |
+| Callouts | light fill, 2.5 pt bar on the left, small letter-spaced uppercase title; colors: Info `#2f6aa8`, Tip `#3b7d3a`, Important `#7a4fb0`, Warning `#b05a1a`, Caution `#b5452b` |
 | Images | local: numbered figure with caption; remote (`http(s)`, `//host`, `data:`) removed automatically offline |
 | Quotes | indented on both sides (narrower than the text block) + italic |
 | Emoji/symbols | per-glyph fallback: Noto Emoji + Noto Sans Symbols 2 (monochrome, only for characters without a Source glyph) |

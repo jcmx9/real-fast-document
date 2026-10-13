@@ -47,16 +47,18 @@ Quelle diff-bar, versionierbar und für Menschen wie Maschinen gleichermaßen le
 
 # Text & Auszeichnung
 
-Im Fließtext funktionieren *kursiv*, **fett**, ***beides***, `inline-code`, ~~durchgestrichen~~
-sowie [externe Verweise](https://typst.app) ohne jeden Zusatzaufwand. Längere Absätze werden im
+Im Fließtext funktionieren *kursiv*, **fett**, ***beides***, `inline-code`, ~~durchgestrichen~~,
+==markiert== sowie [externe Verweise](https://typst.app) ohne jeden Zusatzaufwand. Längere Absätze werden im
 **Blocksatz mit Silbentrennung** gesetzt, sodass der rechte Rand ruhig bleibt und der Grauwert
 der Seite gleichmäßig wirkt — auch über mehrere Zeilen hinweg und mit eingestreuten
 Fachbegriffen wie `PDF/A`, `sys.inputs` oder `--font-path`.
 
 Absätze werden durch eine Leerzeile getrennt. Ein einzelner Zeilenumbruch in der Quelle wird zu
 einem Leerzeichen; das hält den Quelltext angenehm schmal, ohne die Ausgabe zu beeinflussen.[^umbruch]
+Anführungszeichen bleiben exakt so, wie sie getippt sind: „deutsch“, ‚einfach‘, »französisch«.
 
-[^umbruch]: Zwei Leerzeichen am Zeilenende erzwingen bei Bedarf einen harten Umbruch.
+[^umbruch]: Zwei Leerzeichen am Zeilenende erzwingen bei Bedarf einen harten Umbruch. Mit
+    `hard_breaks: true` im Frontmatter bleibt jede Zeile eine Zeile — praktisch für Mitschriften.
 
 # Listen
 
@@ -72,21 +74,21 @@ Nummerierte und verschachtelte Listen werden sauber gesetzt und korrekt eingerü
      - und tiefere Ebenen behalten denselben Marker.
 3. Bauen lassen — fertig.
 
-## Aufgabenlisten
+## Aufgaben als Tabelle
 
-Checklisten werden erkannt; die Kästchen ersetzen den Listenpunkt (☐ offen, ☒ erledigt), statt
-doppelt zu erscheinen:
+Eine Liste, die nur aus Aufgaben besteht, wird zur Tabelle. Wer und bis wann stehen hinter einem
+Gedankenstrich (`– Name, bis Datum`); Spalten, die überall leer wären, entfallen:
 
-- [x] Konzept festgelegt
+- [x] Konzept festlegen – Anna Beispiel, bis 30.06.
 
-- [x] Pipeline umgesetzt
+- [x] Pipeline umsetzen – Ben Probe
 
-- [ ] Letzter Feinschliff am Layout
+- [ ] Letzter Feinschliff am Layout – Anna Beispiel, bis 15.07.
 
 ## Gemischte Listen
 
 Normale Punkte und Aufgaben dürfen sich in einer Liste mischen — die Punkte behalten ihr
-Quadrat, die Aufgaben zeigen nur das Kästchen:
+Quadrat, die Aufgaben zeigen bündig das Kästchen (erledigt: gefüllt mit Häkchen):
 
 - Ein normaler Aufzählungspunkt
 - [x] Eine erledigte Aufgabe
@@ -100,7 +102,7 @@ zentriert und fett, Inhalte linksbündig, mit leichtem Zeilen-Zebra und dünnen 
 | Element       | Schrift         | Beispiel        |
 | ------------- | --------------- | --------------- |
 | Fließtext     | Source Sans 3   | dieser Absatz   |
-| Überschriften | Source Serif 4  | „Tabellen"      |
+| Überschriften | Source Serif 4  | „Tabellen“      |
 | Code          | Source Code Pro | `print("hi")`   |
 | Zahlenwert    | linksbündig     | 1.234,56 €      |
 
@@ -160,8 +162,31 @@ Und der Aufruf der Pipeline selbst:
 rf-document dokument.md      # -> dokument.pdf neben der Quelle
 ```
 
-> **Hinweis:** Voraussetzung ist Typst ≥ 0.15. Erst diese Version rendert die gebündelten
+> [!HINWEIS]
+> Voraussetzung ist Typst ≥ 0.15. Erst diese Version rendert die gebündelten
 > variablen Schriften, aus deren `wght`-Achse der halbfette Schnitt der Überschriften stammt.
+
+# Hinweisboxen
+
+Zitatblöcke mit einem Schlüsselwort werden zu farbigen Boxen — GitHub-Syntax (`[!NOTE]`, `[!TIP]`,
+`[!IMPORTANT]`, `[!WARNING]`, `[!CAUTION]`) oder deutsch (`[!INFO]`, `[!TIPP]`, `[!WICHTIG]`,
+`[!HINWEIS]`, `[!ACHTUNG]`):
+
+> [!INFO]
+> Ergänzende Information.
+
+> [!TIPP]
+> Ein hilfreicher Tipp.
+
+> [!WICHTIG]
+> Etwas, das nicht übersehen werden darf.
+
+> [!ACHTUNG]
+> Folgen bedenken.
+
+Ein gewöhnliches Zitat bleibt ein eingerücktes, kursives Zitat:
+
+> Inhalt gehört in reinen Text, die Form ins Template.
 
 # Mathematik
 
