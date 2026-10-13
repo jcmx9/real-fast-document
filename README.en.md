@@ -258,7 +258,7 @@ Body text with **emphasis** and a footnote.[^1]
 | Aspect | Value |
 |--------|-------|
 | Format | A4 portrait |
-| Margins | left 30 mm · top/bottom/right 20 mm each |
+| Margins | left 35 mm · right 30 mm · top 35 mm · bottom 20 mm (text block 145 mm, ~95 characters per line) |
 | PDF standard | PDF/A-3b, fonts embedded, source as attachment |
 | **Title** | from `title:` — centered on top (serif) + in the header from page 1; not a heading, not in the TOC. Optionally the client above (small, letter-spaced), subtitle and "date · author" below |
 | **H1** | **Chapter** (serif, fine line right below); starts on a new page with `h1_break` and runs in the header |
@@ -269,9 +269,9 @@ Body text with **emphasis** and a footnote.[^1]
 | Footer | **sans**; without date: name left · page right. With date: name left · page centered · date right. Name = filename or "client · title" |
 | Headings | **Source Serif 4**, `luma(8%)`, left-aligned, no bars; **only H1** carries a fine hairline right below, all others are set apart by size/spacing |
 | Watermark | optional (`watermark:`): diagonal, letter-spaced, bold, light gray (single-channel gray → clean K in print), **beneath** everything |
-| Body text | Source Sans 3, 11 pt, `wght` 380, old-style figures, justified with hyphenation (line spacing 0.85em), `luma(13%)`; **bold** = 560 (`strong.delta` 180) |
+| Body text | Source Sans 3, 10 pt, `wght` 380, old-style figures, justified with hyphenation (line spacing 0.85em), `luma(13%)`; **bold** = 560 (`strong.delta` 180) |
 | Tables | compact table type (Source Sans 3, 9 pt Medium, tracking −2 %); **column widths by content** via Typst's `auto` columns: small tables stay narrow, when space runs out Typst shares it and text-heavy columns wrap. Number/amount columns right-aligned, alignment from the separator row (`:--`, `--:`, `:-:`) wins; equal-width lining figures; ragged right; header centered + bold with a line below; light row zebra, vertical separators, no horizontal row lines; **header row repeats** across page breaks |
-| Code | Source Code Pro, 10 pt, with syntax highlighting |
+| Code | Source Code Pro, 9 pt, with syntax highlighting |
 | Lists | unordered: small square at **all** levels; ordered: numbers; tasks (`- [ ]`): drawn box (done: filled dark with a white check mark), aligned with the bullets; task-only lists as a table *Task · Owner · Due · Status* (column widths by content, like all tables) |
 | Callouts | light fill, 2.5 pt bar on the left, small letter-spaced uppercase title; colors: Info `#2f6aa8`, Tip `#3b7d3a`, Important `#7a4fb0`, Warning `#b05a1a`, Caution `#b5452b` |
 | Images | local: numbered figure with caption, width via `{width=…}`; missing: "[Image missing: path]" instead of an abort; remote (`http(s)`, `//host`, `data:`) removed automatically offline |
@@ -284,18 +284,18 @@ Body text with **emphasis** and a footnote.[^1]
 
 | Element | Font | Size |
 |---------|------|------|
-| Body text | Source Sans 3 (`wght` 380), bold 560 | 11 pt, line spacing 0.85em |
-| Title (`title:`) | Source Serif 4 (`wght` 470) | 18 pt, centered |
-| Chapter (H1) | Source Serif 4 (`wght` 470) | 15 pt, fine line below |
-| H2 | Source Serif 4 (`wght` 470) | 13 pt, no line |
-| H3 | Source Serif 4 (`wght` 380) | 11 pt, finely underlined |
-| H4+ | Source Serif 4 (`wght` 380) italic | 11 pt |
-| TOC title "Inhalt" | Source Serif 4 (`wght` 470) | 15 pt |
-| TOC entries (H1 + H2) | Source Sans 3 (`wght` 380) | 12 pt, uniform line spacing |
-| Header (text) | Source Sans 3 (`wght` 380) | 13 pt |
+| Body text | Source Sans 3 (`wght` 380), bold 560 | 10 pt, line spacing 0.85em |
+| Title (`title:`) | Source Serif 4 (`wght` 470) | 16 pt, centered |
+| Chapter (H1) | Source Serif 4 (`wght` 470) | 14 pt, fine line below |
+| H2 | Source Serif 4 (`wght` 470) | 12 pt, no line |
+| H3 | Source Serif 4 (`wght` 380) | 10 pt, finely underlined |
+| H4+ | Source Serif 4 (`wght` 380) italic | 10 pt |
+| TOC title "Inhalt" | Source Serif 4 (`wght` 470) | 14 pt |
+| TOC entries (H1 + H2) | Source Sans 3 (`wght` 380) | 11 pt, uniform line spacing |
+| Header (text) | Source Sans 3 (`wght` 380) | 11 pt |
 | Tables | Source Sans 3 Medium (`wght` 500), tracking −2 %; code 8.5 pt | 9 pt |
-| Caption | Source Sans 3 | 10 pt |
-| Code | Source Code Pro | 10 pt |
+| Caption | Source Sans 3 | 9 pt |
+| Code | Source Code Pro | 9 pt |
 | Footer | Source Sans 3 | 9 pt |
 
 ## Structure

@@ -6,6 +6,16 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.10] - 2026-10-13
+
+### Changed
+- **Body text 10 pt** (was 11 pt) with the scale title 16 / H1 14 / H2 12 / H3+ 10 pt; header text
+  11 pt, TOC title 14 / entries 11 pt, code and captions 9 pt; tables and footer stay 9 pt.
+- **Margins left 35 mm / right 30 mm** (was 30 / 20 mm): a 145 mm text block with about 95
+  characters per line instead of about 105 at 10 pt.
+- **Table cell padding** horizontally 5 pt (was 7 pt) — with the narrower text block a 13-column
+  table overflowed and the first column ran into the second; `scripts/test-pdf.sh` now checks it.
+
 ## [26.10.9] - 2026-10-13
 
 ### Changed

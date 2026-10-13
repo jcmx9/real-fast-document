@@ -438,22 +438,22 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   basename.
 - **H1 = chapter** — the top content heading: serif, a fine full-width hairline right below it, a
   page break before it (`h1_break`), and the active H1 threaded into the running header.
-- **H2 / H3** = subsections (serif, no line). **H3** is body size (11pt) at `weight-text`, finely
+- **H2 / H3** = subsections (serif, no line). **H3** is body size (10pt) at `weight-text`, finely
   underlined; **H4 and deeper** are body size, italic.
 - **Weights/figures (Zettlr-matched, 26.10.4):** `weight-text` 380 (body, H3+, header, TOC entries),
   `weight-heading` 470 (title, H1, H2, "Inhalt"); bold = 380 + **`set strong(delta: 180)`** = 560.
   **Never set a weight in `show strong`** — Typst *adds* `strong.delta` to the current weight. PDF
   viewers draw the variable Source fonts heavier than browsers/editors, hence the slightly-below-
-  nominal values. Sizes: title 18, H1 15, H2 13, H3+ 11 pt. Figures: body `number-type:
+  nominal values. Sizes (26.10.10): title 16, H1 14, H2 12, H3+ 10 pt (= body); header 11, TOC title 14 / entries 11, code + captions 9, tables + footer 9 pt. Margins left 35 / right 30 / top 35 / bottom 20 mm (145 mm text block, ~95 characters per line). Table cell inset `(x: 5pt, y: 7pt)` — 7 pt horizontal made a 13-column table overflow at 145 mm (checked in `test-pdf.sh`). Figures: body `number-type:
   "old-style"`; tables `lining` + `tabular`; header/footer `lining`; `raw` neutral (`auto`).
 - **Visual language:** all headings **serif** (`Source Serif 4`), `luma(8%)`, left-aligned
   (`justify: false`), **no accent bars**; only **H1** carries a hairline (`luma(60%)`) right below.
   Every heading uses space-above > space-below so it binds to the following text — but the `below`
   is sized ~`above`/2 (H1 2.0/0.6, H2 1.5/0.7, H3+ 1.25/0.55 em) so the body no longer
-  hugs the heading. **All above/below em are body-size-em (11pt)** (resolved against the body size at
+  hugs the heading. **All above/below em are body-size-em (10pt)** (resolved against the body size at
   block creation, *not* the heading size) — so the rhythm is level-independent; edit the four block()
-  calls in the `#show heading` rule (H1, H2, H3, H4+). Sizes: H1 15pt, H2 13pt, H3+ 11pt (= body); body
-  text is 11pt with `leading: 0.85em`. Header **and** footer
+  calls in the `#show heading` rule (H1, H2, H3, H4+). Sizes: H1 14pt, H2 12pt, H3+ 10pt (= body); body
+  text is 10pt with `leading: 0.85em`. Header **and** footer
   text are Sans (`Source Sans 3`). Fonts come from `body-font`/`heading-font`/`code-font`. Unordered
   lists use one small drawn square marker at **all** levels; ordered lists keep numbers; task items
   use the drawn `task-box` (outline open, dark fill + white ✓ done); task-only lists become a table. Blockquotes are indented both sides + italic.

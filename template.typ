@@ -17,7 +17,7 @@
 #let horizontalrule = align(center, line(start: (25%, 0%), end: (75%, 0%)))
 
 
-#set table(inset: 7pt, stroke: none)
+#set table(inset: (x: 5pt, y: 7pt), stroke: none)
 // Gemeinsame Tabellen-Gestaltung (allgemeine Tabellen + Aufgabentabelle):
 // leichtes Zebra ab der 1. Datenzeile, senkrechte Trennlinien innen, eine Linie
 // unter der Kopfzeile. Die fill-Funktion ist zugleich der Rekursions-Guard der
@@ -33,7 +33,7 @@
 // Breite, Flattersatz (Blocksatz reißt in schmalen Zellen Lücken).
 #let table-text = (size: 9pt, weight: 500, tracking: -0.02em, hyphenate: false,
   number-type: "lining", number-width: "tabular")
-#let cell-inset = 7pt
+#let cell-inset = (x: 5pt, y: 7pt)
 
 // Allgemeine Tabellen (aus Markdown): Spaltenbreiten macht Typst selbst
 // (auto-Spalten) – jede Spalte so breit wie ihr Inhalt; passt die Tabelle nicht,
@@ -96,7 +96,7 @@
 #show figure.where(kind: table): set figure.caption(position: top)
 #show figure.where(kind: image): set figure.caption(position: bottom)
 // Bildunterschrift kleiner als Fließtext, mit etwas mehr Abstand unter der Abbildung.
-#show figure.caption: set text(size: 10pt)
+#show figure.caption: set text(size: 9pt)
 // breakable: false hält Abbildung UND Unterschrift zusammen auf einer Seite –
 // passt beides nicht mehr aufs Blatt, wandert die ganze Figure auf die nächste
 // Seite (die Unterschrift landet damit nie allein auf der Folgeseite).
@@ -219,8 +219,8 @@
 // Seitengeometrie (zentral, von Seite UND Header-Logik genutzt)
 #let margin-top = 35mm
 #let margin-bottom = 20mm
-#let margin-left = 30mm
-#let margin-right = 20mm
+#let margin-left = 35mm
+#let margin-right = 30mm
 
 // Logo: proportional in einen Rahmen aus maximaler Höhe und Breite eingepasst.
 // Standardhöhe 20 mm; logo-height: (nur absolute Längen wie 15mm, 1.2cm, 40pt,
@@ -271,7 +271,7 @@
   }
   // Kopf-Text: Sans (nicht Serif wie die Überschriften), 13pt, ohne grafisches
   // Element. Kopf und Fuß bleiben bewusst serifenlos.
-  let chapter = text(font: body-font, weight: weight-text, size: 13pt, fill: head-color,
+  let chapter = text(font: body-font, weight: weight-text, size: 11pt, fill: head-color,
     number-type: "lining")[#current]
   grid(
     columns: (1fr, auto),
@@ -396,7 +396,7 @@
 // unschön) – ebenfalls verteuert, damit Typst umbricht/trennt statt es stehen zu lassen.
 // Mediävalziffern im Fließtext und in Überschriften (Tabellen: Versalziffern
 // gleicher Breite, Code: neutral, Kopf/Fuß: Versalziffern).
-#set text(font: body-font, size: 11pt, weight: weight-text, number-type: "old-style",
+#set text(font: body-font, size: 10pt, weight: weight-text, number-type: "old-style",
   lang: doc-lang, hyphenate: true, fill: luma(13%),
   costs: (orphan: 200%, widow: 200%, runt: 200%))
 #set par(justify: true, leading: 0.85em, spacing: 1.1em)
@@ -502,19 +502,19 @@
     // aber below groß genug, dass der Text nicht klebt (~above/2).
     block(width: 100%, above: 2.0em, below: 0.6em, sticky: true, {
       set par(spacing: 2pt)
-      heading-text(15pt, weight-heading, it)
+      heading-text(14pt, weight-heading, it)
       line(length: 100%, stroke: hairline-stroke)
     })
   } else if it.level == 2 {
-    block(width: 100%, above: 1.5em, below: 0.7em, sticky: true, heading-text(13pt, weight-heading, it))
+    block(width: 100%, above: 1.5em, below: 0.7em, sticky: true, heading-text(12pt, weight-heading, it))
   } else if it.level == 3 {
-    // H3: Body-Größe (11pt), schlank; eine feine Unterstreichung setzt sie ab.
+    // H3: Body-Größe (10pt), schlank; eine feine Unterstreichung setzt sie ab.
     block(width: 100%, above: 1.25em, below: 0.55em, sticky: true,
-      underline(stroke: 0.5pt + heading-color, offset: 2pt, heading-text(11pt, weight-text, it)))
+      underline(stroke: 0.5pt + heading-color, offset: 2pt, heading-text(10pt, weight-text, it)))
   } else {
     // H4 und tiefer: Body-Größe, kursiv.
     block(width: 100%, above: 1.25em, below: 0.55em, sticky: true,
-      text(style: "italic", heading-text(11pt, weight-text, it)))
+      text(style: "italic", heading-text(10pt, weight-text, it)))
   }
 }
 
@@ -522,13 +522,13 @@
 // knapp über Fließtextgröße (Book, wght 450 – Default-Bold der H1 neutralisiert).
 #let toc-entry(body) = block(above: 0.55em, below: 0pt, {
   show strong: s => s.body
-  set text(font: body-font, weight: weight-text, size: 12pt)
+  set text(font: body-font, weight: weight-text, size: 11pt)
   body
 })
 #show outline.entry.where(level: 1): it => toc-entry(it)
 #show outline.entry.where(level: 2): it => toc-entry(it)
 
-#show raw: set text(font: code-font, size: 10pt, number-type: auto, number-width: auto)
+#show raw: set text(font: code-font, size: 9pt, number-type: auto, number-width: auto)
 #show raw.where(block: true): it => block(
   fill: luma(245),
   inset: 8pt,
@@ -726,21 +726,21 @@
         upper(client-text)))
     }
     if title-text != "" {
-      block(below: 0.5em, heading-text(18pt, weight-heading, title-text))
+      block(below: 0.5em, heading-text(16pt, weight-heading, title-text))
     }
     if subtitle-text != "" {
-      block(below: 0.6em, text(font: heading-font, size: 13pt, fill: head-color, subtitle-text))
+      block(below: 0.6em, text(font: heading-font, size: 12pt, fill: head-color, subtitle-text))
     }
     // Datum/Autor-Zeile nur, wenn ein Autor gesetzt ist – das Datum allein
     // steht wie bisher rechts in der Fußzeile.
     if author-text != "" {
-      text(font: body-font, size: 10pt, fill: head-color, meta-line.join(" · "))
+      text(font: body-font, size: 9pt, fill: head-color, meta-line.join(" · "))
     }
   }))
 }
 #context {
   if want-toc() {
-    block(above: 2.0em, below: 1.0em, heading-text(15pt, weight-heading, label-text("contents")))
+    block(above: 2.0em, below: 1.0em, heading-text(14pt, weight-heading, label-text("contents")))
     outline(title: none, depth: 2)
     pagebreak(weak: true)
   }

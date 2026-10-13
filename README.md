@@ -261,7 +261,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Aspekt | Wert |
 |--------|------|
 | Format | DIN A4 Hochformat |
-| Ränder | links 30 mm · oben/unten/rechts je 20 mm |
+| Ränder | links 35 mm · rechts 30 mm · oben 35 mm · unten 20 mm (Satzspiegel 145 mm, ~95 Zeichen je Zeile) |
 | PDF-Standard | PDF/A-3b, Schriften eingebettet, Quelle als Anhang |
 | **Titel** | aus `title:` — zentriert oben (Serif) + in der Kopfzeile ab Seite 1; kein Heading, nicht im TOC. Darüber optional der Kunde (klein, gesperrt), darunter Untertitel und „Datum · Autor“ |
 | **H1** | **Kapitel** (Serif, feine Linie dicht darunter); beginnt bei `h1_break` auf neuer Seite und läuft im Kopf mit |
@@ -272,9 +272,9 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Fuß | **Sans**; ohne Datum: Name links · Seite rechts. Mit Datum: Name links · Seite mittig · Datum rechts. Name = Dateiname bzw. „Kunde · Titel“ |
 | Überschriften | **Source Serif 4**, `luma(8%)`, linksbündig, ohne Balken; **nur H1** trägt eine feine Hairline dicht darunter, alle anderen grenzen sich über Größe/Abstand ab |
 | Wasserzeichen | optional (`watermark:`): diagonal, gespreizt, fett, hellgrau (Einkanal-Grau → sauberes K im Druck), **unter** allem |
-| Fließtext | Source Sans 3, 11 pt, `wght` 380, Mediävalziffern, Blocksatz mit Silbentrennung (Zeilenabstand 0.85em), `luma(13%)`; **fett** = 560 (`strong.delta` 180) |
+| Fließtext | Source Sans 3, 10 pt, `wght` 380, Mediävalziffern, Blocksatz mit Silbentrennung (Zeilenabstand 0.85em), `luma(13%)`; **fett** = 560 (`strong.delta` 180) |
 | Tabellen | kompakte Tabellenschrift (Source Sans 3, 9 pt Medium, Laufweite −2 %); **Spaltenbreiten nach Inhalt** über Typsts `auto`-Spalten: kleine Tabellen bleiben schmal, bei Platzmangel verteilt Typst den Raum und textreiche Spalten brechen um. Zahlen-/Betragsspalten rechtsbündig, Ausrichtung aus der Trennzeile (`:--`, `--:`, `:-:`) hat Vorrang; Ziffern gleich breit (Versalziffern); Flattersatz; Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien; **Kopfzeile wiederholt sich** bei Seitenumbruch |
-| Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
+| Code | Source Code Pro, 9 pt, mit Syntax-Hervorhebung |
 | Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): gezeichnetes Kästchen (erledigt: dunkel gefüllt mit weißem Häkchen), bündig mit den Punkten; reine Aufgabenlisten als Tabelle *Aufgabe · Wer · Bis · Status* (Spaltenbreiten nach Inhalt, wie alle Tabellen) |
 | Hinweisboxen | Fläche aufgehellt, 2,5-pt-Balken links, Titel klein + gesperrt in Versalien; Farben: Info `#2f6aa8`, Tipp `#3b7d3a`, Wichtig `#7a4fb0`, Hinweis `#b05a1a`, Achtung `#b5452b` |
 | Bilder | lokal: nummerierte Abbildung mit Untertitel, Breite per `{width=…}`; fehlend: „[Bild fehlt: pfad]“ statt Abbruch; remote (`http(s)`, `//host`, `data:`) offline automatisch entfernt |
@@ -287,18 +287,18 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 
 | Element | Schrift | Grad |
 |---------|---------|------|
-| Fließtext | Source Sans 3 (`wght` 380), fett 560 | 11 pt, Zeilenabstand 0.85em |
-| Titel (`title:`) | Source Serif 4 (`wght` 470) | 18 pt, zentriert |
-| Kapitel (H1) | Source Serif 4 (`wght` 470) | 15 pt, feine Linie darunter |
-| H2 | Source Serif 4 (`wght` 470) | 13 pt, ohne Linie |
-| H3 | Source Serif 4 (`wght` 380) | 11 pt, fein unterstrichen |
-| H4+ | Source Serif 4 (`wght` 380) kursiv | 11 pt |
-| TOC-Titel „Inhalt" | Source Serif 4 (`wght` 470) | 15 pt |
-| TOC-Einträge (H1 + H2) | Source Sans 3 (`wght` 380) | 12 pt, gleiche Zeilenabstände |
-| Kopf (Text) | Source Sans 3 (`wght` 380) | 13 pt |
+| Fließtext | Source Sans 3 (`wght` 380), fett 560 | 10 pt, Zeilenabstand 0.85em |
+| Titel (`title:`) | Source Serif 4 (`wght` 470) | 16 pt, zentriert |
+| Kapitel (H1) | Source Serif 4 (`wght` 470) | 14 pt, feine Linie darunter |
+| H2 | Source Serif 4 (`wght` 470) | 12 pt, ohne Linie |
+| H3 | Source Serif 4 (`wght` 380) | 10 pt, fein unterstrichen |
+| H4+ | Source Serif 4 (`wght` 380) kursiv | 10 pt |
+| TOC-Titel „Inhalt" | Source Serif 4 (`wght` 470) | 14 pt |
+| TOC-Einträge (H1 + H2) | Source Sans 3 (`wght` 380) | 11 pt, gleiche Zeilenabstände |
+| Kopf (Text) | Source Sans 3 (`wght` 380) | 11 pt |
 | Tabellen | Source Sans 3 Medium (`wght` 500), Laufweite −2 %; Code 8,5 pt | 9 pt |
-| Bildunterschrift | Source Sans 3 | 10 pt |
-| Code | Source Code Pro | 10 pt |
+| Bildunterschrift | Source Sans 3 | 9 pt |
+| Code | Source Code Pro | 9 pt |
 | Fußzeile | Source Sans 3 | 9 pt |
 
 ## Aufbau
