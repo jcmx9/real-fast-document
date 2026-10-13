@@ -198,7 +198,8 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   "leading `# Title` becomes the title" legacy rule). The PDF/A metadata title is `title:`, else the
   basename.
   - **Metadata:** `#set document(title, date, author, description, keywords)` — author list from
-    `author:` (split on commas), description = `subtitle:`, keywords = client + `"rf-document "` +
+    `author:` (split on commas; empty without `author:`), description/Subject = `title:` (empty
+    without it — the user wants the title there, not the subtitle), keywords = client + `"rf-document "` +
     `read("VERSION")`. Typst hard-codes Creator/CreatorTool ("Typst 0.15.0") with no setting; the
     user chose keywords over post-processing the PDF (exiftool/qpdf would risk PDF/A sync).
   - **Attachment name:** `pdf.attach` gets `"/" + basename` **plus the bytes** (`read(…, encoding:

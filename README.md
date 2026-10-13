@@ -366,8 +366,8 @@ Symbols 2** — einfarbig, PDF/A-tauglich: 🚀 ✓ ⚠ → ★ ½ €.
   `embed_source: false` oder `--no-source`.
 - Das **PDF-Datum** ist das `date:` der Notiz, sonst die Änderungszeit der Quelle — nie der
   Zeitpunkt des Builds.
-- **Weitere Metadaten:** Titel aus `title:` (sonst Dateiname), Autor aus `author:`, Beschreibung
-  aus `subtitle:`, Sprache aus `lang:`; die Stichwörter enthalten den Kunden und
+- **Weitere Metadaten:** Titel und Thema aus `title:` (Titel ohne `title:` = Dateiname, Thema
+  leer), Autor nur aus `author:` (sonst leer), Sprache aus `lang:`; die Stichwörter enthalten den Kunden und
   „rf-document <Version>“. Als erzeugendes Programm trägt Typst sich selbst ein („Typst 0.15.0“);
   dieses Feld lässt sich nicht ändern.
 

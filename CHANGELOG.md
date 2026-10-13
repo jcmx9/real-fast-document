@@ -6,6 +6,12 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.12] - 2026-10-13
+
+### Changed
+- **PDF subject ("Thema") is the title** from `title:` instead of the subtitle; empty without
+  `title:`. The author still comes only from `author:` and stays empty without it.
+
 ## [26.10.11] - 2026-10-13
 
 ### Added
