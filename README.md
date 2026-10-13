@@ -97,7 +97,10 @@ rf-document notiz.md    # -> 2026-10-13_notiz.pdf neben der Notiz
 ```
 
 Eine Vorlage mit **allen** Einstellungen ist [`header.md`](header.md); ein Rundgang durch
-alle Funktionen ist [`example.md`](example.md).
+alle Funktionen ist [`example.md`](example.md). Wie ein echtes Dokument aussieht, zeigt
+[`demo.md`](demo.md): das Kick-off-Protokoll für den Online-Shop einer Kaffeerösterei — mit
+Hinweisboxen, Sortiment- und Budgettabellen, Röstformel, Ablauf- und Zeitplandiagramm,
+Aufgabentabelle und Glossar.
 
 ## Verwendung
 
@@ -317,7 +320,9 @@ flowchart LR
 ````
 
 Mermaid-Diagramme werden offline gezeichnet (Typst-Package **mmdr**), in ruhigen Farben und
-mit der variablen Source Sans 3. Fehlerhafte Syntax bricht den Export nicht ab.
+mit der variablen Source Sans 3 — Abläufe, Sequenzen, Zustände, Zeitpläne (Gantt) u. a. Ein
+Diagramm wird proportional auf Satzspiegelbreite und höchstens 12 cm Höhe eingepasst.
+Fehlerhafte Syntax bricht den Export nicht ab.
 
 ### Formeln, Code, Fußnoten, Definitionslisten
 
@@ -406,6 +411,7 @@ scripts/test-pdf.sh         End-to-End-Tests (macOS/Linux)
 scripts/test-windows.ps1    Windows-Tests (CI, Windows PowerShell 5.1)
 tests/fixtures/             Testnotizen, u. a. tables-showcase.md (alle Tabellenformen)
 example.md                  Rundgang durch alle Funktionen
+demo.md                     Beispieldokument: Kick-off-Protokoll einer Kaffeerösterei
 header.md                   Frontmatter-Vorlage mit allen Schlüsseln
 fonts/, assets/, logo.svg   Schriften, Beispielgrafik, Standard-Logo
 ```

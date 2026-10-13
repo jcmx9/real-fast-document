@@ -578,6 +578,10 @@
 // hauchdünn; 500 (Medium) trifft einen echten Schnitt und bleibt gut lesbar.
 // Darum setzt die Regel font-weight="500" in das SVG. mmdr bricht bei
 // fehlerhafter Syntax nicht ab (zeichnet, was es versteht).
+#let mermaid-max-height = 12cm
+// Kompaktere Abstände als mmdrs Standard: weniger Weißraum, damit Diagramme
+// seltener verkleinert werden müssen (Schrift bleibt lesbar).
+#let mermaid-layout = (node_spacing: 25, rank_spacing: 35)
 #let mermaid-theme = (
   font_family: "SourceSans3VF",
   primary_color: "#f4f2ee",
@@ -600,10 +604,15 @@
 #show raw.where(lang: "mermaid", block: true): it => block(
   width: 100%, above: 1.4em, below: 1.4em, breakable: false,
   {
-    let svg = mermaid-svg(it.text, base-theme: "modern", theme: mermaid-theme)
-      .replace("font-family=", "font-weight=\"500\" font-family=")
-    align(center, image(bytes(svg), format: "svg", alt: label-text("diagram"),
-      width: auto))
+    let svg = bytes(mermaid-svg(it.text, base-theme: "modern", theme: mermaid-theme, layout: mermaid-layout)
+      .replace("font-family=", "font-weight=\"500\" font-family="))
+    // Proportional einpassen: höchstens Satzspiegelbreite und höchstens
+    // mermaid-max-height hoch – ein senkrechter Ablauf füllt sonst eine Seite.
+    align(center, layout(size => {
+      let natural = measure(image(svg, format: "svg"))
+      let scale = calc.min(1.0, size.width / natural.width, mermaid-max-height / natural.height)
+      image(svg, format: "svg", alt: label-text("diagram"), width: natural.width * scale)
+    }))
   },
 )
 

@@ -369,6 +369,10 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
     `font-weight="500"` (Medium) into the SVG. The user wants **only the variable Adobe Source
     fonts** — do not add a static `SourceSans3-Regular.otf` (tried and removed). mmdr does not
     abort on invalid syntax.
+    Size: the image is fitted with `layout` + `measure` to the text width and `mermaid-max-height`
+    (12 cm), and mmdr gets `mermaid-layout` (node_spacing 25, rank_spacing 35) — mmdr's default
+    spacing made a 6-node TD flowchart 17 cm tall; tighter than 25/35 lets labelled edges collide
+    with boxes. Gantt and stateDiagram render well; `pie` looked washed out (not used).
 - **Install / bootstrap** (separate from conversion):
   - `scripts/bootstrap.sh` / `scripts/bootstrap.ps1` are the curl|bash / irm|iex one-liners:
     require git, clone/pull into `~/.local/share/real-fast-document` (Windows

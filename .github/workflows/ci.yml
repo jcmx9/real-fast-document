@@ -58,6 +58,9 @@ jobs:
       - name: Build example.md (regression probe, date-set path)
         run: RFD_NO_OPEN=1 bash scripts/build.sh example.md /tmp/example.pdf
 
+      - name: Build demo.md (example document)
+        run: RFD_NO_OPEN=1 bash scripts/build.sh demo.md /tmp/demo.pdf
+
       - name: Build README.md (dogfood, date-less mtime path)
         run: RFD_NO_OPEN=1 bash scripts/build.sh README.md /tmp/README.pdf
 
