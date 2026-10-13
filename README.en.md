@@ -367,8 +367,9 @@ Symbols 2** — monochrome, PDF/A-safe: 🚀 ✓ ⚠ → ★ ½ €.
   `embed_source: false` or `--no-source`.
 - The **PDF date** is the note's `date:`, otherwise the source's modification time — never the
   build time.
-- **Further metadata:** title from `title:` (otherwise the file name), author from `author:`,
-  description from `subtitle:`, language from `lang:`; the keywords contain the client and
+- **Further metadata:** title and subject from `title:` (without `title:` the title is the file
+  name and the subject stays empty), author only from `author:` (otherwise empty), language from
+  `lang:`; the keywords contain the client and
   “rf-document <version>”. Typst records itself as the creating program (“Typst 0.15.0”); that
   field cannot be changed.
 

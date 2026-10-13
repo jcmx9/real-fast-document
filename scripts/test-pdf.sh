@@ -135,6 +135,10 @@ test_fixtures() {
     local info
     info="$(pdfinfo "${out_dir}/client-meta.pdf")"
     expect "client-meta.md Metadaten" "${info}" "jcmx9, Ben Probe" "Muster GmbH, rf-document $(cat "${root_dir}/VERSION")"
+    grep -q '^Subject: *Kick-off$' <<<"${info}" || die "client-meta.md: Thema ist nicht der Titel"
+    # Ohne author: kein Autor, ohne title: kein Thema.
+    info="$(pdfinfo "${out_dir}/edge-cases.pdf")"
+    if grep -qE '^(Author|Subject):' <<<"${info}"; then die "edge-cases.md: Autor/Thema ohne YAML gesetzt"; fi
   fi
   ok client-meta.md
 
