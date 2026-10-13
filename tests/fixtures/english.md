@@ -13,6 +13,8 @@ logo-height: 15mm
 > [!NOTE]
 > English alert titles.
 
+He said "hello" -- it's fine... and 'single'.
+
 ## Tasks
 
 - [ ] Draft the sitemap – jcmx9, due 17 Oct

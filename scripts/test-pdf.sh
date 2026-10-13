@@ -130,8 +130,10 @@ test_fixtures() {
   # Englische Beschriftungen.
   text="$(render english.md)"
   expect_compact english.md "${text}" "EXAMPLE LTD"
+  # shellcheck disable=SC1112
   expect english.md "${text}" "Example Ltd" "Kick-off" "Page 1 /" "NOTE" "English alert titles." \
-    "Task" "Owner" "Due" "Status" "17 Oct" "Ben Probe" "October 17, 2026"
+    "Task" "Owner" "Due" "Status" "17 Oct" "Ben Probe" "October 17, 2026" \
+    'He said “hello” – it’s fine… and ‘single’.'
   reject english.md "${text}" "[!NOTE]" "– jcmx9"
   reject english.md "${text}" "Seite"
   ok english.md
@@ -170,11 +172,14 @@ test_fixtures() {
   text="$(render text-features.md)"
   # shellcheck disable=SC1111,SC1112
   expect text-features.md "${text}" '„Deutsche Anführungszeichen“' '‚einfache‘' '»Guillemets«' \
-    '"gerade"' "Text mit markiert" "==kein Mark im Code==" "==bleibt Code==" '\newpage' \
+    '„gerade“' '‚einfach gerade‘' 'geht’s' 'Seite 3–5' 'Gedanke—Strich' 'Moment…' \
+    "Text mit markiert" "==kein Mark im Code==" "==bleibt Code==" '\newpage' \
     "1. Echte Liste" "Seite drei."
+  # Code bleibt unverändert (Zeilenumbruch im Blocksatz -> ohne Leerraum prüfen)
+  expect_compact text-features.md "${text}" 'echo "x" --flag ...'
   expect_line text-features.md "${text}" "18. Oktober 2026" "19. Okt. 2026" "1. Dez. 2026"
   # shellcheck disable=SC1111
-  reject text-features.md "${text}" "==markiert==" "pagebreak" '“gerade”'
+  reject text-features.md "${text}" "==markiert==" "pagebreak" '"gerade"' '“gerade”' '3--5' 'Moment...'
   pdfinfo "${out_dir}/text-features.pdf" | grep -q '^Pages: *3$' ||
     die "text-features.md: Seitenumbrüche fehlen (erwartet 3 Seiten)"
   ok text-features.md

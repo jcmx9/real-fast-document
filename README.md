@@ -148,7 +148,7 @@ lang: de                # Dokumentsprache (Datumsformat); Default de
 header: "Vertraulich"   # fester Kopfzeilentext ab Seite 1 (übersteuert den Running Header)
 watermark: "ENTWURF"    # diagonales Wasserzeichen unter allem
 logo: logo-kunde.png    # Logo nur für dieses Dokument (relativ zur Notiz oder absolut)
-logo-height: 15mm       # maximale Logohöhe (nur absolute Längen; Default 13mm, max. 25mm)
+logo-height: 15mm       # maximale Logohöhe (nur absolute Längen; Default 20mm, max. 25mm)
 embed_source: false     # Markdown-Quelle nicht einbetten (Default: true)
 hard_breaks: true       # jede Zeile bleibt eine Zeile (Default: false)
 ---
@@ -215,7 +215,9 @@ Codeblöcke werden mit Syntax-Hervorhebung gesetzt, Formeln (`$…$`, `$$…$$`)
 | gemischte Liste mit `- [ ]` / `- [x]` | Kästchen statt Aufzählungspunkt, bündig mit den Punkten |
 | `18. Oktober 2026` am Zeilenanfang | bleibt ein Datum, keine nummerierte Liste (Monatsnamen de/en, auch abgekürzt) |
 | `<!-- pagebreak -->`, `\newpage` (eigene Zeile) | Seitenumbruch |
-| `„…“`, `‚…‘`, `»…«`, `"…"` | Anführungszeichen bleiben exakt wie getippt (keine Automatik) |
+| `"…"`, `'…'`, `geht's` | gerade Anführungszeichen nach Sprache: `lang: de` „…“ ‚…‘, sonst “…” ‘…’; Apostroph ’ |
+| `„…“`, `‚…‘`, `»…«`, `“…”` | getippte typografische Zeichen bleiben exakt erhalten |
+| `--`, `---`, `...` | – (Halbgeviertstrich), — (Geviertstrich), … (Auslassungszeichen); nicht in Code, Formeln und HTML |
 
 Snippet-Vorlage für Aufgaben: `- [ ] ${1:Aufgabe} – ${2:Name}, bis ${3:Datum}$0`
 
@@ -266,7 +268,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | **H2 / H3** | Unterabschnitte (Serif, ohne Linie); **H3** fein unterstrichen, **H4** und tiefer kursiv, beide in Body-Größe |
 | Kopf | `header:` fester Text · sonst aktives H1-Kapitel · vor dem 1. Kapitel der Titel. Text in **Sans** |
 | **TOC** | bedingt: ab `#H1 + #H2 > 5` → Inhaltsverzeichnis (nur H1 + H2) + Kapitel je neue Seite; per `toc`/`h1_break` übersteuerbar |
-| Kopf rechts | Logo (`logo:` pro Dokument, sonst `logo.svg` → `.png` → `.jpg`), proportional in 13 mm × 60 mm (`logo-height`) — **optional** |
+| Kopf rechts | Logo (`logo:` pro Dokument, sonst `logo.svg` → `.png` → `.jpg`), proportional in 20 mm × 60 mm (Höhe per `logo-height`) — **optional** |
 | Fuß | **Sans**; ohne Datum: Name links · Seite rechts. Mit Datum: Name links · Seite mittig · Datum rechts. Name = Dateiname bzw. „Kunde · Titel“ |
 | Überschriften | **Source Serif 4**, `luma(8%)`, linksbündig, ohne Balken; **nur H1** trägt eine feine Hairline dicht darunter, alle anderen grenzen sich über Größe/Abstand ab |
 | Wasserzeichen | optional (`watermark:`): diagonal, gespreizt, fett, hellgrau (Einkanal-Grau → sauberes K im Druck), **unter** allem |

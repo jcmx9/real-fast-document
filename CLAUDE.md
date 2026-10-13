@@ -217,7 +217,7 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   filename; `logo:` → per-note logo (expanded by `expand_path`/`Expand-NotePath`: `~`, `${VAR}`,
   `$VAR`, `%VAR%` with USER↔USERNAME / HOME↔USERPROFILE fallback, `%XX` decoding — **no `eval`**;
   relative to the note; missing → warning + global logo); `logo-height:` → absolute lengths only,
-  parsed in the template (`logo-max-height`, capped at 25 mm), the logo is fitted proportionally into
+  parsed in the template (`logo-max-height`, default **20 mm**, capped at 25 mm), the logo is fitted proportionally into
   height × 60 mm via `measure`; `embed_source:` / CLI `--no-source` → `attach=` empty;
   `date:` (ISO **or** German `T.M.JJJJ`, parsed by `parse-date` in the template and `iso_date`/
   `ConvertTo-IsoDate` in the shells; anything else is shown verbatim and gets no prefix) → ISO-prefixes the output file (`2026-06-19_name.pdf`), shows a
@@ -281,8 +281,15 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   `rfd-tasks` collects them from its body (`body.children.filter(c => c.func() == metadata)`) into
   a table with Typst `auto` columns and `table-text` (like every table) that reuses `rfd-table-fill`/`rfd-table-stroke` (the `fill` function is also
   the guard that keeps the general `#show table` rebuild away). cmarker runs with
-  **`smart-punctuation: false`**: typed quotes stay exact (the automatic replacement put English
-  “…” into German text); `--`/`...` therefore stay as typed too. The **original** `.md`
+  **`smart-punctuation: false`** (its automatic replacement put English “…” into German text) — the
+  typography is done in `lib/markdown.typ` instead (**`smart-typography`**, runs right after
+  `pagebreaks`): `---`→—, `--`→–, `...`→…, straight `"`/`'` → `lang`-dependent quotes (de „…“ ‚…‘,
+  otherwise “…” ‘…’; opening vs closing decided by the preceding char, `opener-re`), apostrophe ’
+  between letters. Typed typographic quotes are left alone. Skipped: code fences, `$$` math
+  (`skip-mask`), inline code (split on backticks), inline `$…$` (split on `$` when the count is
+  even), lines starting with `<`, lines containing an HTML tag/comment (attributes like `class="x"`
+  must stay straight), rule/separator lines (`rule-line-re`). The user wants `--`/`...` converted
+  ("das ist doch gut") and quotes by language; default `lang` stays **de**. The **original** `.md`
   is both rendered (after preprocessing in memory) and embedded (`--input attach`). New Markdown
   transforms go into `lib/markdown.typ` (git-tracked via `!lib/*.typ` in `.gitignore`).
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the

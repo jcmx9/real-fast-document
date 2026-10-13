@@ -140,7 +140,8 @@
 // Markdown vorverarbeiten (lib/markdown.typ).
 // hard_breaks: true -> jede Zeile bleibt eine Zeile (Frontmatter oder --hard-breaks).
 #let body-markdown = if source-path == none { "" } else {
-  preprocess(read(source-path), hard-breaks: sys.inputs.at("hard_breaks", default: "false") == "true")
+  preprocess(read(source-path), hard-breaks: sys.inputs.at("hard_breaks", default: "false") == "true",
+    lang: sys.inputs.at("lang", default: "de"))
 }
 // Sichtbarer Dokumenttitel nur aus dem Frontmatter (title:): Titelblock oben +
 // Kopfzeile ab Seite 1. Leer = kein Titel; ein "# …" ist immer ein Kapitel.
@@ -222,13 +223,13 @@
 #let margin-right = 20mm
 
 // Logo: proportional in einen Rahmen aus maximaler Höhe und Breite eingepasst.
-// Standardhöhe 13 mm; logo-height: (nur absolute Längen wie 15mm, 1.2cm, 40pt,
+// Standardhöhe 20 mm; logo-height: (nur absolute Längen wie 15mm, 1.2cm, 40pt,
 // 0.8in) übersteuert, gedeckelt auf 25 mm, damit der Kopf im oberen Rand bleibt.
 // Ungültige Werte (z. B. 50%) werden ignoriert.
 #let logo-max-width = 60mm
 #let logo-max-height = {
   let m = logo-height-raw.trim().match(regex("^(\d+(?:\.\d+)?)\s*(mm|cm|pt|in)$"))
-  if m == none { 13mm } else {
+  if m == none { 20mm } else {
     let v = float(m.captures.at(0))
     let unit = (mm: 1mm, cm: 1cm, pt: 1pt, "in": 1in).at(m.captures.at(1))
     calc.min(v * unit, 25mm)

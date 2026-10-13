@@ -46,7 +46,7 @@ watermark: ""
 logo: ""
 # Maximale Logohöhe, nur absolute Längen (mm, cm, pt, in); höchstens 25mm.
 # Das Logo bleibt proportional und höchstens 60 mm breit.
-logo-height: 13mm
+logo-height: 20mm
 
 # ---- Ausgabe ----------------------------------------------------------------
 # Markdown-Quelle als Anhang ins PDF einbetten; false für Kunden-PDFs

@@ -148,7 +148,7 @@ lang: de                # document language (date format); default de
 header: "Confidential"  # fixed header text from page 1 (overrides the running header)
 watermark: "DRAFT"      # diagonal watermark beneath everything
 logo: client-logo.png   # logo for this document only (relative to the note or absolute)
-logo-height: 15mm       # maximum logo height (absolute lengths only; default 13mm, max 25mm)
+logo-height: 15mm       # maximum logo height (absolute lengths only; default 20mm, max 25mm)
 embed_source: false     # do not embed the Markdown source (default: true)
 hard_breaks: true       # every line stays a line (default: false)
 ---
@@ -213,7 +213,9 @@ blank line before them.
 | mixed list with `- [ ]` / `- [x]` | Box instead of the bullet, aligned with the bullets |
 | `18. Oktober 2026` at line start | stays a date, not a numbered list (month names de/en, also abbreviated) |
 | `<!-- pagebreak -->`, `\newpage` (own line) | Page break |
-| `„…“`, `‚…‘`, `»…«`, `"…"` | Quotes stay exactly as typed (no automatic replacement) |
+| `"…"`, `'…'`, `it's` | straight quotes by language: `lang: de` „…“ ‚…‘, otherwise “…” ‘…’; apostrophe ’ |
+| `„…“`, `‚…‘`, `»…«`, `“…”` | typed typographic quotes stay exactly as they are |
+| `--`, `---`, `...` | – (en dash), — (em dash), … (ellipsis); not in code, math or HTML |
 
 Snippet template for tasks: `- [ ] ${1:Task} – ${2:Name}, due ${3:Date}$0`
 
@@ -263,7 +265,7 @@ Body text with **emphasis** and a footnote.[^1]
 | **H2 / H3** | subsections (serif, no line); **H3** finely underlined, **H4** and deeper italic, both at body size |
 | Header | `header:` fixed text · else active H1 chapter · before the 1st chapter the title. Text in **sans** |
 | **TOC** | conditional: from `#H1 + #H2 > 5` → table of contents (H1 + H2 only) + chapter per new page; overridable via `toc`/`h1_break` |
-| Header right | logo (`logo:` per document, else `logo.svg` → `.png` → `.jpg`), fitted proportionally into 13 mm × 60 mm (`logo-height`) — **optional** |
+| Header right | logo (`logo:` per document, else `logo.svg` → `.png` → `.jpg`), fitted proportionally into 20 mm × 60 mm (height via `logo-height`) — **optional** |
 | Footer | **sans**; without date: name left · page right. With date: name left · page centered · date right. Name = filename or "client · title" |
 | Headings | **Source Serif 4**, `luma(8%)`, left-aligned, no bars; **only H1** carries a fine hairline right below, all others are set apart by size/spacing |
 | Watermark | optional (`watermark:`): diagonal, letter-spaced, bold, light gray (single-channel gray → clean K in print), **beneath** everything |
