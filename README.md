@@ -142,11 +142,11 @@ Remove-Item -Recurse -Force "$env:LOCALAPPDATA\real-fast-document"  # Windows
 ```bash
 bash scripts/build.sh                 # example.md  -> example.pdf
 bash scripts/build.sh dokument.md     # dokument.md -> dokument.pdf
-bash scripts/build.sh in.md out.pdf   # explizite Ausgabe (exakt dieser Pfad, kein Präfix)
-bash scripts/build.sh --no-source in.md out.pdf  # ohne eingebettete Markdown-Quelle
-bash scripts/build.sh --hard-breaks notiz.md     # jede Zeile bleibt eine Zeile
-bash scripts/build.sh --help          # Optionen + Frontmatter-Schlüssel anzeigen
-bash scripts/build.sh --version       # rf-document- und Typst-Version anzeigen
+bash scripts/build.sh in.md out.pdf   # exakt dieser Ausgabepfad
+bash scripts/build.sh --no-source a.md # ohne eingebettete Quelle
+bash scripts/build.sh --hard-breaks a.md  # Zeile bleibt Zeile
+bash scripts/build.sh --help          # Optionen + Schlüssel
+bash scripts/build.sh --version       # Versionen anzeigen
 ```
 
 Ohne zweites Argument landet die Ausgabe neben der Quelle. Ist im Frontmatter ein `date`
@@ -316,7 +316,7 @@ Fließtext mit **Auszeichnung** und einer Fußnote.[^1]
 | Überschriften | **Source Serif 4**, `luma(8%)`, linksbündig, ohne Balken; **nur H1** trägt eine feine Hairline dicht darunter, alle anderen grenzen sich über Größe/Abstand ab |
 | Wasserzeichen | optional (`watermark:`): diagonal, gespreizt, fett, hellgrau (Einkanal-Grau → sauberes K im Druck), **unter** allem |
 | Fließtext | Source Sans 3, 11 pt, Blocksatz mit Silbentrennung (Zeilenabstand 0.85em), `luma(13%)` |
-| Tabellen | volle Breite, **Spalten anteilig nach Inhaltsbreite** (schmale Spalten bleiben schmal, textreiche bekommen mehr Platz); Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien; **Kopfzeile wiederholt sich** bei Seitenumbruch |
+| Tabellen | **Spaltenbreiten nach Inhalt** (wie HTML-Tabellen): passt alles, bleibt die Tabelle in Inhaltsbreite; sonst erhält jede Spalte mindestens ihr längstes Wort und textreiche Spalten den Rest. Zahlen-/Betragsspalten rechtsbündig, Ausrichtung aus der Trennzeile (`:--`, `--:`, `:-:`) hat Vorrang; Ziffern gleich breit (Versalziffern); Flattersatz; Kopf zentriert + fett mit Linie darunter; leichtes Zeilen-Zebra, senkrechte Trennlinien, keine waagerechten Zeilenlinien; **Kopfzeile wiederholt sich** bei Seitenumbruch |
 | Code | Source Code Pro, 10 pt, mit Syntax-Hervorhebung |
 | Aufzählungen | ungeordnet: kleines Quadrat auf **allen** Ebenen; geordnet: Nummern; Aufgaben (`- [ ]`): gezeichnetes Kästchen (erledigt: dunkel gefüllt mit weißem Häkchen), bündig mit den Punkten; reine Aufgabenlisten als Tabelle (Aufgabe 56 % · Wer 20 % · Bis 14 % · Status 10 %) |
 | Hinweisboxen | Fläche aufgehellt, 2,5-pt-Balken links, Titel klein + gesperrt in Versalien; Farben: Info `#2f6aa8`, Tipp `#3b7d3a`, Wichtig `#7a4fb0`, Hinweis `#b05a1a`, Achtung `#b5452b` |

@@ -439,14 +439,20 @@ via `build.sh` only.
 - `outline(title: [..])` renders its title as a *heading*, which re-triggers the heading
   show rule → recursion. Use `outline(title: none)` and render the "Inhalt" label as plain
   text.
-- The **full-width table** show rule rebuilds the table to fill the text block **with columns
-  sized proportionally to content** (not `(1fr,)*n`, which stretches every column equally): it
-  flattens the cell bodies (unwrapping the `table.header` — see below), then inside a
-  `layout(size => …)` **`measure`s each column's natural max width**, caps it at the text width
-  (`size.width`) so one text-heavy column can't crush the narrow ones to zero, adds ~12pt of
-  inset compensation (`measure` doesn't know the cell inset), and turns those widths into
-  `fr` weights (`w / total * 1fr`). Result: the table still fills the width, but narrow columns
-  stay narrow and wide content gets more room. Header centered/bold, body left, zebra `fill`.
+- The **table** show rule rebuilds every cmarker table with **HTML-auto-layout column widths**:
+  inside `layout(size => …)` it measures per column a **min** width (the widest *word*:
+  `cell-words` splits a cell into words while keeping `strong`/`emph`/`raw` styling, header cells
+  measured as `strong`) and a **max** width (natural `measure(body)`), both + `2 * cell-inset`.
+  `Σmax ≤ avail` → columns = max (table keeps its **content width**, not stretched); `Σmin ≥ avail`
+  → proportional to min; else `min + spare · (max − min) / Σ(max − min)`. **Trap:**
+  `measure(width: X, body)` does *not* give the min width — it returns the constraint X itself, so
+  the word split is the only way. **Alignment:** `it.align` is an array from cmarker (`auto` where
+  the separator row has no `:`); `auto` columns whose non-empty cells all match `number-re`
+  (`plain-text` of the cell) become `right`, others `left`; header row always centered/bold.
+  Tables set `number-type: "lining", number-width: "tabular"` and `par(justify: false)`.
+  `plain-text` must use `.sum(default: "")`, not `.join("")` — `join` on an empty array returns
+  `none` and empty cells then crash `.trim()`. Zebra/stroke come from `rfd-table-fill`/
+  `rfd-table-stroke` (shared with the task table).
   Emitting a `table` inside `#show table:` recurses → guard on a field the rebuild sets but
   cmarker never does: `if it.fill != none { it } else { …rebuild… }` (the guard is a **field
   check**, so it survives the `layout`/`context` boundary — unlike the built-in heading
@@ -456,6 +462,9 @@ via `build.sh` only.
   do **not** re-wrap the first cells in another `table.header` (Typst errors: *header within another
   header*). For measuring only, the header is unwrapped (`c.func() == table.header` → its
   `.children`) and each cell's `.body` is pulled out (`c.func() == table.cell ? c.body : c`).
+  `scripts/test-pdf.sh` checks the result geometrically via `pdftotext -bbox` (`xmax`): amounts of
+  different length end at the same x (right-aligned), a small table ends well before the margin,
+  and page 2 of a long table repeats the header.
   The rebuilt table is wrapped in a `block(above/below, breakable: true)` for symmetric
   spacing while still letting long tables break across pages (with the repeating header).
 - **Non-breaking spaces** — `template.typ` inserts NBSP so common pairs don't break across a line:

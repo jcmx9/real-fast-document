@@ -92,6 +92,11 @@ reject() {
 
 ok() { printf 'ok   %s\n' "$*"; }
 
+# xmax <pdf> <wort>: rechte Kante (pt) jedes Vorkommens des Wortes (pdftotext -bbox).
+xmax() {
+  pdftotext -bbox "$1" - | grep -F ">$2<" | sed -E 's/.*xMax="([0-9.]+)".*/\1/'
+}
+
 test_fixtures() {
   local text
 
@@ -189,6 +194,23 @@ test_fixtures() {
     "Text direkt danach mit Markierung."
   reject no-blank-lines.md "${text}" "# Mitschrift" "==Markierung==" "\\"
   ok no-blank-lines.md
+
+  # Tabellen: Spaltenbreiten nach Inhalt, Zahlen rechtsbündig, Kopf wiederholt.
+  text="$(render tables.md)"
+  expect tables.md "${text}" "Donaudampfschifffahrtsgesellschaftskapitänsmütze" "1.250,00 €" "17.10.2026"
+  if command -v pdftotext >/dev/null 2>&1; then
+    local pdf="${out_dir}/tables.pdf" edges
+    # Beträge unterschiedlicher Länge enden an derselben Kante (rechtsbündig).
+    edges="$(for w in 520,00 1.250,00 9,50; do xmax "${pdf}" "${w}"; done |
+      awk 'NR == 1 { a = $1 } { d = $1 - a; if (d < 0) d = -d; if (d > 0.5) bad = 1 } END { print bad + 0 }')"
+    [[ "${edges}" == 0 ]] || die "tables.md: Beträge nicht rechtsbündig"
+    # Kleine Tabelle bleibt in Inhaltsbreite (Satzspiegel endet bei ~538 pt).
+    awk '{ exit !($1 < 400) }' <<<"$(xmax "${pdf}" Verantwortlich)" ||
+      die "tables.md: kleine Tabelle auf volle Breite gezogen"
+    # Lange Tabelle: Kopfzeile wiederholt sich auf Seite 2.
+    expect "tables.md Seite 2" "$(pdftotext -f 2 -l 2 -layout "${pdf}" -)" "Position" "Betrag"
+  fi
+  ok tables.md
 }
 
 test_interface() {

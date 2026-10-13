@@ -26,52 +26,106 @@
   left: if x > 0 { 0.4pt + luma(80%) } else { 0pt },
   top: if y == 1 { 0.7pt + luma(45%) } else { 0pt },
 )
-// Tabellen über die volle Satzspiegelbreite; Kopf zentriert + fett, Inhalte
-// linksbündig (auch Zahlen/Währungen), leichter Zebra-Hintergrund, senkrechte
-// Trennlinien und eine Linie unter der Kopfzeile.
+// Allgemeine Tabellen (aus Markdown): Spaltenbreiten wie bei HTML-Tabellen
+// ("auto layout"). Je Spalte werden zwei Breiten gemessen:
+//   min = breitestes Wort (darunter würden Wörter zerbrechen),
+//   max = natürliche Breite ohne Umbruch.
+// Passt die Summe der max-Breiten in den Satzspiegel, bleibt die Tabelle in
+// Inhaltsbreite (kleine Tabellen werden nicht auf volle Breite gezogen). Sonst
+// erhält jede Spalte ihre min-Breite und der Rest wird nach (max − min)
+// verteilt: schmale Spalten (Zahlen, Daten, Kürzel) bleiben so schmal wie ihr
+// Inhalt, textreiche Spalten bekommen den Rest und brechen um.
+// Ausrichtung: die der Markdown-Trennzeile (:--, --:, :-:); ohne Angabe werden
+// reine Zahlen-/Betragsspalten rechtsbündig, alles andere linksbündig. Kopf
+// zentriert + fett, leichtes Zebra, senkrechte Trennlinien, Linie unter dem Kopf.
+#let cell-inset = 7pt
+// Klartext einer Zelle (für die Zahlenerkennung).
+#let plain-text(c) = {
+  if c.has("text") { c.text }
+  else if c.has("children") { c.children.map(plain-text).sum(default: "") }
+  else if c.has("body") { plain-text(c.body) }
+  else if c == [ ] { " " }
+  else { "" }
+}
+// Zelleninhalt in Wörter zerlegen, Auszeichnung (fett, kursiv, Code) bleibt
+// erhalten, damit die Messung stimmt. Getrennt wird nur an Leerzeichen und
+// Zeilenumbrüchen, nicht an geschützten Leerzeichen.
+#let cell-words(c) = {
+  let split(t) = t.split(regex("[ \t\n]+")).filter(w => w != "")
+  if c.func() == text { split(c.text).map(w => text(w)) }
+  else if c.func() == raw { split(c.text).map(w => raw(w)) }
+  else if c.func() == strong { cell-words(c.body).map(w => strong(w)) }
+  else if c.func() == emph { cell-words(c.body).map(w => emph(w)) }
+  else if c.has("children") { c.children.map(cell-words).flatten() }
+  else if c.has("body") { cell-words(c.body) }
+  else if c == [ ] or c.func() in (linebreak, parbreak) { () }
+  else { (c,) }
+}
+#let number-re = regex("^[+\-−]?\s*(?:[€$£]\s*)?[0-9][0-9.,'\u{2009}\u{00A0} ]*(?:\s*(?:%|€|\$|£|EUR|CHF|USD|Std\.?|h|Tage?|Stk\.?))?$")
+#let is-number(c) = plain-text(c).trim().match(number-re) != none
+
 #show table: it => {
-  // Guard gegen Rekursion: die umgebaute Tabelle setzt `fill` (eine Funktion),
-  // die cmarker-Originaltabelle nicht -> nur die Originaltabelle umbauen.
-  // (`it.columns` kommt von Typst als Array normalisiert – daher .len().)
+  // Guard gegen Rekursion: umgebaute Tabellen (und die Aufgabentabelle) setzen
+  // `fill` (eine Funktion), die cmarker-Originaltabelle nicht.
   if it.fill != none {
     it
   } else {
     let n = if type(it.columns) == int { it.columns } else { it.columns.len() }
-    // Zellinhalte flach sammeln (Kopfzeile aus table.header auspacken) – nur zum
-    // Messen der natürlichen Spaltenbreite, das Rendering nutzt weiter ..it.children.
+    // Zellinhalte in Lesereihenfolge (Kopfzeile aus table.header ausgepackt) –
+    // nur zum Messen; gerendert wird weiter ..it.children (der table.header
+    // wiederholt sich so bei Seitenumbruch).
     let cell-body = c => if c.func() == table.cell { c.body } else { c }
+    let header = ()
     let bodies = ()
     for c in it.children {
-      if c.func() == table.header {
-        for hc in c.children { bodies.push(cell-body(hc)) }
-      } else {
-        bodies.push(cell-body(c))
-      }
+      if c.func() == table.header { for hc in c.children { header.push(cell-body(hc)) } }
+      else { bodies.push(cell-body(c)) }
     }
-    // cmarker liefert die Kopfzeile bereits als table.header (Default repeat:true) –
-    // in ..it.children enthalten, wird also weitergereicht und wiederholt sich bei
-    // Seitenumbruch am Kopf der Folgeseite. Symmetrischer Abstand ober-/unterhalb
-    // (etwas mehr als der Absatzabstand); breakable:true, damit lange Tabellen
-    // samt wiederholtem Kopf über Seiten umbrechen dürfen.
-    block(above: 1.2em, below: 1.4em, breakable: true, layout(size => {
-      // Volle Breite, aber Spalten anteilig nach Inhaltsbedarf: je Spalte die
-      // natürliche Max-Breite messen (+ Zell-Innenabstand), auf die Satzbreite
-      // gedeckelt, damit eine textreiche Spalte die schmalen nicht auf null drückt.
-      // Daraus fr-Gewichte -> Tabelle füllt aus, breite Inhalte bekommen mehr Platz.
-      let widths = (0pt,) * n
-      for (i, body) in bodies.enumerate() {
-        let col = calc.rem(i, n)
-        let m = calc.min(measure(body).width, size.width)
-        if m > widths.at(col) { widths.at(col) = m }
+    let rows = bodies.chunks(n)
+    let column(i) = rows.map(r => r.at(i, default: []))
+    // Ausrichtung je Spalte: Markdown-Angabe, sonst Zahlen rechts, Text links.
+    let md-align = if type(it.align) == array { it.align } else { (auto,) * n }
+    let aligns = range(n).map(i => {
+      let a = md-align.at(i, default: auto)
+      if a != auto { a }
+      else {
+        let cells = column(i).filter(c => plain-text(c).trim() != "")
+        if cells.len() > 0 and cells.all(is-number) { right } else { left }
       }
-      // + ~1em Padding-Ausgleich (measure kennt den Zell-inset nicht), sonst
-      // wirken kurze Spalten relativ zu schmal.
-      let widths = widths.map(w => w + 12pt)
-      let total = widths.sum()
-      let cols = if total == 0pt { (1fr,) * n } else { widths.map(w => w / total * 1fr) }
+    })
+    block(above: 1.2em, below: 1.4em, breakable: true, layout(size => {
+      let pad = 2 * cell-inset
+      let mins = (0pt,) * n
+      let maxs = (0pt,) * n
+      let cells = header.map(h => strong(h)) + bodies
+      for (k, body) in cells.enumerate() {
+        let col = calc.rem(k, n)
+        let words = cell-words(body)
+        let mn = if words.len() == 0 { 0pt } else { calc.max(..words.map(w => measure(w).width)) }
+        let mx = measure(body).width
+        if mn > mins.at(col) { mins.at(col) = mn }
+        if mx > maxs.at(col) { maxs.at(col) = mx }
+      }
+      let mins = mins.map(w => calc.min(w, size.width) + pad)
+      let maxs = maxs.enumerate().map(((i, w)) => calc.max(calc.min(w, size.width) + pad, mins.at(i)))
+      let avail = size.width
+      let widths = if maxs.sum() <= avail {
+        maxs                                       // passt: Inhaltsbreite
+      } else if mins.sum() >= avail {
+        mins.map(w => w / mins.sum() * avail)      // zu viele Spalten: anteilig
+      } else {
+        let spare = avail - mins.sum()
+        let flex = maxs.sum() - mins.sum()
+        range(n).map(i => mins.at(i) + spare * ((maxs.at(i) - mins.at(i)) / flex))
+      }
+      // Zahlen in Tabellen: Versalziffern in gleicher Breite (stehen untereinander).
+      // Flattersatz statt Blocksatz – in schmalen Zellen reißt Blocksatz Lücken.
+      set text(number-type: "lining", number-width: "tabular")
+      set par(justify: false)
       table(
-        columns: cols,
-        align: (_, y) => if y == 0 { center } else { left },
+        columns: widths,
+        inset: cell-inset,
+        align: (x, y) => if y == 0 { center } else { aligns.at(x) },
         fill: rfd-table-fill,
         stroke: rfd-table-stroke,
         ..it.children,
@@ -596,6 +650,8 @@
   cols.at(0).width += rest
   let status-x = cols.len() - 1
   let cell(t, key) = if key == "task" { t.body } else if key == "status" { task-box(t.done) } else { t.at(key) }
+  set par(justify: false)
+  set text(number-type: "lining", number-width: "tabular")
   block(above: 1.2em, below: 1.4em, breakable: true, table(
     columns: cols.map(c => c.width),
     align: (x, y) => if x == status-x { center + horizon } else { left + horizon },
