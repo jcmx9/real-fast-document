@@ -6,6 +6,17 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.15] - 2026-10-14
+
+### Changed
+- **No page break after the table of contents without chapter breaks:** with `h1_break: false`
+  the text continues directly below the TOC (compact minutes); with chapter breaks everything
+  stays as before.
+
+### Fixed
+- Text directly after the table of contents overlapped its last entry (hidden so far by the
+  forced page break); the TOC now keeps a 2 em gap below it. New fixture `toc-no-break.md`.
+
 ## [26.10.14] - 2026-10-13
 
 ### Added

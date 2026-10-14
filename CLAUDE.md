@@ -492,6 +492,10 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
     2× the default cost makes Typst pull an extra line rather than leave one stranded.
 - **Running header** (`doc-header`): `header:` fixed text wins; else the active **H1** chapter;
   before the first chapter the `title:` (if set), else empty.
+- **Page break after the TOC follows `h1_break`** (`if want-break() { pagebreak(weak: true) }`):
+  with `h1_break: false` the body continues directly below the TOC (user decision). The outline sits
+  in `block(below: 2.0em, …)` because the entries have `below: 0pt` — without it a following
+  paragraph overlapped the last entry (`toc-no-break.md` checks it via bbox).
 - **Conditional TOC / structured mode**: when `#H1 + #H2 > 5` (`auto-structured()`) the doc renders
   a TOC (**H1 + H2 only**, `outline(depth: 2)`) after the title and breaks each **H1** to a new
   page. `toc`/`h1_break` override each independently via `want-toc()`/`want-break()`. The title

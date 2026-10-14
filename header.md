@@ -31,6 +31,7 @@ lang: de
 # Inhaltsverzeichnis: auto = ab mehr als fünf #/##-Überschriften; true/false erzwingt.
 toc: auto
 # Jedes Kapitel (#) auf neuer Seite: auto = wie toc; true/false erzwingt.
+# Mit false läuft der Text auch direkt unter dem Inhaltsverzeichnis weiter.
 h1_break: auto
 
 # ---- Kopf, Fuß, Wasserzeichen -----------------------------------------------

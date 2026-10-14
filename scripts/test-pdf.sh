@@ -160,6 +160,20 @@ test_fixtures() {
     die "h1-chapter.md: PDF-Titel ist nicht der Dateiname"
   ok h1-chapter.md
 
+  # toc: true + h1_break: false: kein Seitenumbruch nach dem Inhaltsverzeichnis,
+  # der Text beginnt darunter – ohne den letzten Eintrag zu überlappen.
+  text="$(render toc-no-break.md)"
+  expect "toc-no-break.md Seite 1" "$(pdftotext -f 1 -l 1 "${out_dir}/toc-no-break.pdf" - 2>/dev/null || mutool draw -q -F txt "${out_dir}/toc-no-break.pdf" 1)" \
+    "Inhalt" "Einleitung direkt unter dem Inhaltsverzeichnis." "Kurzer Text in Kapitel 1."
+  if command -v pdftotext >/dev/null 2>&1; then
+    local toc_last intro_top
+    toc_last="$(pdftotext -f 1 -l 1 -bbox "${out_dir}/toc-no-break.pdf" - | grep -F '>Kapitel<' | sed -n 8p | sed -E 's/.*yMax="([0-9.]+)".*/\1/')"
+    intro_top="$(pdftotext -f 1 -l 1 -bbox "${out_dir}/toc-no-break.pdf" - | grep -F '>Einleitung<' | sed -E 's/.*yMin="([0-9.]+)".*/\1/')"
+    awk -v a="${toc_last}" -v b="${intro_top}" 'BEGIN { exit !(a != "" && b != "" && a + 5 < b) }' ||
+      die "toc-no-break.md: Text überlappt das Inhaltsverzeichnis"
+  fi
+  ok toc-no-break.md
+
   # Hinweisboxen: GitHub- und deutsche Schlüsselwörter, deutsche Titel.
   text="$(render alerts.md)"
   expect alerts.md "${text}" "INFO" "TIPP" "WICHTIG" "HINWEIS" "ACHTUNG" "Ruhiges Orange." \
