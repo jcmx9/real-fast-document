@@ -6,6 +6,12 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.17] - 2026-10-14
+
+### Changed
+- **More air in the title block:** client → title 10 pt, title → subtitle 9 pt, subtitle →
+  date/author 11 pt (were 5–6 pt), and 16 pt instead of 10 pt below the title block.
+
 ## [26.10.16] - 2026-10-14
 
 ### Fixed
