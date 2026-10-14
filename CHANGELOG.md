@@ -6,6 +6,19 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.16] - 2026-10-14
+
+### Fixed
+- **Windows: a note on another drive than rf-document was not found** (note on `D:`,
+  rf-document under `C:\Users\…\AppData`): converting to a Typst path dropped the drive letter.
+  Typst can only read below one root (the install drive, where template, `lib/` and `vendor/`
+  live), so `convert.ps1` now stages a note, image or logo from another drive into a temporary
+  folder inside the installation for the build and removes it afterwards. Images on a third drive
+  work as well; the embedded source keeps its original name and content.
+- CI (`scripts/test-windows.ps1`): note with a relative image, a logo and spaces in the path on a
+  different drive than the installation, output on that drive; checks the PDF, that no image or
+  logo was missed and that the staging folder is gone.
+
 ## [26.10.15] - 2026-10-14
 
 ### Changed

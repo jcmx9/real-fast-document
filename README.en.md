@@ -307,7 +307,8 @@ shown in [`tests/fixtures/tables-showcase.md`](tests/fixtures/tables-showcase.md
 - A **missing image never aborts the export**: the PDF shows “[Bild fehlt: path]” (“[Image
   missing: path]” with `lang: en`), stderr a warning.
 - **Remote images** (`http(s)://`, `data:`) are dropped offline; the build reports how many.
-- On Windows only images on the install drive are reachable.
+- On Windows the note, images and logo may live on any drive, including one other than
+  rf-document's.
 
 ### Diagrams
 
