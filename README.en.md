@@ -196,7 +196,7 @@ hard_breaks: true            # every line stays a line
 | `isodate_praefix` | `true` / `false` | `true` | ISO prefix on the file name when `date` is set. |
 | `lang` | `de`, `en`, … | `de` | Language: date, hyphenation, quotes, labels (Seite/Page, Inhalt/Contents, Aufgabe/Task, callouts). |
 | `toc` | `auto` / `true` / `false` | `auto` | Table of contents (H1 + H2 only); `auto` above five H1/H2. |
-| `h1_break` | `auto` / `true` / `false` | `auto` | Every chapter (`#`) on a new page; `auto` as for `toc`. |
+| `h1_break` | `auto` / `true` / `false` | `auto` | Every chapter (`#`) on a new page; `auto` as for `toc`. Without chapter breaks the text also continues directly below the table of contents. |
 | `header` | text | — | Fixed header text from page 1 instead of the running chapter. |
 | `print_filename` | `true` / `false` | `true` | Show/hide the bottom-left entry (file name or “client · title”). |
 | `watermark` | text | — | Diagonal light-gray watermark beneath everything. |

@@ -783,8 +783,12 @@
 #context {
   if want-toc() {
     block(above: 2.0em, below: 1.0em, heading-text(14pt, weight-heading, label-text("contents")))
-    outline(title: none, depth: 2)
-    pagebreak(weak: true)
+    // Eigener Block mit Abstand nach unten: die Einträge haben below: 0pt, ohne
+    // diesen Abstand würde direkt folgender Text den letzten Eintrag überlappen.
+    block(below: 2.0em, outline(title: none, depth: 2))
+    // Neue Seite nach dem Verzeichnis nur mit Kapitel-Umbruch (h1_break); sonst
+    // läuft der Text direkt darunter weiter (kompakt, z. B. Protokolle).
+    if want-break() { pagebreak(weak: true) }
   }
 }
 
