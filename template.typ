@@ -761,17 +761,19 @@
 // dem Titel, Titel, Untertitel, darunter "Datum · Autor".
 #let meta-line = (date-display, if author-text != "" { author-text }).filter(p => p != none)
 #if (client-text, title-text, subtitle-text, author-text).any(p => p != "") {
-  block(width: 100%, above: 0.2em, below: 1.0em, align(center, {
+  // Abstände zwischen Kunde, Titel, Untertitel und Datum/Autor großzügig genug,
+  // dass die Zeilen nicht aneinanderkleben (em = Fließtextgröße 10 pt).
+  block(width: 100%, above: 0.2em, below: 1.6em, align(center, {
     set par(justify: false)
     if client-text != "" {
-      block(below: 0.6em, text(font: body-font, size: 9pt, tracking: 0.12em, fill: head-color,
+      block(below: 1.0em, text(font: body-font, size: 9pt, tracking: 0.12em, fill: head-color,
         upper(client-text)))
     }
     if title-text != "" {
-      block(below: 0.5em, heading-text(16pt, weight-heading, title-text))
+      block(below: 0.9em, heading-text(16pt, weight-heading, title-text))
     }
     if subtitle-text != "" {
-      block(below: 0.6em, text(font: heading-font, size: 12pt, fill: head-color, subtitle-text))
+      block(below: 1.1em, text(font: heading-font, size: 12pt, fill: head-color, subtitle-text))
     }
     // Datum/Autor-Zeile nur, wenn ein Autor gesetzt ist – das Datum allein
     // steht wie bisher rechts in der Fußzeile.
