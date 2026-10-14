@@ -307,7 +307,8 @@ nicht getrennt. Alle Tabellenformen zeigt
 - Ein **fehlendes Bild bricht den Export nie ab**: Im PDF steht „[Bild fehlt: pfad]“, auf
   stderr eine Warnung.
 - **Remote-Bilder** (`http(s)://`, `data:`) entfallen offline; der Build meldet ihre Anzahl.
-- Unter Windows sind nur Bilder auf dem Laufwerk der Installation erreichbar.
+- Unter Windows dürfen Notiz, Bilder und Logo auf beliebigen Laufwerken liegen, auch auf einem
+  anderen als rf-document.
 
 ### Diagramme
 

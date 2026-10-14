@@ -316,7 +316,7 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   template/fonts/vendor) unless an explicit second arg is given, and passes `typst --root /`
   with **absolute** `source=`/`attach=`/`docdir=` so reads work for sources anywhere on disk
   (Typst sandboxes reads to its root). `convert.ps1` mirrors this with `--root` = the install
-  drive root (same-drive assumption for source), passing absolute paths — no logo copy needed.
+  drive root, passing absolute paths; files on **other drives are staged** (see below).
   - **Relative paths:** because `build.sh` `cd`s into the project root, it records `orig_pwd`
     **before** the `cd` and resolves a relative source/output argument against it (`resolve_from_pwd`).
     Without this, `rf-document foo.md` from any other directory failed with "file not found".
@@ -445,8 +445,13 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
     for the four path-valued inputs — `source` (`read`), `attach` (`pdf.attach`), `docdir`
     (relative-image resolution), `logo` (`image`). This mirrors `build.sh`, which passes `--root /`
     plus `/`-absolute POSIX paths (root-relative already). Because `--root` = the drive root
-    (`$Root`), this assumes **source and install live on the same drive** (documented; a single
-    `--root` cannot span two drives). The **CLI filesystem args** (`$Template`, output, `--root`,
+    (`$Root`) and a single `--root` cannot span two drives, any file Typst must read that lives on
+    another drive (note on `D:`, rf-document under `C:\Users\…\AppData`; images; logo) is
+    **staged**: `Get-TypstReadable` copies it into `<install>\.rfd-stage-<guid>\` (the note keeps its
+    file name → attachment name unchanged; others get `datei-N.<ext>` so Typst still infers the
+    format) and the folder is removed in `finally` and in the outer `catch`. Before 26.10.16 the drive
+    letter was simply stripped and Typst looked on the install drive ("not found"). Tested in CI
+    (`test-windows.ps1`: repo on `D:`, note in `%TEMP%` on `C:`). The **CLI filesystem args** (`$Template`, output, `--root`,
     `--font-path`) go through the OS fs layer, accept backslashes/drive letters, and are left
     untouched. `build.sh` is unaffected; non-path inputs (title, date, lang, …) need no transform.
 

@@ -82,6 +82,32 @@ elseif ($r.Text -match 'nicht gefunden') { Fail "RFD_BASE_DIR: Bild nicht gefund
 elseif (-not (Test-PdfA $target3)) { Fail 'RFD_BASE_DIR: PDF fehlt' }
 else { Ok 'RFD_BASE_DIR (temporaere Kopie)' }
 
+# 3b) Notiz auf einem ANDEREN Laufwerk als rf-document (Nachtrag Punkt 2):
+#     Auf dem Runner liegt das Repo auf D:, %TEMP% auf C:. Notiz mit relativem
+#     Bild und Leerzeichen im Pfad, Ausgabe ebenfalls dort; ein zweites Bild per
+#     absolutem Pfad auf dem Repo-Laufwerk. Bereitstellungsordner muss danach weg.
+$otherRoot = [IO.Path]::GetPathRoot([IO.Path]::GetTempPath())
+if ($otherRoot -ne [IO.Path]::GetPathRoot($Root)) {
+  $drvDir  = Join-Path ([IO.Path]::GetTempPath()) 'rfd andere platte\Notizen mit Leerzeichen'
+  $drvOut  = Join-Path ([IO.Path]::GetTempPath()) 'rfd andere platte\Export Ziel'
+  New-Item -ItemType Directory -Force -Path (Join-Path $drvDir 'bilder'), $drvOut | Out-Null
+  Copy-Item -LiteralPath (Join-Path $Fixtures 'bilder\screenshot.png') -Destination (Join-Path $drvDir 'bilder')
+  Copy-Item -LiteralPath (Join-Path $Fixtures 'logo.png') -Destination $drvDir
+  $absImg = (Join-Path $Fixtures 'bilder\screenshot.png')
+  $noteText = "---`ntitle: `"Andere Platte`"`nlogo: logo.png`n---`n`n# Kapitel`n`n![Relativ](bilder/screenshot.png)`n`n![Absolut auf dem Repo-Laufwerk]($absImg)`n`nText nach den Bildern.`n"
+  [IO.File]::WriteAllText((Join-Path $drvDir 'notiz.md'), $noteText, (New-Object Text.UTF8Encoding $false))
+  $drvPdf = Join-Path $drvOut 'notiz.pdf'
+  $r = Invoke-Convert @((Join-Path $drvDir 'notiz.md'), $drvPdf)
+  $leftover = @(Get-ChildItem -LiteralPath $Root -Directory -Filter '.rfd-stage-*' -Force -ErrorAction SilentlyContinue)
+  if ($r.Code -ne 0) { Fail "anderes Laufwerk: Exit $($r.Code)`n$($r.Text)" }
+  elseif (-not (Test-PdfA $drvPdf)) { Fail "anderes Laufwerk: PDF fehlt am Zielpfad`n$($r.Text)" }
+  elseif ($r.Text -match 'nicht gefunden') { Fail "anderes Laufwerk: Bild/Logo nicht gefunden`n$($r.Text)" }
+  elseif ($leftover.Count -gt 0) { Fail "anderes Laufwerk: Bereitstellungsordner nicht entfernt" }
+  else { Ok "Notiz auf anderem Laufwerk ($otherRoot) als rf-document ($([IO.Path]::GetPathRoot($Root)))" }
+} else {
+  Write-Host "skip anderes Laufwerk (TEMP und Repo auf demselben Laufwerk)"
+}
+
 # 4) Fehlende Quelle: Exit 1, verstaendliche Meldung.
 $r = Invoke-Convert @((Join-Path $inDir 'gibt es nicht.md'), (Join-Path $outDir 'x.pdf'))
 if ($r.Code -ne 1 -or $r.Text -notmatch 'Quelle nicht gefunden') { Fail "fehlende Quelle: Exit $($r.Code)`n$($r.Text)" }

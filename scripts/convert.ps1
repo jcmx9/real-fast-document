@@ -218,6 +218,31 @@ function ConvertTo-IsoDate {
   return ''
 }
 
+# Typst liest nur unterhalb von --root (= Laufwerk der Installation, weil
+# template.typ, lib/ und vendor/ dort liegen muessen). Eine Notiz, ein Bild oder
+# ein Logo auf einem anderen Laufwerk (Notiz auf D:, rf-document unter C:\Users\
+# ...\AppData) wird deshalb fuer den Build in einen temporaeren Ordner innerhalb
+# der Installation kopiert ("Bereitstellung"); der Ordner wird danach entfernt.
+# Pfade auf dem Installationslaufwerk bleiben unveraendert.
+$script:StageDir = ''
+$script:StageCount = 0
+function Get-TypstReadable {
+  param([string]$Path, [string]$Name = '')
+  if (-not $Path) { return $Path }
+  if ([IO.Path]::GetPathRoot($Path) -eq $Root) { return $Path }
+  if (-not $script:StageDir) {
+    $script:StageDir = Join-Path $InstallRoot ('.rfd-stage-' + [Guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Force -Path $script:StageDir | Out-Null
+  }
+  if (-not $Name) {
+    $script:StageCount++
+    $Name = ('datei-' + $script:StageCount + [IO.Path]::GetExtension($Path))
+  }
+  $target = Join-Path $script:StageDir $Name
+  Copy-Item -LiteralPath $Path -Destination $target -Force
+  return $target
+}
+
 function Convert-One {
   param([string]$Src)
 
@@ -328,9 +353,16 @@ function Convert-One {
   # Pfad-Inputs, die Typst INTERN aufloest (read/image/pdf.attach + docdir),
   # in wurzel-relative Typst-Pfade wandeln (Backslashes -> '/', Laufwerk weg);
   # siehe ConvertTo-TypstPath. Die CLI-fs-Argumente bleiben unveraendert.
-  $srcFwd       = ConvertTo-TypstPath $Src
-  $srcDirFwd    = ConvertTo-TypstPath $baseDir
-  $logoFwd      = ConvertTo-TypstPath $logoArg
+  # Quelle und Logo fuer Typst erreichbar machen (anderes Laufwerk -> Kopie in
+  # der Installation). Die Kopie der Quelle traegt ihren Dateinamen: so bleibt der
+  # Anhang im PDF unter dem Originalnamen und mit dem Originalinhalt.
+  $script:StageDir = ''; $script:StageCount = 0
+  $typstSrc     = Get-TypstReadable $Src ([IO.Path]::GetFileName($Src))
+  $typstLogo    = Get-TypstReadable $logoArg
+  $typstBase    = if ([IO.Path]::GetPathRoot($baseDir) -eq $Root) { $baseDir } else { Split-Path -Parent $typstSrc }
+  $srcFwd       = ConvertTo-TypstPath $typstSrc
+  $srcDirFwd    = ConvertTo-TypstPath $typstBase
+  $logoFwd      = ConvertTo-TypstPath $typstLogo
   $attachFwd    = if ($fmEmbed -ne 'false') { $srcFwd } else { '' }
   $inputs = @(
     '--input', "filename=$outName",
@@ -369,8 +401,8 @@ function Convert-One {
   # meldet im Probe-Modus alle Bildquellen (+ Zahl der Remote-Bilder); hier
   # ~/$VAR/${VAR}/%VAR% ersetzen, relativ zur Notiz aufloesen und pruefen. Ein
   # fehlendes Bild erscheint im PDF als "[Bild fehlt: pfad]". Ein Bild auf einem
-  # anderen Laufwerk als --root ist fuer Typst nicht erreichbar und zaehlt als
-  # fehlend. Der Ausdruck enthaelt bewusst KEINE doppelten Anfuehrungszeichen:
+  # anderen Laufwerk als --root wird bereitgestellt (siehe Get-TypstReadable).
+  # Der Ausdruck enthaelt bewusst KEINE doppelten Anfuehrungszeichen:
   # Windows PowerShell 5.1 reicht sie an externe Programme nicht korrekt weiter.
   $probeExpr = '(str(query(<rfd-remote-skip>).len()),) + query(<rfd-image>).map(m => m.value).dedup()'
   $probeJson = & typst eval --in $Template $probeExpr `
@@ -385,12 +417,11 @@ function Convert-One {
       $img = Expand-NotePath ([string]$raw)
       if (-not [IO.Path]::IsPathRooted($img)) { $img = Join-Path $baseDir $img }
       $img = [IO.Path]::GetFullPath($img)
-      $sameDrive = [IO.Path]::GetPathRoot($img) -eq $Root
-      if ($sameDrive -and (Test-Path -LiteralPath $img -PathType Leaf)) {
-        $imageMap[[string]$raw] = ConvertTo-TypstPath $img
+      if (Test-Path -LiteralPath $img -PathType Leaf) {
+        # Bild auf einem anderen Laufwerk: fuer Typst in die Installation kopieren
+        $imageMap[[string]$raw] = ConvertTo-TypstPath (Get-TypstReadable $img)
       } else {
-        if (-not $sameDrive) { Write-Warning "Bild auf anderem Laufwerk (nicht erreichbar): $raw" }
-        else { Write-Warning "Bild nicht gefunden: $raw" }
+        Write-Warning "Bild nicht gefunden: $raw"
         $imageMap[[string]$raw] = ''
       }
     }
@@ -411,6 +442,7 @@ function Convert-One {
   }
   finally {
     Remove-Item -LiteralPath $imagesJson -ErrorAction SilentlyContinue
+    if ($script:StageDir) { Remove-Item -LiteralPath $script:StageDir -Recurse -Force -ErrorAction SilentlyContinue }
   }
 
   Write-Host "OK  $outPdf" -ForegroundColor Green
@@ -433,6 +465,8 @@ catch {
   # "Senden an"-Fall auf Enter warten - mit ausdruecklicher Ausgabe oder
   # RFD_NO_OPEN laeuft das Skript unbeaufsichtigt und darf nicht haengen.
   [Console]::Error.WriteLine("Fehler: $($_.Exception.Message)")
+  # Bereitstellung auch bei einem Abbruch vor dem Kompilieren entfernen
+  if ($script:StageDir) { Remove-Item -LiteralPath $script:StageDir -Recurse -Force -ErrorAction SilentlyContinue }
   if (-not $ExplicitOut -and -not $env:RFD_NO_OPEN) { [void](Read-Host 'Enter zum Schliessen') }
   exit 1
 }
