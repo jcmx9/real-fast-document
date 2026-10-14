@@ -574,6 +574,39 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
     trimmed). Verify with the visible-marker trick on a **highlighted** code block (swap NBSP→`¤`):
     `¤` must appear in body prose but **never** inside a code block.
 
+## Dependent projects: zettlr_rfdoc-Export
+
+`jcmx9/zettlr_rfdoc-Export` (Zettlr export profile, editor theme, snippets) builds on rf-document.
+Its CI installs rf-document via the bootstrap and exports real notes on Ubuntu, macOS and Windows.
+Changes here can silently break it, so:
+
+- **`header.md` is the complete, fully commented reference** of every frontmatter key (default +
+  explanation). The Zettlr project derives its own *compact* `header` snippet from it — do not
+  shorten `header.md` to match the snippet. Any key added, renamed or removed: name it in the
+  CHANGELOG with key, default value and a short comment (≤ ~35 characters, one line) so the snippet
+  can follow. Empty values (`""`) stay ignored, never an error.
+- **Layout values are mirrored by the editor theme** (`rfdoc-zettlr.css`): sizes (body 10 pt,
+  `#` 14, `##` 12, `###` 10 underlined, `####` italic, `leading`), weights (380 / 470 / 560 via
+  `strong.delta`, serif headings, sans body), colors (text `#212121`, headings `#141414`,
+  header/footer `#333`, hairline `#999`, code background `#f5f5f5`, highlight `#fbeab0`, callouts
+  note/tip/important/warning/caution, code syntax colors = Typst defaults), design (hairline under
+  `#`, heading spacing, square bullets, borderless tables with 0.4 pt `#ccc` column lines,
+  centered header with a 0.7 pt rule, zebra, 2.5 pt callout bar with letter-spaced uppercase
+  title). Also relevant: table type 9 pt Medium −2 %, title block 16/12/9 pt, code 9 pt, margins
+  35/30 mm. Any change: list old and new value in the CHANGELOG under a "Layout" note.
+- **Font file names in `fonts/` are part of the contract** (the theme embeds them):
+  `SourceSans3VF-Upright/Italic`, `SourceSerif4Variable-Roman/Italic`, `SourceCodeVF-Upright/Italic`,
+  `NotoEmoji[wght].ttf` — do not rename.
+- **Launcher and logo locations:** the messenger looks for `~/.local/bin/rf-document` (also
+  `/opt/homebrew/bin`, `/usr/local/bin`) and `%LOCALAPPDATA%\Microsoft\WindowsApps\rf-document.cmd`;
+  the global logo is `logo.svg|png|jpg` in the install folder. Changing a location or launcher
+  name must be reported to the Zettlr project.
+- **Interface stays stable:** `rf-document <in.md> <out.pdf>` writes exactly there (no ISO prefix),
+  exit 0 only on success, short errors on stderr, `RFD_NO_OPEN=1` and `RFD_BASE_DIR` honoured
+  (relative images/logo resolve against it — the input may be a temp copy), works with a minimal
+  `PATH`. CLI flags win over frontmatter; the messenger sets **no** flags, its snippets steer
+  `hard_breaks`/`embed_source` via frontmatter.
+
 ## Release flow
 
 GitHub Flow: `feature/*` (or `fix/*`/`docs/*`) → PR → squash-merge to `main`, then
