@@ -421,6 +421,49 @@
 }
 
 // Gesamte Vorverarbeitung: Markdown-String für cmarker.
+// Tabellen-Einleitung: ein kurzer Absatz (bis 4 Zeilen) direkt vor einer
+// Tabelle wird in <rfd-keep> gehüllt; das Template macht daraus einen
+// "sticky" Block, damit die Einleitung nie allein unten auf der Seite steht.
+#let table-sep-re = regex("^ {0,3}\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$")
+#let table-intros(lines) = {
+  let mask = code-mask(lines)
+  let n = lines.len()
+  let starts = (:)
+  let ends = (:)
+  for i in range(1, n) {
+    if mask.at(i) or mask.at(i - 1) { continue }
+    // Tabellenanfang: Kopfzeile mit | und darunter die Trennzeile.
+    if i + 1 >= n or lines.at(i).match(regex("^ {0,3}\|")) == none { continue }
+    if lines.at(i + 1).match(table-sep-re) == none or not lines.at(i + 1).contains("-") { continue }
+    if not blank(lines.at(i - 1)) { continue }
+    let e = i - 1
+    while e >= 0 and blank(lines.at(e)) { e -= 1 }
+    if e < 0 or mask.at(e) { continue }
+    let s = e
+    while s > 0 and not blank(lines.at(s - 1)) { s -= 1 }
+    let para = lines.slice(s, e + 1)
+    if para.len() > 4 { continue }
+    if para.any(l => l.match(block-start-re) != none or l.starts-with("    ")) { continue }
+    if s > 0 and mask.at(s - 1) { continue }
+    // Davor ein normaler Absatz? Dann gilt der Absatzabstand, sonst der
+    // Abstand des Blocks davor (Überschrift, Liste, Code, Bild …).
+    let p = s - 1
+    while p >= 0 and blank(lines.at(p)) { p -= 1 }
+    let prev = if p < 0 { "" } else { lines.at(p) }
+    let after-par = (p >= 0 and not mask.at(p) and prev.match(block-start-re) == none
+      and not prev.starts-with(" ") and not prev.starts-with("\t") and not prev.starts-with("!["))
+    starts.insert(str(s), if after-par { "par" } else { "block" })
+    ends.insert(str(e), true)
+  }
+  let out = ()
+  for (i, l) in lines.enumerate() {
+    if str(i) in starts { out += ("", "<rfd-keep after=\"" + starts.at(str(i)) + "\">", "") }
+    out.push(l)
+    if str(i) in ends { out += ("", "</rfd-keep>", "") }
+  }
+  out
+}
+
 #let preprocess(src, hard-breaks: false, lang: "de") = {
   let lines = strip-frontmatter(src)
   lines = pagebreaks(lines)
@@ -428,6 +471,7 @@
   lines = alerts(lines)
   lines = task-tables(lines)
   lines = date-lines(lines)
+  lines = table-intros(lines)
   lines = deflists(lines)
   if hard-breaks { lines = keep-line-breaks(lines) }
   lines = marks(lines)

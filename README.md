@@ -314,7 +314,9 @@ Pipe-Tabellen in kompakter Tabellenschrift (9 pt Medium). Jede Spalte ist so bre
 Inhalt; kleine Tabellen bleiben schmal, bei Platzmangel brechen textreiche Spalten um. Spalten
 nur aus Zahlen oder Beträgen stehen rechtsbündig; die Ausrichtung aus der Trennzeile (`:--`,
 `--:`, `:-:`) hat Vorrang. Der Kopf wiederholt sich auf Folgeseiten; Wörter werden in Zellen
-nicht getrennt. Alle Tabellenformen zeigt
+nicht getrennt. Ein kurzer Absatz direkt vor der Tabelle (bis vier Zeilen, etwa „Die Übersicht:“)
+bleibt bei ihr: Passt die Tabelle nicht mehr auf die Seite, wandert er mit. Alle Tabellenformen
+zeigt
 [`tests/fixtures/tables-showcase.md`](tests/fixtures/tables-showcase.md).
 
 ### Bilder
@@ -432,6 +434,7 @@ scripts/fetch-fonts.sh      lädt die Schriften nach ./fonts
 scripts/fetch-typst-packages.sh  lädt cmarker, mitex, mmdr nach ./vendor
 scripts/test-pdf.sh         End-to-End-Tests (macOS/Linux)
 scripts/test-windows.ps1    Windows-Tests (CI, Windows PowerShell 5.1)
+scripts/test-windows-install.ps1  Windows: Senden an, Deinstallation, Bootstrap (CI)
 tests/fixtures/             Testnotizen, u. a. tables-showcase.md (alle Tabellenformen)
 example.md                  Rundgang durch alle Funktionen
 demo.md                     Beispieldokument: Kick-off-Protokoll einer Kaffeerösterei
@@ -441,8 +444,10 @@ fonts/, assets/, logo.svg   Schriften, Beispielgrafik, mitgeliefertes Logo
 
 **Tests:** `bash scripts/test-pdf.sh` baut alle Testnotizen und prüft den Text der PDFs, die
 Tabellengeometrie und die Schnittstelle (Ausgabepfad, Exit-Codes, eingebettete Quelle,
-minimaler `PATH`, Pfade mit Leerzeichen, `RFD_BASE_DIR`). Benötigt `pdftotext` (poppler) oder
-`mutool` (mupdf). Die CI führt sie auf Linux aus, dazu `scripts/test-windows.ps1` auf Windows.
+minimaler `PATH`, Pfade mit Leerzeichen, `RFD_BASE_DIR`, Logo-Suche). Benötigt `pdftotext` (poppler) oder
+`mutool` (mupdf). Die CI führt sie auf Linux aus; auf Windows laufen `scripts/test-windows.ps1` (Aufruf,
+Pfade, Logo-Suche) und `scripts/test-windows-install.ps1` („Senden an“, Deinstallation,
+Bootstrap).
 
 ## Versionierung
 

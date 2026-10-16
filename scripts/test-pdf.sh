@@ -271,6 +271,20 @@ test_fixtures() {
   reject tables-showcase.md "${text}" "due 17 Oct" "by Friday" ", bis 19.10." "— Ben Probe" "[ ]" "[x]"
   ok tables-showcase.md
 
+  # Eine kurze Einleitung vor einer Tabelle steht nie allein unten auf der
+  # Seite: passt die Tabelle nicht mehr, wandert die Einleitung mit.
+  text="$(render table-intro.md)"
+  expect table-intro.md "${text}" "Die folgende Übersicht zeigt alle Posten:" "Posten 15"
+  if command -v pdftotext >/dev/null 2>&1; then
+    local tpdf="${out_dir}/table-intro.pdf"
+    if pdftotext -f 1 -l 1 "${tpdf}" - | grep -q "Übersicht zeigt"; then
+      die "table-intro.md: Einleitung allein auf Seite 1"
+    fi
+    pdftotext -f 2 -l 2 "${tpdf}" - | grep -q "Übersicht zeigt" ||
+      die "table-intro.md: Einleitung nicht bei der Tabelle auf Seite 2"
+  fi
+  ok table-intro.md
+
   # Bilder: Breite aus {width=…}, Remote-Bild übersprungen, Bildunterschrift.
   text="$(render images.md)"
   expect images.md "${text}" "Abbildung 1: Screenshot aus dem Termin" "Ende der Bilder."

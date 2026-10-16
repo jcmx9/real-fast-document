@@ -146,8 +146,13 @@ image crashes under qemu on arm64). **Since 26.10.7 CI has a `windows` job** (`w
 `shell: powershell` = **Windows PowerShell 5.1**): it installs Typst from the release zip, runs
 `install.ps1 -Fonts -Packages -Cli -Force` and `scripts/test-windows.ps1` (absolute in/out paths with
 spaces from a foreign cwd, POSIX options through the `rf-document.cmd` shim, `RFD_BASE_DIR`, exit
-codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -Tools` (winget),
-`-SendTo`, `-Uninstall`, and `bootstrap.ps1`. Work dirs in that test must sit on the repo's drive
+codes, `--version`/`-Version`, logo lookup via a fake `USERPROFILE`), then (since 26.10.19)
+`scripts/test-windows-install.ps1`: `install.ps1 -SendTo` (shortcut target/arguments + a simulated
+"Send to" call), `install.ps1 -Uninstall`, and `bootstrap.ps1` in a throwaway `LOCALAPPDATA` (clone of
+GitHub `main`, install, build via the fresh shim, `-Uninstall`, second `-Uninstall`, foreign-origin
+guard). It must run **after** `test-windows.ps1` (its `-Uninstall` removes the shim). Still **not**
+executed: the winget *install* branch of `install.ps1 -Tools` (typst is already on PATH in CI), and
+bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test must sit on the repo's drive
 (`D:` on the runner) — Typst only reads below `--root` = the install drive.
 
 ## Requirements & environment gotchas
@@ -285,6 +290,13 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   owner/due from the **last** ` – `/` — `/` - ` and `, bis|due|by …`; mixed lists are copied
   through untouched, including continuation lines), **`date-lines`** (a run of `N. Month …` lines
   where *every* line starts with a month name → `N\.` escaped + `\` hard break between them),
+  **`table-intros`** (a plain paragraph of ≤ 4 lines directly before a pipe table, blank line
+  between → wrapped in `<rfd-keep after="par|block">`; the template's `rfd-keep` makes it a
+  `block(sticky: true)` so the intro never stays alone at a page foot. **Spacing trap:** Typst puts
+  `par.spacing` only *between two paragraphs*; block→paragraph uses only the block's `below`, and
+  block→block the maximum of `below`/`above`. So the wrapper gets `above: 1.1em` only after a
+  paragraph (`after="par"`), else `0pt`, and `below: 0pt` — verified byte-identical text positions
+  for README/example/demo; a fixed `spacing` shifted layouts by 2.6–11 pt),
   then (2) converts Pandoc-style definition lists (`Term` / `: def`) to HTML `<dl>` in **block form** (a
   blank line after `<dd>`, so inline markdown renders; inline `<dd>x `code` y</dd>` would show
   literal backticks) and folds indented continuation lines into the `<dd>`. Loose task lists need no

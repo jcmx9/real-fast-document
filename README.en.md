@@ -314,8 +314,9 @@ A box never splits across pages. A quote without a keyword stays an indented, it
 Pipe tables in a compact table type (9 pt Medium). Each column is as wide as its content; small
 tables stay narrow, when space runs out text-heavy columns wrap. Columns made only of numbers
 or amounts are right-aligned; the alignment from the separator row (`:--`, `--:`, `:-:`) wins.
-The header repeats on following pages; words are not hyphenated in cells. Every table form is
-shown in [`tests/fixtures/tables-showcase.md`](tests/fixtures/tables-showcase.md).
+The header repeats on following pages; words are not hyphenated in cells. A short paragraph right
+before the table (up to four lines, e.g. “The overview:”) stays with it: if the table no longer
+fits on the page, it moves along. Every table form is shown in [`tests/fixtures/tables-showcase.md`](tests/fixtures/tables-showcase.md).
 
 ### Images
 
@@ -433,6 +434,7 @@ scripts/fetch-fonts.sh      downloads the fonts into ./fonts
 scripts/fetch-typst-packages.sh  downloads cmarker, mitex, mmdr into ./vendor
 scripts/test-pdf.sh         end-to-end tests (macOS/Linux)
 scripts/test-windows.ps1    Windows tests (CI, Windows PowerShell 5.1)
+scripts/test-windows-install.ps1  Windows: Send to, uninstall, bootstrap (CI)
 tests/fixtures/             test notes, incl. tables-showcase.md (every table form)
 example.md                  tour of every feature
 demo.md                     example document: kick-off minutes of a coffee roastery
@@ -442,8 +444,9 @@ fonts/, assets/, logo.svg   fonts, example graphic, bundled logo
 
 **Tests:** `bash scripts/test-pdf.sh` builds every test note and checks the PDF text, the table
 geometry and the interface (output path, exit codes, embedded source, minimal `PATH`, paths
-with spaces, `RFD_BASE_DIR`). Requires `pdftotext` (poppler) or `mutool` (mupdf). CI runs them
-on Linux, plus `scripts/test-windows.ps1` on Windows.
+with spaces, `RFD_BASE_DIR`, logo lookup). Requires `pdftotext` (poppler) or `mutool` (mupdf). CI runs them
+on Linux; on Windows `scripts/test-windows.ps1` (calls, paths, logo lookup) and
+`scripts/test-windows-install.ps1` (“Send to”, uninstall, bootstrap) run.
 
 ## Versioning
 
