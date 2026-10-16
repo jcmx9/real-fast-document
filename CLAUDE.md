@@ -57,8 +57,10 @@ bash scripts/build.sh SRC.md OUT.pdf  # explicit output
 bash scripts/build.sh --help          # usage, options, frontmatter keys, env vars (also -h)
 bash scripts/build.sh --version       # rf-document version + Typst version (also -V)
 RFD_NO_OPEN=1 bash scripts/build.sh SRC.md   # suppress the auto-open (build.sh opens the PDF by default)
+bash scripts/build.sh --soft-breaks SRC.md   # CommonMark breaks (= hard_breaks: false); needed for wrapped prose like the READMEs
+bash scripts/build.sh --no-source SRC.md     # don't embed the .md (= embed_source: false); --hard-breaks is the default
 bash scripts/fetch-fonts.sh           # download bundled fonts into ./fonts (idempotent: skips if all present; --force to re-fetch)
-bash scripts/fetch-typst-packages.sh  # vendor cmarker + mitex into ./vendor (idempotent: skips if vendored at the pinned version; --force)
+bash scripts/fetch-typst-packages.sh  # vendor cmarker + mitex + mmdr into ./vendor (idempotent: skips if vendored at the pinned version; --force)
 bash scripts/install.sh               # set up tool + fonts + packages + right-click + rf-document CLI (idempotent)
 bash scripts/install.sh --uninstall   # remove the right-click integration + rf-document
 bash scripts/bootstrap.sh --uninstall # FULL removal: integration + rf-document + install folder
@@ -71,6 +73,10 @@ TYPST=/path/to/typst bash scripts/build.sh ...       # override the typst binary
 # a NEW script must be added to BOTH, otherwise it is never linted anywhere.
 shellcheck scripts/build.sh scripts/fetch-fonts.sh scripts/fetch-typst-packages.sh scripts/install.sh scripts/bootstrap.sh scripts/rfd-convert.sh scripts/test-pdf.sh
 bash scripts/test-pdf.sh              # end-to-end tests: build tests/fixtures/*.md, check PDF text + CLI interface
+# Single fixture (test-pdf.sh has no filter; build from the fixture folder like the test does):
+(cd tests/fixtures && RFD_NO_OPEN=1 bash ../../scripts/build.sh tables.md /tmp/t.pdf) && pdftotext -layout /tmp/t.pdf -
+# Windows tests run only in CI (windows job), in this order: scripts/test-windows.ps1, then
+# scripts/test-windows-install.ps1 (its -Uninstall removes the shim the first one needs).
 ```
 
 **End-to-end tests:** `scripts/test-pdf.sh` builds every note in `tests/fixtures/` through `build.sh`
@@ -100,7 +106,7 @@ bilder/fehlt.png`) and the remote-skip note. `README.md`/`README.en.md` are orga
 (overview → install → usage → frontmatter → Markdown per feature → layout → PDF/A → fonts →
 customizing → development) and must keep identical structure; they have no frontmatter (GitHub
 would render it), so they build with `lang: de` and need **`--soft-breaks`** (their prose is wrapped in
-the source; `hard_breaks` defaults to true since 26.10.20) — write English quotes in `README.en.md` prose as
+the source and `hard_breaks` defaults to true) — write English quotes in `README.en.md` prose as
 typed “…” or the typography step would set German „…“. Never write a bare `--` in README prose
 (it becomes –); options always in backticks. Use it to eyeball layout changes; its `*.pdf` is
 git-ignored.
@@ -143,11 +149,11 @@ Locally this is macOS (no Linux/Windows runner); **CI runs the Linux build** (se
 but not the **installer** — the **Linux installer** can be validated for real in Docker (mount
 read-only, copy inside, run `install.sh`): this is how the install path was verified, and it caught
 real bugs. Locally Windows `.ps1` can only be reviewed (no `pwsh`; the `mcr.microsoft.com/powershell`
-image crashes under qemu on arm64). **Since 26.10.7 CI has a `windows` job** (`windows-latest`,
+image crashes under qemu on arm64). **CI has a `windows` job** (`windows-latest`,
 `shell: powershell` = **Windows PowerShell 5.1**): it installs Typst from the release zip, runs
 `install.ps1 -Fonts -Packages -Cli -Force` and `scripts/test-windows.ps1` (absolute in/out paths with
 spaces from a foreign cwd, POSIX options through the `rf-document.cmd` shim, `RFD_BASE_DIR`, exit
-codes, `--version`/`-Version`, logo lookup via a fake `USERPROFILE`), then (since 26.10.19)
+codes, `--version`/`-Version`, logo lookup via a fake `USERPROFILE`), then
 `scripts/test-windows-install.ps1`: `install.ps1 -SendTo` (shortcut target/arguments + a simulated
 "Send to" call), `install.ps1 -Uninstall`, and `bootstrap.ps1` in a throwaway `LOCALAPPDATA` (clone of
 GitHub `main`, install, build via the fresh shim, `-Uninstall`, second `-Uninstall`, foreign-origin
@@ -218,9 +224,8 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
     `task-box` (same `marker-slot` width as the bullet square, so mixed lists align), and `scope:` overrides for `image` (`safe-image`), `divider` (the centered
     `horizontalrule`), and `terms` (`rfd-terms`: builds each term/description pair as plain blocks —
     term bold on its own line, description indented below, unbreakable. A `#show terms.item` rule
-    does **not** fire in Typst 0.15, which is why the old approach silently ran term and description
-    on one line).
-  - **`safe-image`** (in `template.typ`) replaces the old Lua image/link/para/figure dance:
+    does **not** fire in Typst 0.15 — term and description would run on one line).
+  - **`safe-image`** (in `template.typ`):
     remote sources (`http(s)://`, protocol-relative `//host`, `data:`) render **nothing** but
     emit an invisible `metadata("rfd-remote-skip")<rfd-remote-skip>` marker for counting; a
     local image with alt text becomes a **numbered figure with caption**; relative paths are
@@ -233,12 +238,12 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
   "date · author" line below — that line only appears when `author:` is set; `author: [A, B]` inline
   lists are flattened by `yaml_str`/`ConvertTo-YamlStr`); as soon as `client:` or `subtitle:` is set
   the **footer-left** shows at most two of client/title/subtitle ("Kunde · Titel") instead of the
-  filename; `logo:` → the **only** way to get a logo (no key / empty = no logo, user decision 26.10.18; expanded by `expand_path`/`Expand-NotePath`: `~`, `${VAR}`,
+  filename; `logo:` → the **only** way to get a logo (no key / empty = no logo, user decision; expanded by `expand_path`/`Expand-NotePath`: `~`, `${VAR}`,
   `$VAR`, `%VAR%` with USER↔USERNAME / HOME↔USERPROFILE fallback, `%XX` decoding — **no `eval`**;
   must end in `.svg/.png/.jpg/.jpeg`; absolute → exactly that file, relative → looked up in the note's
   folder (`RFD_BASE_DIR`), then `$HOME`/`%USERPROFILE%`, then the install folder; not found or wrong
   extension → `Hinweis` on stderr, no logo, never an error); `logo-height:` → absolute lengths only,
-  parsed in the template (`logo-max-height`, default **13 mm** (was 20 mm until 26.10.18), capped at 25 mm), the logo is fitted proportionally into
+  parsed in the template (`logo-max-height`, default **13 mm**, capped at 25 mm), the logo is fitted proportionally into
   height × 60 mm via `measure`; `embed_source:` / CLI `--no-source` → `attach=` empty;
   `date:` (ISO **or** German `T.M.JJJJ`, parsed by `parse-date` in the template and `iso_date`/
   `ConvertTo-IsoDate` in the shells; anything else is shown verbatim and gets no prefix) → ISO-prefixes the output file (`2026-06-19_name.pdf`), shows a
@@ -261,7 +266,7 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
   on/off`, quotes; `toc`/`h1_break` also `auto`): an **empty value is ignored silently**, an
   unrecognized one warns — both keep the default. String values go through `yaml_str`/
   `ConvertTo-YamlStr`: inside quotes the value ends at the closing quote, otherwise an inline
-  `# comment` is cut off (before 26.10.6 a comment leaked into e.g. the title). `header.md` in
+  `# comment` is cut off (otherwise it leaks into e.g. the title). `header.md` in
   the root is the user-facing template with every key + default + comment; `test-pdf.sh` builds
   it and fails on any `Warnung` — **a new frontmatter key must be added to `header.md` too.** Typst does not localize month names (`[month repr:long]` is English only) → a manual
   `months-de` array lives in `template.typ`; `parse-date` validates the string defensively
@@ -302,7 +307,7 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
   blank line after `<dd>`, so inline markdown renders; inline `<dd>x `code` y</dd>` would show
   literal backticks) and folds indented continuation lines into the `<dd>`. Loose task lists need no
   workaround anymore — cmarker **0.1.10** fixed the `wasm unreachable` crash. Then **`keep-line-breaks`**
-  (**on by default since 26.10.20** — off only with an explicit `hard_breaks: false` or `--soft-breaks`; appends `\` to a line when the next line *continues the same
+  (**on by default** — off only with an explicit `hard_breaks: false` or `--soft-breaks`; appends `\` to a line when the next line *continues the same
   paragraph* — never before a block start (`block-start-re`: list item, heading, `>`, table,
   fence, `$$`, HTML, setext underline, footnote/deflist), never after a heading/table/HTML line,
   and never inside code or `$$` math (`skip-mask`); a `\` before a new block would print a literal
@@ -359,7 +364,7 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
     drive. **`RFD_BASE_DIR`** (both converters): base folder for relative image/logo paths and the
     `docdir` input (an editor's temporary copy of an unsaved note); invalid → warning + source folder. Keep
     the flag list in sync across `build.sh`, `convert.ps1`, and **both** READMEs' options tables.
-  - **Image probe pass (replaces the old remote-count pass):** Typst can neither read env vars
+  - **Image probe pass:** Typst can neither read env vars
     nor test file existence (a missing image *aborts* the build). So both converters first run
     `typst eval --in template.typ <expr> --input probe=true`: in probe mode `safe-image` loads
     nothing and emits `metadata(source)<rfd-image>` (remote sources still emit
@@ -464,8 +469,8 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
     another drive (note on `D:`, rf-document under `C:\Users\…\AppData`; images; logo) is
     **staged**: `Get-TypstReadable` copies it into `<install>\.rfd-stage-<guid>\` (the note keeps its
     file name → attachment name unchanged; others get `datei-N.<ext>` so Typst still infers the
-    format) and the folder is removed in `finally` and in the outer `catch`. Before 26.10.16 the drive
-    letter was simply stripped and Typst looked on the install drive ("not found"). Tested in CI
+    format) and the folder is removed in `finally` and in the outer `catch`. Merely stripping the drive
+    letter makes Typst look on the install drive ("not found"). Tested in CI
     (`test-windows.ps1`: repo on `D:`, note in `%TEMP%` on `C:`). The **CLI filesystem args** (`$Template`, output, `--root`,
     `--font-path`) go through the OS fs layer, accept backslashes/drive letters, and are left
     untouched. `build.sh` is unaffected; non-path inputs (title, date, lang, …) need no transform.
@@ -480,11 +485,11 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
   page break before it (`h1_break`), and the active H1 threaded into the running header.
 - **H2 / H3** = subsections (serif, no line). **H3** is body size (10pt) at `weight-text`, finely
   underlined; **H4 and deeper** are body size, italic.
-- **Weights/figures (26.10.4):** `weight-text` 380 (body, H3+, header, TOC entries),
+- **Weights/figures:** `weight-text` 380 (body, H3+, header, TOC entries),
   `weight-heading` 470 (title, H1, H2, "Inhalt"); bold = 380 + **`set strong(delta: 180)`** = 560.
   **Never set a weight in `show strong`** — Typst *adds* `strong.delta` to the current weight. PDF
   viewers draw the variable Source fonts heavier than browsers/editors, hence the slightly-below-
-  nominal values. Sizes (26.10.10): title 16, H1 14, H2 12, H3+ 10 pt (= body); header 11, TOC title 14 / entries 11, code + captions 9, tables + footer 9 pt. Margins left 35 / right 30 / top 35 / bottom 20 mm (145 mm text block, ~95 characters per line). Table cell inset `(x: 5pt, y: 7pt)` — 7 pt horizontal made a 13-column table overflow at 145 mm (checked in `test-pdf.sh`). Figures: body `number-type:
+  nominal values. Sizes: title 16, H1 14, H2 12, H3+ 10 pt (= body); header 11, TOC title 14 / entries 11, code + captions 9, tables + footer 9 pt. Margins left 35 / right 30 / top 35 / bottom 20 mm (145 mm text block, ~95 characters per line). Table cell inset `(x: 5pt, y: 7pt)` — 7 pt horizontal made a 13-column table overflow at 145 mm (checked in `test-pdf.sh`). Figures: body `number-type:
   "old-style"`; tables `lining` + `tabular`; header/footer `lining`; `raw` neutral (`auto`).
 - **Visual language:** all headings **serif** (`Source Serif 4`), `luma(8%)`, left-aligned
   (`justify: false`), **no accent bars**; only **H1** carries a hairline (`luma(60%)`) right below.
@@ -537,11 +542,9 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
   text.
 - The **table** show rule rebuilds every cmarker table with **Typst's own `auto` columns**
   (`columns: (auto,) * n`) — each column as wide as its content, Typst shares the space and wraps
-  text-heavy columns when the table doesn't fit; small tables keep their content width. **History:**
-  26.10.2–26.10.7 used a hand-made HTML-auto-layout (measure min = widest word via a styled word
-  split, max = natural width, distribute the rest); side by side with plain `auto` it looked almost
-  identical, so the user judged it over-engineered ("übersteuert") — **don't reintroduce custom
-  width measuring.** Table type is `table-text`: Source Sans 3 **9 pt, weight 500, tracking
+  text-heavy columns when the table doesn't fit; small tables keep their content width. A hand-made
+  HTML-style auto-layout (min/max width measuring) was tried and dropped — it looked almost the same,
+  the user judged it over-engineered ("übersteuert") — **don't reintroduce custom width measuring.** Table type is `table-text`: Source Sans 3 **9 pt, weight 500, tracking
   −0.02em**, lining tabular figures, ragged right; code in cells 8.5 pt (`show raw: set text(...)`
   inside the table block — the global raw size is 10 pt). Adobe has **no condensed** Source Sans (the
   VF only has a `wght` axis); the user chose tracking instead of another font. The task table uses the
