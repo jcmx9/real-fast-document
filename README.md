@@ -195,7 +195,7 @@ hard_breaks: true            # Zeile bleibt Zeile
 | `header` | Text | — | Fester Kopfzeilentext ab Seite 1 statt des laufenden Kapitels. |
 | `print_filename` | `true` / `false` | `true` | Angabe unten links (Dateiname bzw. „Kunde · Titel“) ein-/ausblenden. |
 | `watermark` | Text | — | Diagonales, hellgraues Wasserzeichen unter allem. |
-| `logo` | Pfad | globales Logo | Logo nur für dieses Dokument (PNG/JPG/SVG), relativ zur Notiz oder absolut. Fehlt die Datei: Warnung, globales Logo. |
+| `logo` | Datei `.svg`/`.png`/`.jpg`/`.jpeg` | kein Logo | Logo im Kopf, nur wenn gesetzt. Relativ: gesucht im Ordner der Notiz, dann im Benutzerordner, dann im Installordner; absolut (auch mit `~`, `$HOME`, `%USERPROFILE%`): genau diese Datei. Nicht gefunden: Hinweis, ohne Logo. |
 | `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximale Logohöhe (höchstens 25 mm); das Logo bleibt proportional und höchstens 60 mm breit. |
 | `embed_source` | `true` / `false` | `true` | Markdown-Quelle als Anhang ins PDF einbetten. |
 | `hard_breaks` | `true` / `false` | `false` | Jeder Zeilenumbruch bleibt einer (wie in Zettlr/Obsidian getippt). |
@@ -386,10 +386,10 @@ Emoji** (variabel) und **Noto Sans Symbols 2** ein, beide einfarbig. Details:
 
 ## Anpassen
 
-- **Globales Logo:** `logo.svg`, `logo.png` oder `logo.jpg` im Installordner
-  (`~/.local/share/real-fast-document`, Windows `%LOCALAPPDATA%\real-fast-document`);
-  genommen wird die erste vorhandene Datei. Ohne Logo baut rf-document mit Hinweis weiter. Pro
-  Dokument: `logo:` im Frontmatter.
+- **Logo:** erscheint nur mit `logo:` im Frontmatter, ohne den Schlüssel nie. Ein eigenes Logo
+  liegt am besten im Benutzerordner (`~/firma.svg`, Windows `%USERPROFILE%\firma.svg`) und kommt
+  mit `logo: firma.svg` in jedes Dokument; eine Datei gleichen Namens neben der Notiz hat Vorrang.
+  Der Installordner bringt `logo.svg` mit (letzte Station der Suche).
 - **Ränder, Schriften, Farben, Schriftgrade:** gesammelt oben in `template.typ`.
 - **PDF/A-Grad:** `standard` in `scripts/build.sh` (`a-1b`, `a-2b`, `a-3b`); das Einbetten der
   Quelle setzt `a-3b` voraus.

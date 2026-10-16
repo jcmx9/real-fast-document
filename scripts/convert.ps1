@@ -322,29 +322,32 @@ function Convert-One {
   }
   $outName = Split-Path -Leaf $outPdf
 
-  # Logo: Frontmatter logo: (pro Notiz, relativ zur Notiz oder absolut) vor dem
-  # ersten vorhandenen svg/png/jpg im Installpfad. Ein fehlendes Notiz-Logo
-  # bricht nie ab: Warnung, dann Standard-Logo.
-  $logoArg = $null
+  # Logo nur mit logo: im Frontmatter (ohne Schluessel oder leer: kein Logo).
+  # Der Wert ist eine Datei .svg/.png/.jpg/.jpeg. Absolut (auch ueber ~,
+  # %USERPROFILE% oder $HOME) -> genau diese Datei; relativ -> zuerst im Ordner
+  # der Notiz (bzw. RFD_BASE_DIR), dann im Benutzerordner, dann im Installpfad.
+  # Nichts gefunden -> ohne Logo, nur ein Hinweis, nie ein Fehler.
+  $logoArg = ''
   if ($fmLogo) {
     if ($fmLogo -match '^(https?:)?//|^data:') {
-      Write-Warning "Remote-Logo wird nicht geladen (kein Netzzugriff): $fmLogo"
+      Write-Host "Hinweis: Remote-Logo wird nicht geladen (kein Netzzugriff): $fmLogo" -ForegroundColor Yellow
+    } elseif ($fmLogo -notmatch '\.(svg|png|jpe?g)$') {
+      Write-Host "Hinweis: Logo muss .svg, .png, .jpg oder .jpeg sein: $fmLogo - baue ohne Logo." -ForegroundColor Yellow
     } else {
       $noteLogo = Expand-NotePath $fmLogo
-      if (-not [IO.Path]::IsPathRooted($noteLogo)) { $noteLogo = Join-Path $baseDir $noteLogo }
-      if (Test-Path -LiteralPath $noteLogo -PathType Leaf) { $logoArg = $noteLogo }
-      else { Write-Warning "Logo nicht gefunden: $fmLogo - nutze das Standard-Logo." }
+      if ([IO.Path]::IsPathRooted($noteLogo)) {
+        if (Test-Path -LiteralPath $noteLogo -PathType Leaf) { $logoArg = $noteLogo }
+      } else {
+        foreach ($dir in @($baseDir, (Get-EnvFallback 'USERPROFILE'), $InstallRoot)) {
+          if (-not $dir) { continue }
+          $cand = [IO.Path]::Combine($dir, $noteLogo)
+          if (Test-Path -LiteralPath $cand -PathType Leaf) { $logoArg = $cand; break }
+        }
+      }
+      if (-not $logoArg) {
+        Write-Host "Hinweis: Logo nicht gefunden: $fmLogo - baue ohne Logo." -ForegroundColor Yellow
+      }
     }
-  }
-  if (-not $logoArg) {
-    $logoArg = @('logo.svg', 'logo.png', 'logo.jpg') |
-      ForEach-Object { Join-Path $InstallRoot $_ } |
-      Where-Object   { Test-Path -LiteralPath $_ } |
-      Select-Object  -First 1
-  }
-  if (-not $logoArg) {
-    $logoArg = ''
-    Write-Host "Hinweis: kein Logo im Installpfad - baue ohne Logo." -ForegroundColor Yellow
   }
 
   # Laufzeit-Eingaben fuers Template. title = Rueckfall-Metadatentitel

@@ -200,7 +200,7 @@ hard_breaks: true            # every line stays a line
 | `header` | text | — | Fixed header text from page 1 instead of the running chapter. |
 | `print_filename` | `true` / `false` | `true` | Show/hide the bottom-left entry (file name or “client · title”). |
 | `watermark` | text | — | Diagonal light-gray watermark beneath everything. |
-| `logo` | path | global logo | Logo for this document only (PNG/JPG/SVG), relative to the note or absolute. Missing file: warning, global logo. |
+| `logo` | file `.svg`/`.png`/`.jpg`/`.jpeg` | no logo | Logo in the header, only when set. Relative: looked up in the note's folder, then the user's home folder, then the install folder; absolute (also with `~`, `$HOME`, `%USERPROFILE%`): exactly this file. Not found: note, no logo. |
 | `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximum logo height (at most 25 mm); the logo keeps its proportions and is at most 60 mm wide. |
 | `embed_source` | `true` / `false` | `true` | Embed the Markdown source as an attachment. |
 | `hard_breaks` | `true` / `false` | `false` | Every line break stays one (as typed in Zettlr/Obsidian). |
@@ -387,10 +387,10 @@ and **Noto Sans Symbols 2** step in individually, both monochrome. Details:
 
 ## Customizing
 
-- **Global logo:** `logo.svg`, `logo.png` or `logo.jpg` in the install folder
-  (`~/.local/share/real-fast-document`, Windows `%LOCALAPPDATA%\real-fast-document`); the first
-  existing file is used. Without a logo rf-document continues with a note. Per document:
-  `logo:` in the frontmatter.
+- **Logo:** appears only with `logo:` in the frontmatter, never without the key. A custom logo
+  is best kept in the home folder (`~/company.svg`, Windows `%USERPROFILE%\company.svg`) and
+  pulled into every document with `logo: company.svg`; a file of the same name next to the note
+  takes precedence. The install folder ships `logo.svg` (last stop of the lookup).
 - **Margins, fonts, colors, font sizes:** collected at the top of `template.typ`.
 - **PDF/A level:** `standard` in `scripts/build.sh` (`a-1b`, `a-2b`, `a-3b`); embedding the
   source requires `a-3b`.

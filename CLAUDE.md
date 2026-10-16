@@ -227,9 +227,11 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   "date · author" line below — that line only appears when `author:` is set; `author: [A, B]` inline
   lists are flattened by `yaml_str`/`ConvertTo-YamlStr`); as soon as `client:` or `subtitle:` is set
   the **footer-left** shows at most two of client/title/subtitle ("Kunde · Titel") instead of the
-  filename; `logo:` → per-note logo (expanded by `expand_path`/`Expand-NotePath`: `~`, `${VAR}`,
+  filename; `logo:` → the **only** way to get a logo (no key / empty = no logo, user decision 26.10.18; expanded by `expand_path`/`Expand-NotePath`: `~`, `${VAR}`,
   `$VAR`, `%VAR%` with USER↔USERNAME / HOME↔USERPROFILE fallback, `%XX` decoding — **no `eval`**;
-  relative to the note; missing → warning + global logo); `logo-height:` → absolute lengths only,
+  must end in `.svg/.png/.jpg/.jpeg`; absolute → exactly that file, relative → looked up in the note's
+  folder (`RFD_BASE_DIR`), then `$HOME`/`%USERPROFILE%`, then the install folder; not found or wrong
+  extension → `Hinweis` on stderr, no logo, never an error); `logo-height:` → absolute lengths only,
   parsed in the template (`logo-max-height`, default **20 mm**, capped at 25 mm), the logo is fitted proportionally into
   height × 60 mm via `measure`; `embed_source:` / CLI `--no-source` → `attach=` empty;
   `date:` (ISO **or** German `T.M.JJJJ`, parsed by `parse-date` in the template and `iso_date`/
@@ -309,8 +311,8 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   is both rendered (after preprocessing in memory) and embedded (`--input attach`). New Markdown
   transforms go into `lib/markdown.typ` (git-tracked via `!lib/*.typ` in `.gitignore`).
 - **`scripts/build.sh`** (macOS/Linux) and **`scripts/convert.ps1`** (Windows) are the
-  conversion entry points. They parse the frontmatter, resolve the logo (frontmatter `logo:`, else
-  `logo.svg → .png → .jpg`, optional), and run `typst compile template.typ` directly
+  conversion entry points. They parse the frontmatter, resolve the logo (frontmatter `logo:` only: note
+  folder → home → install folder), and run `typst compile template.typ` directly
   (no intermediate `.typ`, no Pandoc), emitting PDF/A-3b with the source Markdown embedded.
   `build.sh` writes the PDF **next to the source** (not the repo root, which it `cd`s into for
   template/fonts/vendor) unless an explicit second arg is given, and passes `typst --root /`
@@ -599,7 +601,8 @@ Changes here can silently break it, so:
   `NotoEmoji[wght].ttf` — do not rename.
 - **Launcher and logo locations:** the messenger looks for `~/.local/bin/rf-document` (also
   `/opt/homebrew/bin`, `/usr/local/bin`) and `%LOCALAPPDATA%\Microsoft\WindowsApps\rf-document.cmd`;
-  the global logo is `logo.svg|png|jpg` in the install folder. Changing a location or launcher
+  a logo only appears with `logo:` (lookup: note folder → home → install folder, which ships
+  `logo.svg`). Changing a location or launcher
   name must be reported to the Zettlr project.
 - **Interface stays stable:** `rf-document <in.md> <out.pdf>` writes exactly there (no ISO prefix),
   exit 0 only on success, short errors on stderr, `RFD_NO_OPEN=1` and `RFD_BASE_DIR` honoured
