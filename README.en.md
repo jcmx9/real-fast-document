@@ -27,7 +27,7 @@ count. The result is **PDF/A-3b** with the Markdown source embedded. Everything 
   ellipses, non-breaking spaces, old-style figures in text and lining figures in tables.
 - **Archivable:** PDF/A-3b, source as an attachment (optional), reproducible PDF date.
 - **Usable everywhere:** terminal command `rf-document`, right-click in the file manager and
-  calls from other programs (e.g. as a Zettlr export) — on macOS, Linux and Windows.
+  calls from other programs (e.g. as an export from an editor) — on macOS, Linux and Windows.
 
 ## Installation & update
 
@@ -151,14 +151,14 @@ After installation a right-click entry is available; the PDF lands next to the s
 - **Linux:** right-click `.md` → **Open with → “Nach PDF-A (real-fast-document)”**
 - **Windows:** select `.md` → right-click → **Send to → “Nach PDF-A (real-fast-document)”**
 
-### From other programs (e.g. Zettlr)
+### From other programs
 
 `rf-document` is built as an export target:
 
 - The exit code is 0 only on success; errors and warnings go briefly (in German) to stderr.
 - Typst is found even with a minimal `PATH` (started from a GUI app).
 - Input and output may be absolute paths with spaces; the working directory does not matter.
-- For a temporary copy of the note (Zettlr with unsaved changes) `RFD_BASE_DIR` points to the
+- For a temporary copy of the note (e.g. when exporting unsaved changes) `RFD_BASE_DIR` points to the
   real note folder so images and logo are found.
 - On Windows the same call goes through `rf-document.cmd`; CI checks it under Windows
   PowerShell 5.1.
@@ -204,7 +204,7 @@ hard_breaks: true            # every line stays a line
 | `logo` | file `.svg`/`.png`/`.jpg`/`.jpeg` | no logo | Logo in the header, only when set. Relative: looked up in the note's folder, then the user's home folder, then the install folder; absolute (also with `~`, `$HOME`, `%USERPROFILE%`): exactly this file. Not found: note, no logo. |
 | `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximum logo height (at most 25 mm); the logo keeps its proportions and is at most 60 mm wide. |
 | `embed_source` | `true` / `false` | `true` | Embed the Markdown source as an attachment. |
-| `hard_breaks` | `true` / `false` | `false` | Every line break stays one (as typed in Zettlr/Obsidian). |
+| `hard_breaks` | `true` / `false` | `false` | Every line break stays one (as typed in the editor). |
 
 **Rules:** empty values (`subtitle: ""` or just `subtitle:`) are ignored, never an error.
 Yes/no keys accept `true`/`false`, `yes`/`no`, `on`/`off` in any case; an unrecognized value

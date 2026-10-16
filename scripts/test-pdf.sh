@@ -37,7 +37,7 @@ attachments() {
 }
 
 # render <fixture> [build-optionen…]: baut aus dem Fixture-Ordner heraus (wie
-# Zettlr: Arbeitsverzeichnis = Ordner der Notiz) und gibt den PDF-Text aus.
+# ein Editor: Arbeitsverzeichnis = Ordner der Notiz) und gibt den PDF-Text aus.
 render() {
   local name="$1" pdf="${out_dir}/${1%.md}.pdf"
   shift
@@ -221,7 +221,7 @@ test_fixtures() {
   reject "soft-breaks.md --hard-breaks" "${text}" "\\"
   ok "soft-breaks.md (+ --hard-breaks)"
 
-  # Zettlr-Notiz ohne Leerzeilen, harte Umbrüche per Front Matter.
+  # Notiz ohne Leerzeilen, harte Umbrüche per Front Matter.
   text="$(render no-blank-lines.md)"
   expect no-blank-lines.md "${text}" "Agenda" "Mitschrift" "Das ist zu tun" "Markierung" "Abschluss"
   expect_line no-blank-lines.md "${text}" "Letzte Zeile." "Noch eine Zeile." "18. Oktober 2026" \
@@ -422,7 +422,7 @@ test_interface() {
     printf 'skip Einbettung (mutool fehlt)\n'
   fi
 
-  # Absolute Pfade mit Leerzeichen (so ruft der Zettlr-Bote auf), Aufruf aus
+  # Absolute Pfade mit Leerzeichen (so rufen andere Programme auf), Aufruf aus
   # einem fremden Arbeitsverzeichnis: das PDF entsteht genau am Zielpfad.
   local in_dir="${out_dir}/Notiz Ordner" target_dir="${out_dir}/Aus gabe"
   mkdir -p "${in_dir}/bilder" "${target_dir}"
@@ -433,7 +433,7 @@ test_interface() {
   [[ -s "${target_dir}/mein pdf.pdf" ]] || die "Pfade mit Leerzeichen: PDF fehlt am Zielpfad"
   ok "absolute Pfade mit Leerzeichen"
 
-  # Temporäre Kopie (Zettlr bei ungespeicherten Änderungen): Bilder gelten über
+  # Temporäre Kopie (Export ungespeicherter Änderungen): Bilder gelten über
   # RFD_BASE_DIR relativ zum Originalordner; Name in Fußzeile, PDF-Titel und
   # Anhang bleibt der der Notiz (die Kopie trägt denselben Dateinamen).
   local tmp_copy="${out_dir}/tmpkopie"
@@ -458,7 +458,7 @@ test_interface() {
   grep -q "RFD_BASE_DIR ist kein Ordner" "${out_dir}/basis2.err" || die "ungültiger RFD_BASE_DIR ohne Warnung"
   ok "RFD_BASE_DIR (temporäre Kopie) + Dateiname"
 
-  # Minimaler PATH wie bei einer GUI-App (Zettlr, Finder): typst muss über
+  # Minimaler PATH wie bei einer GUI-App (Editor, Finder): typst muss über
   # bin/rfd-tools.env bzw. bin/typst gefunden werden.
   if [[ -f "${root_dir}/bin/rfd-tools.env" || -x "${root_dir}/bin/typst" ]]; then
     (cd "${fixtures}" && env -i HOME="${HOME}" PATH=/usr/bin:/bin RFD_NO_OPEN=1 \

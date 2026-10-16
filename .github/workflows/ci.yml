@@ -83,10 +83,11 @@ jobs:
           echo "All builds are PDF/A-3b."
 
   # Windows: convert.ps1 und der rf-document.cmd-Shim laufen unter Windows
-  # PowerShell 5.1 (powershell.exe) – genau so ruft der Zettlr-Bote auf.
+  # PowerShell 5.1 (powershell.exe) – genau so rufen andere Programme auf.
   # install.ps1 lädt Fonts + Packages und legt den Shim an (wird dabei selbst
   # ausgeführt); scripts/test-windows.ps1 prüft absolute Pfade mit
-  # Leerzeichen, POSIX-Optionen, RFD_BASE_DIR und die Exit-Codes.
+  # Leerzeichen, POSIX-Optionen, RFD_BASE_DIR, Logo-Suche und die Exit-Codes;
+  # scripts/test-windows-install.ps1 prüft -SendTo, -Uninstall und bootstrap.ps1.
   windows:
     runs-on: windows-latest
     defaults:
@@ -113,3 +114,7 @@ jobs:
 
       - name: Windows smoke tests (scripts/test-windows.ps1)
         run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-windows.ps1
+
+      # Läuft nach den Rauchtests, weil -Uninstall den Shim wieder entfernt.
+      - name: Send to, uninstall and bootstrap (scripts/test-windows-install.ps1)
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts\test-windows-install.ps1

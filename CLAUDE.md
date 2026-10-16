@@ -74,7 +74,7 @@ bash scripts/test-pdf.sh              # end-to-end tests: build tests/fixtures/*
 ```
 
 **End-to-end tests:** `scripts/test-pdf.sh` builds every note in `tests/fixtures/` through `build.sh`
-(from the fixture folder, like Zettlr: cwd = the note's folder) and checks the extracted PDF text
+(from the fixture folder, like an editor export: cwd = the note's folder) and checks the extracted PDF text
 (`pdftotext`, else `mutool`) with `expect`/`expect_compact`/`reject` — `expect_compact` ignores
 whitespace because letter-spaced text (`tracking`, e.g. the client line) extracts as `M U S T E R`.
 It also checks the interface: exact explicit output (no ISO prefix), prefix from a German date,
@@ -194,7 +194,7 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   don't embed], `docdir`, plus the frontmatter-derived `date`, `subtitle`, `client`, `author`, `toc`,
   `h1_break`, `showname`, `lang`, `header`, `watermark`) are passed as `typst --input` and read via
   `sys.inputs`. The visible title comes **only** from `doctitle` (frontmatter `title:`); a `# …`
-  is **always a chapter**, never promoted to the title (the user explicitly rejected Zettlr's
+  is **always a chapter**, never promoted to the title (the user explicitly rejected the
   "leading `# Title` becomes the title" legacy rule). The PDF/A metadata title is `title:`, else the
   basename.
   - **Metadata:** `#set document(title, date, author, description, keywords)` — author list from
@@ -324,7 +324,7 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
     Without this, `rf-document foo.md` from any other directory failed with "file not found".
   - **Auto-open:** after a successful build both scripts open the PDF in the default viewer
     (`open`/`xdg-open`/`Start-Process`); set `RFD_NO_OPEN=1` to suppress (batch/cron).
-  - **Called by other programs (Zettlr messenger):** `rf-document IN.md OUT.pdf` writes exactly
+  - **Called by other programs (e.g. an editor's export):** `rf-document IN.md OUT.pdf` writes exactly
     `OUT.pdf`; exit 0 only on success; errors short + German on stderr (missing source → `Error:
     Quelle nicht gefunden`, missing typst → `Error: typst nicht gefunden`). `build.sh` itself sources
     `bin/rfd-tools.env` and prefers `bin/typst`, so it works under a **minimal `PATH`** (GUI apps),
@@ -338,13 +338,13 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
     `-V`/`-Version`, `--help`/`-h`/`-Help`, `--no-source`, `--hard-breaks`; unknown `-x` → exit 2).
     **Windows trap:** with PowerShell parameter binding (`[CmdletBinding()]` + `param`) POSIX options
     such as `--no-source` coming through the `rf-document.cmd` shim (`powershell -File … %*`) are
-    taken as unknown parameter names — the Zettlr messenger passes exactly those. **Path trap:** turn
+    taken as unknown parameter names — calling programs pass exactly those. **Path trap:** turn
     CLI paths absolute with `[IO.Path]::Combine(cwd, p)` (`ConvertTo-FullPath`), never `Join-Path`:
     `Join-Path` appends an absolute second path (`C:\Notizen\C:\…\x.pdf` → "Das angegebene
     Pfadformat wird nicht unterstützt"), `Combine` keeps it. **Temp trap:** files Typst must read (the
     image-mapping JSON) go into the install folder, not `%TEMP%` — Typst only reads on the `--root`
     drive. **`RFD_BASE_DIR`** (both converters): base folder for relative image/logo paths and the
-    `docdir` input (Zettlr's temporary copy of an unsaved note); invalid → warning + source folder. Keep
+    `docdir` input (an editor's temporary copy of an unsaved note); invalid → warning + source folder. Keep
     the flag list in sync across `build.sh`, `convert.ps1`, and **both** READMEs' options tables.
   - **Image probe pass (replaces the old remote-count pass):** Typst can neither read env vars
     nor test file existence (a missing image *aborts* the build). So both converters first run
@@ -467,7 +467,7 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
   page break before it (`h1_break`), and the active H1 threaded into the running header.
 - **H2 / H3** = subsections (serif, no line). **H3** is body size (10pt) at `weight-text`, finely
   underlined; **H4 and deeper** are body size, italic.
-- **Weights/figures (Zettlr-matched, 26.10.4):** `weight-text` 380 (body, H3+, header, TOC entries),
+- **Weights/figures (26.10.4):** `weight-text` 380 (body, H3+, header, TOC entries),
   `weight-heading` 470 (title, H1, H2, "Inhalt"); bold = 380 + **`set strong(delta: 180)`** = 560.
   **Never set a weight in `show strong`** — Typst *adds* `strong.delta` to the current weight. PDF
   viewers draw the variable Source fonts heavier than browsers/editors, hence the slightly-below-
@@ -576,39 +576,19 @@ codes, `--version`/`-Version`). Still **not** executed anywhere: `install.ps1 -T
     trimmed). Verify with the visible-marker trick on a **highlighted** code block (swap NBSP→`¤`):
     `¤` must appear in body prose but **never** inside a code block.
 
-## Dependent projects: zettlr_rfdoc-Export
+## Callers: stable CLI interface
 
-`jcmx9/zettlr_rfdoc-Export` (Zettlr export profile, editor theme, snippets) builds on rf-document.
-Its CI installs rf-document via the bootstrap and exports real notes on Ubuntu, macOS and Windows.
-Changes here can silently break it, so:
+Other programs (editors, scripts) call rf-document as a plain command; rf-document knows nothing
+about them and has no caller-specific code. Keep the interface stable:
 
+- `rf-document <in.md> <out.pdf>` writes exactly there (no ISO prefix), exit 0 only on success,
+  short German errors on stderr, `RFD_NO_OPEN=1` and `RFD_BASE_DIR` honoured (relative
+  images/logo resolve against it — the input may be a temp copy), works with a minimal `PATH`.
+  CLI flags win over frontmatter.
+- Launchers: `~/.local/bin/rf-document` (macOS/Linux) and
+  `%LOCALAPPDATA%\Microsoft\WindowsApps\rf-document.cmd` (Windows).
 - **`header.md` is the complete, fully commented reference** of every frontmatter key (default +
-  explanation). The Zettlr project derives its own *compact* `header` snippet from it — do not
-  shorten `header.md` to match the snippet. Any key added, renamed or removed: name it in the
-  CHANGELOG with key, default value and a short comment (≤ ~35 characters, one line) so the snippet
-  can follow. Empty values (`""`) stay ignored, never an error.
-- **Layout values are mirrored by the editor theme** (`rfdoc-zettlr.css`): sizes (body 10 pt,
-  `#` 14, `##` 12, `###` 10 underlined, `####` italic, `leading`), weights (380 / 470 / 560 via
-  `strong.delta`, serif headings, sans body), colors (text `#212121`, headings `#141414`,
-  header/footer `#333`, hairline `#999`, code background `#f5f5f5`, highlight `#fbeab0`, callouts
-  note/tip/important/warning/caution, code syntax colors = Typst defaults), design (hairline under
-  `#`, heading spacing, square bullets, borderless tables with 0.4 pt `#ccc` column lines,
-  centered header with a 0.7 pt rule, zebra, 2.5 pt callout bar with letter-spaced uppercase
-  title). Also relevant: table type 9 pt Medium −2 %, title block 16/12/9 pt, code 9 pt, margins
-  35/30 mm. Any change: list old and new value in the CHANGELOG under a "Layout" note.
-- **Font file names in `fonts/` are part of the contract** (the theme embeds them):
-  `SourceSans3VF-Upright/Italic`, `SourceSerif4Variable-Roman/Italic`, `SourceCodeVF-Upright/Italic`,
-  `NotoEmoji[wght].ttf` — do not rename.
-- **Launcher and logo locations:** the messenger looks for `~/.local/bin/rf-document` (also
-  `/opt/homebrew/bin`, `/usr/local/bin`) and `%LOCALAPPDATA%\Microsoft\WindowsApps\rf-document.cmd`;
-  a logo only appears with `logo:` (lookup: note folder → home → install folder, which ships
-  `logo.svg`). Changing a location or launcher
-  name must be reported to the Zettlr project.
-- **Interface stays stable:** `rf-document <in.md> <out.pdf>` writes exactly there (no ISO prefix),
-  exit 0 only on success, short errors on stderr, `RFD_NO_OPEN=1` and `RFD_BASE_DIR` honoured
-  (relative images/logo resolve against it — the input may be a temp copy), works with a minimal
-  `PATH`. CLI flags win over frontmatter; the messenger sets **no** flags, its snippets steer
-  `hard_breaks`/`embed_source` via frontmatter.
+  explanation) — never shorten it. Empty values (`""`) stay ignored, never an error.
 
 ## Release flow
 

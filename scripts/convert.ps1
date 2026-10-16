@@ -14,7 +14,7 @@
 
   Bewusst OHNE param()-Block: die Argumente werden selbst aus $args gelesen.
   Mit PowerShell-Parameterbindung ([CmdletBinding()]) wuerden POSIX-Optionen
-  wie --no-source oder --hard-breaks (so ruft der Zettlr-Bote ueber den
+  wie --no-source oder --hard-breaks (so rufen andere Programme ueber den
   rf-document.cmd-Shim auf) als unbekannte Parameternamen abgelehnt.
 #>
 
@@ -69,7 +69,7 @@ Optionale YAML-Frontmatter-Schluessel:
 Environment:
   RFD_NO_OPEN=1         Das PDF nach dem Build nicht oeffnen (Batch/Cron)
   RFD_BASE_DIR=ordner   Relative Bild-/Logopfade gelten relativ zu diesem Ordner
-                        statt zum Ordner der Quelle (Zettlr: temporaere Kopie)
+                        statt zum Ordner der Quelle (temporaere Kopie)
 "@
 }
 
@@ -110,15 +110,15 @@ if (-not $Path -or $Path.Count -eq 0) {
 # Pfad aus der Befehlszeile absolut machen. [IO.Path]::Combine statt
 # Join-Path: Combine uebernimmt einen absoluten zweiten Pfad unveraendert,
 # Join-Path haengt ihn an ("C:\Notizen\C:\...\notiz.pdf" -> GetFullPath:
-# "Das angegebene Pfadformat wird nicht unterstuetzt"). Der Zettlr-Bote
-# uebergibt Ein- und Ausgabe immer absolut, oft mit Leerzeichen.
+# "Das angegebene Pfadformat wird nicht unterstuetzt"). Andere Programme
+# uebergeben Ein- und Ausgabe meist absolut, oft mit Leerzeichen.
 function ConvertTo-FullPath {
   param([string]$P)
   return [IO.Path]::GetFullPath([IO.Path]::Combine((Get-Location).Path, $P))
 }
 
 # Genau zwei Argumente, das zweite eine .pdf: ausdruecklicher Ausgabepfad
-# (Paritaet zu 'build.sh SOURCE.md OUTPUT.pdf', z. B. fuer den Zettlr-Export).
+# (Paritaet zu 'build.sh SOURCE.md OUTPUT.pdf', z. B. fuer den Export aus einem Editor).
 $ExplicitOut = ''
 if ($Path.Count -eq 2 -and [IO.Path]::GetExtension($Path[1]) -eq '.pdf') {
   $ExplicitOut = ConvertTo-FullPath $Path[1]
@@ -256,7 +256,7 @@ function Convert-One {
 
   $srcDir = Split-Path -Parent $Src
   # Basisordner fuer relative Bild- und Logopfade: RFD_BASE_DIR, falls gesetzt
-  # (Zettlr uebergibt bei ungespeicherten Aenderungen eine temporaere Kopie der
+  # (Editoren uebergeben bei ungespeicherten Aenderungen eine temporaere Kopie der
   # Notiz, die Bilder liegen aber neben dem Original), sonst der Ordner der Quelle.
   $baseDir = $srcDir
   if ($env:RFD_BASE_DIR) {
@@ -464,7 +464,7 @@ try {
   foreach ($p in $Path) { Convert-One $p }
 }
 catch {
-  # Fehler auf stderr (Aufrufer wie Zettlr zeigen ihn an). Nur im interaktiven
+  # Fehler auf stderr (aufrufende Programme zeigen ihn an). Nur im interaktiven
   # "Senden an"-Fall auf Enter warten - mit ausdruecklicher Ausgabe oder
   # RFD_NO_OPEN laeuft das Skript unbeaufsichtigt und darf nicht haengen.
   [Console]::Error.WriteLine("Fehler: $($_.Exception.Message)")

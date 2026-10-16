@@ -26,7 +26,7 @@ Seitenzählung. Das Ergebnis ist **PDF/A-3b** mit eingebetteter Markdown-Quelle.
   im Text und Versalziffern in Tabellen.
 - **Archivfähig:** PDF/A-3b, Quelle als Anhang (abschaltbar), reproduzierbares PDF-Datum.
 - **Überall nutzbar:** Terminal-Befehl `rf-document`, Rechtsklick im Dateimanager und Aufruf
-  aus anderen Programmen (z. B. als Zettlr-Export) — auf macOS, Linux und Windows.
+  aus anderen Programmen (z. B. als Export aus einem Editor) — auf macOS, Linux und Windows.
 ## Installation & Update
 Einzige Vorbedingung ist **git**. **Ein Befehl installiert — derselbe Befehl aktualisiert.**
 **macOS / Linux:**
@@ -146,14 +146,14 @@ Nach der Installation steht ein Rechtsklick-Eintrag bereit; das PDF landet neben
 - **Linux:** `.md` rechtsklicken → **Öffnen mit → „Nach PDF-A (real-fast-document)“**
 - **Windows:** `.md` markieren → Rechtsklick → **Senden an → „Nach PDF-A (real-fast-document)“**
 
-### Aus anderen Programmen (z. B. Zettlr)
+### Aus anderen Programmen
 
 `rf-document` ist als Exportziel gebaut:
 
 - Der Exit-Code ist nur bei Erfolg 0; Fehler und Warnungen gehen kurz und auf Deutsch auf stderr.
 - Typst wird auch mit minimalem `PATH` gefunden (Start aus einer GUI-App).
 - Ein- und Ausgabe dürfen absolute Pfade mit Leerzeichen sein, das Arbeitsverzeichnis ist egal.
-- Bei einer temporären Kopie der Notiz (Zettlr mit ungespeicherten Änderungen) zeigt
+- Bei einer temporären Kopie der Notiz (etwa beim Export ungespeicherter Änderungen) zeigt
   `RFD_BASE_DIR` auf den echten Notizordner, damit Bilder und Logo gefunden werden.
 - Unter Windows läuft derselbe Aufruf über `rf-document.cmd`; die CI prüft das unter Windows
   PowerShell 5.1.
@@ -199,7 +199,7 @@ hard_breaks: true            # Zeile bleibt Zeile
 | `logo` | Datei `.svg`/`.png`/`.jpg`/`.jpeg` | kein Logo | Logo im Kopf, nur wenn gesetzt. Relativ: gesucht im Ordner der Notiz, dann im Benutzerordner, dann im Installordner; absolut (auch mit `~`, `$HOME`, `%USERPROFILE%`): genau diese Datei. Nicht gefunden: Hinweis, ohne Logo. |
 | `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximale Logohöhe (höchstens 25 mm); das Logo bleibt proportional und höchstens 60 mm breit. |
 | `embed_source` | `true` / `false` | `true` | Markdown-Quelle als Anhang ins PDF einbetten. |
-| `hard_breaks` | `true` / `false` | `false` | Jeder Zeilenumbruch bleibt einer (wie in Zettlr/Obsidian getippt). |
+| `hard_breaks` | `true` / `false` | `false` | Jeder Zeilenumbruch bleibt einer (wie im Editor getippt). |
 
 **Regeln:** Leere Werte (`subtitle: ""` oder nur `subtitle:`) werden ignoriert, nie ein Fehler.
 Ja/Nein-Schlüssel verstehen `true`/`false`, `yes`/`no`, `on`/`off` in jeder Schreibweise; ein
