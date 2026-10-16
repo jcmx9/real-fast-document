@@ -15,6 +15,9 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
   before and after). New fixture `table-intro.md`.
 
 ### Changed
+- **Default logo height 13 mm** (was 20 mm): a logo set with `logo:` and found is fitted into
+  13 × 60 mm unless `logo-height:` sets another height (still up to 25 mm). `header.md` shows
+  `logo-height: 13mm`.
 - References to Zettlr removed: README, scripts and CI now speak of “other programs” / “an
   editor”; the CLAUDE.md section on the Zettlr project became a neutral “Callers: stable CLI
   interface”. The interface itself is unchanged.

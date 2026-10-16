@@ -237,7 +237,7 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
   must end in `.svg/.png/.jpg/.jpeg`; absolute → exactly that file, relative → looked up in the note's
   folder (`RFD_BASE_DIR`), then `$HOME`/`%USERPROFILE%`, then the install folder; not found or wrong
   extension → `Hinweis` on stderr, no logo, never an error); `logo-height:` → absolute lengths only,
-  parsed in the template (`logo-max-height`, default **20 mm**, capped at 25 mm), the logo is fitted proportionally into
+  parsed in the template (`logo-max-height`, default **13 mm** (was 20 mm until 26.10.18), capped at 25 mm), the logo is fitted proportionally into
   height × 60 mm via `measure`; `embed_source:` / CLI `--no-source` → `attach=` empty;
   `date:` (ISO **or** German `T.M.JJJJ`, parsed by `parse-date` in the template and `iso_date`/
   `ConvertTo-IsoDate` in the shells; anything else is shown verbatim and gets no prefix) → ISO-prefixes the output file (`2026-06-19_name.pdf`), shows a

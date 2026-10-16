@@ -197,7 +197,7 @@ hard_breaks: true            # Zeile bleibt Zeile
 | `print_filename` | `true` / `false` | `true` | Angabe unten links (Dateiname bzw. „Kunde · Titel“) ein-/ausblenden. |
 | `watermark` | Text | — | Diagonales, hellgraues Wasserzeichen unter allem. |
 | `logo` | Datei `.svg`/`.png`/`.jpg`/`.jpeg` | kein Logo | Logo im Kopf, nur wenn gesetzt. Relativ: gesucht im Ordner der Notiz, dann im Benutzerordner, dann im Installordner; absolut (auch mit `~`, `$HOME`, `%USERPROFILE%`): genau diese Datei. Nicht gefunden: Hinweis, ohne Logo. |
-| `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximale Logohöhe (höchstens 25 mm); das Logo bleibt proportional und höchstens 60 mm breit. |
+| `logo-height` | `15mm`, `1.5cm`, `40pt`, … | `13mm` | Maximale Logohöhe (höchstens 25 mm); das Logo bleibt proportional und höchstens 60 mm breit. |
 | `embed_source` | `true` / `false` | `true` | Markdown-Quelle als Anhang ins PDF einbetten. |
 | `hard_breaks` | `true` / `false` | `false` | Jeder Zeilenumbruch bleibt einer (wie im Editor getippt). |
 
@@ -226,7 +226,7 @@ auskommentiert bleibt der Kopf ohne Logo — auch bei Notizen ganz ohne Frontmat
   etwa für ein Kundenlogo.
 - Der Installordner bringt das real·fast·document-Logo als `logo.svg` mit: `logo: logo.svg`
   findet es, solange keine eigene `logo.svg` neben der Notiz oder im Benutzerordner liegt.
-- Größe: das Logo wird proportional in höchstens 20 × 60 mm eingepasst; `logo-height` ändert
+- Größe: das Logo wird proportional in höchstens 13 × 60 mm eingepasst; `logo-height` ändert
   die Höhe (bis 25 mm).
 
 ## Markdown
@@ -368,7 +368,7 @@ Symbols 2** — einfarbig, PDF/A-tauglich: 🚀 ✓ ⚠ → ★ ½ €.
 |--------|------|
 | Format | DIN A4 Hochformat |
 | Ränder | links 35 mm · rechts 30 mm · oben 35 mm · unten 20 mm (Satzspiegel 145 mm, ~95 Zeichen je Zeile) |
-| Kopf | Kapitel bzw. `header:` links (Sans), Logo (nur mit `logo:`) rechts in höchstens 20 × 60 mm, Linie darunter |
+| Kopf | Kapitel bzw. `header:` links (Sans), Logo (nur mit `logo:`) rechts in höchstens 13 × 60 mm, Linie darunter |
 | Fuß | Linie; Name links · Seite · Datum rechts (ohne Datum: Name · Seite) |
 | Titelblock | zentriert: Kunde (gesperrt), Titel, Untertitel, „Datum · Autor“ |
 | Überschriften | Source Serif 4, linksbündig; nur H1 mit feiner Linie; bleiben nie allein am Seitenfuß |

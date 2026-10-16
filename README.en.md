@@ -202,7 +202,7 @@ hard_breaks: true            # every line stays a line
 | `print_filename` | `true` / `false` | `true` | Show/hide the bottom-left entry (file name or “client · title”). |
 | `watermark` | text | — | Diagonal light-gray watermark beneath everything. |
 | `logo` | file `.svg`/`.png`/`.jpg`/`.jpeg` | no logo | Logo in the header, only when set. Relative: looked up in the note's folder, then the user's home folder, then the install folder; absolute (also with `~`, `$HOME`, `%USERPROFILE%`): exactly this file. Not found: note, no logo. |
-| `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximum logo height (at most 25 mm); the logo keeps its proportions and is at most 60 mm wide. |
+| `logo-height` | `15mm`, `1.5cm`, `40pt`, … | `13mm` | Maximum logo height (at most 25 mm); the logo keeps its proportions and is at most 60 mm wide. |
 | `embed_source` | `true` / `false` | `true` | Embed the Markdown source as an attachment. |
 | `hard_breaks` | `true` / `false` | `false` | Every line break stays one (as typed in the editor). |
 
@@ -230,7 +230,7 @@ out, the header has no logo — also for notes without any frontmatter.
   e.g. for a client logo.
 - The install folder ships the real·fast·document logo as `logo.svg`: `logo: logo.svg` finds it
   as long as no custom `logo.svg` lies next to the note or in the home folder.
-- Size: the logo is fitted proportionally into at most 20 × 60 mm; `logo-height` changes the
+- Size: the logo is fitted proportionally into at most 13 × 60 mm; `logo-height` changes the
   height (up to 25 mm).
 
 ## Markdown
@@ -367,7 +367,7 @@ Symbols 2** — monochrome, PDF/A-safe: 🚀 ✓ ⚠ → ★ ½ €.
 |--------|-------|
 | Format | A4 portrait |
 | Margins | left 35 mm · right 30 mm · top 35 mm · bottom 20 mm (text block 145 mm, ~95 characters per line) |
-| Header | chapter or `header:` on the left (sans), logo (only with `logo:`) on the right within at most 20 × 60 mm, line below |
+| Header | chapter or `header:` on the left (sans), logo (only with `logo:`) on the right within at most 13 × 60 mm, line below |
 | Footer | line; name left · page · date right (without date: name · page) |
 | Title block | centered: client (letter-spaced), title, subtitle, “date · author” |
 | Headings | Source Serif 4, left-aligned; only H1 with a fine line; never left alone at a page foot |

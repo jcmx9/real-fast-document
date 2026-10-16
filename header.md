@@ -49,9 +49,9 @@ watermark: ""
 # Installordner. Absolut geht auch; ~, $VAR, ${VAR} und %VAR% werden ersetzt.
 # Nicht gefunden: Hinweis, ohne Logo.
 logo: ""
-# Maximale Logohöhe, nur absolute Längen (mm, cm, pt, in); Standard 20mm,
+# Maximale Logohöhe, nur absolute Längen (mm, cm, pt, in); Standard 13mm,
 # höchstens 25mm. Das Logo bleibt proportional und höchstens 60 mm breit.
-logo-height: 20mm
+logo-height: 13mm
 
 # ---- Ausgabe ----------------------------------------------------------------
 # Markdown-Quelle als Anhang ins PDF einbetten; false für Kunden-PDFs

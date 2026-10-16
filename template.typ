@@ -235,13 +235,13 @@
 #let margin-right = 30mm
 
 // Logo: proportional in einen Rahmen aus maximaler Höhe und Breite eingepasst.
-// Standardhöhe 20 mm; logo-height: (nur absolute Längen wie 15mm, 1.2cm, 40pt,
+// Standardhöhe 13 mm; logo-height: (nur absolute Längen wie 15mm, 1.2cm, 40pt,
 // 0.8in) übersteuert, gedeckelt auf 25 mm, damit der Kopf im oberen Rand bleibt.
 // Ungültige Werte (z. B. 50%) werden ignoriert.
 #let logo-max-width = 60mm
 #let logo-max-height = {
   let m = logo-height-raw.trim().match(regex("^(\d+(?:\.\d+)?)\s*(mm|cm|pt|in)$"))
-  if m == none { 20mm } else {
+  if m == none { 13mm } else {
     let v = float(m.captures.at(0))
     let unit = (mm: 1mm, cm: 1cm, pt: 1pt, "in": 1in).at(m.captures.at(1))
     calc.min(v * unit, 25mm)

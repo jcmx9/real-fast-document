@@ -23,7 +23,7 @@ Die Markdown-Quelle liegt als Anhang im PDF und lässt sich jederzeit wieder her
 
 Der **Titelblock** oben entsteht aus dem Frontmatter: `client` (klein, gesperrt), `title`,
 `subtitle` und die Zeile „Datum · Autor“ aus `date` und `author`. Die **Kopfzeile** zeigt ab
-Seite 1 das aktuelle Kapitel, rechts das Logo aus `logo:` (höchstens 20 × 60 mm). Die **Fußzeile** zeigt
+Seite 1 das aktuelle Kapitel, rechts das Logo aus `logo:` (höchstens 13 × 60 mm). Die **Fußzeile** zeigt
 links „Kunde · Titel“ (weil `client` gesetzt ist), in der Mitte die Seitenzahl und rechts das
 Datum. Das **Wasserzeichen** „BEISPIEL“ liegt unter allem.
 
