@@ -8,6 +8,7 @@ lang: de
 toc: true
 h1_break: false
 watermark: "ENTWURF"
+hard_breaks: false
 ---
 
 Am 19. Oktober trafen sich Röstwerk Hansen und die Agentur in der Rösterei in Lüneburg, um den

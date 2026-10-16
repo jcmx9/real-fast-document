@@ -68,8 +68,10 @@ Arguments:
                z. B. 2026-06-19_SOURCE.pdf – abschaltbar mit 'isodate_praefix: false'
 
 Options:
-  --hard-breaks   Jede Zeile bleibt eine Zeile, wie im Editor getippt
-                  (Frontmatter: hard_breaks: true)
+  --hard-breaks   Jede Zeile bleibt eine Zeile, wie im Editor getippt (Standard;
+                  Frontmatter: hard_breaks: true)
+  --soft-breaks   Einzelne Zeilenumbrüche werden zu Leerzeichen (CommonMark, für
+                  umbrochenen Fließtext; Frontmatter: hard_breaks: false)
   --no-source     Markdown-Quelle NICHT ins PDF einbetten (z. B. für Kunden-PDFs;
                   Frontmatter: embed_source: false)
   -V, --version   rf-document- und Typst-Version ausgeben und beenden
@@ -99,6 +101,7 @@ while [ $# -gt 0 ]; do
     -V|--version) print_version; exit 0 ;;
     --no-source)  cli_embed="false"; shift ;;
     --hard-breaks) cli_breaks="true"; shift ;;
+    --soft-breaks) cli_breaks="false"; shift ;;
     --)           shift; while [ $# -gt 0 ]; do positional+=("$1"); shift; done; break ;;
     -*)           printf 'Error: unbekannte Option %s\n' "$1" >&2
                   printf "Aufruf: rf-document --help\n" >&2; exit 2 ;;
@@ -255,7 +258,7 @@ fm_author=""
 fm_logo=""
 fm_logo_height=""
 fm_embed="true"
-fm_breaks="false"
+fm_breaks="true"
 if [[ "$(head -n 1 "${src}" | tr -d '\r')" == "---" ]]; then
   block="$(awk 'NR==1 { next } /^(---|\.\.\.)[[:space:]]*$/ { exit } { print }' "${src}" | tr -d '\r')"
   while IFS= read -r line; do

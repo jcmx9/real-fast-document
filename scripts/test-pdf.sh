@@ -213,13 +213,19 @@ test_fixtures() {
     die "text-features.md: Seitenumbrüche fehlen (erwartet 3 Seiten)"
   ok text-features.md
 
-  # Zeilenumbrüche: Standard weich, mit --hard-breaks / hard_breaks: true hart.
+  # Zeilenumbrüche: Standard hart (auch ohne Eintrag), nur --soft-breaks bzw.
+  # hard_breaks: false macht sie weich.
   text="$(render soft-breaks.md)"
-  expect soft-breaks.md "${text}" "Zeile eins Zeile zwei"
+  expect_line soft-breaks.md "${text}" "Zeile eins" "Zeile zwei"
+  reject soft-breaks.md "${text}" "\\" "Zeile eins Zeile zwei"
   text="$(render soft-breaks.md --hard-breaks)"
   expect_line "soft-breaks.md --hard-breaks" "${text}" "Zeile eins" "Zeile zwei"
-  reject "soft-breaks.md --hard-breaks" "${text}" "\\"
-  ok "soft-breaks.md (+ --hard-breaks)"
+  text="$(render soft-breaks.md --soft-breaks)"
+  expect "soft-breaks.md --soft-breaks" "${text}" "Zeile eins Zeile zwei"
+  printf -- '---\nhard_breaks: false\n---\n\nZeile eins\nZeile zwei\n' >"${out_dir}/weich.md"
+  (cd "${out_dir}" && bash "${build}" weich.md weich.pdf >/dev/null 2>&1) || die "weich.md: Export fehlgeschlagen"
+  expect "hard_breaks: false" "$(pdf_text "${out_dir}/weich.pdf")" "Zeile eins Zeile zwei"
+  ok "soft-breaks.md (Standard hart, --hard-breaks, --soft-breaks, hard_breaks: false)"
 
   # Notiz ohne Leerzeilen, harte Umbrüche per Front Matter.
   text="$(render no-blank-lines.md)"

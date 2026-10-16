@@ -110,7 +110,7 @@ Aufgabentabelle und Glossar.
 rf-document notiz.md                # PDF neben der Notiz
 rf-document notiz.md ziel.pdf       # genau dieser Pfad
 rf-document --no-source notiz.md    # ohne Quelle im PDF
-rf-document --hard-breaks notiz.md  # Zeile bleibt Zeile
+rf-document --soft-breaks notiz.md  # Umbrüche werden Leerzeichen
 rf-document --help                  # alle Optionen
 ```
 
@@ -125,7 +125,8 @@ Nach dem Build öffnet sich das PDF im Standardprogramm.
 | Option | Wirkung |
 |--------|---------|
 | `--no-source` | Markdown-Quelle **nicht** ins PDF einbetten (z. B. Kunden-PDFs); wie `embed_source: false` |
-| `--hard-breaks` | Jede Zeile bleibt eine Zeile, wie im Editor getippt; wie `hard_breaks: true` |
+| `--hard-breaks` | Jede Zeile bleibt eine Zeile, wie im Editor getippt (Standard); wie `hard_breaks: true` |
+| `--soft-breaks` | Einzelne Zeilenumbrüche werden zu Leerzeichen (CommonMark), für umbrochenen Fließtext; wie `hard_breaks: false` |
 | `--version`, `-V` | rf-document- und Typst-Version ausgeben |
 | `--help`, `-h` | Hilfe ausgeben |
 
@@ -159,7 +160,7 @@ Nach der Installation steht ein Rechtsklick-Eintrag bereit; das PDF landet neben
   PowerShell 5.1.
 
 ```bash
-RFD_NO_OPEN=1 RFD_BASE_DIR="/pfad/zur/notiz" rf-document --no-source --hard-breaks "/pfad/notiz.md" "/pfad/ziel.pdf"
+RFD_NO_OPEN=1 RFD_BASE_DIR="/pfad/zur/notiz" rf-document --no-source "/pfad/notiz.md" "/pfad/ziel.pdf"
 ```
 
 ## Frontmatter
@@ -178,7 +179,7 @@ lang: de                     # Sprache; Standard de
 watermark: "ENTWURF"         # Wasserzeichen
 logo: firma.svg              # Logo im Kopf (ohne: kein Logo)
 embed_source: false          # Quelle nicht einbetten
-hard_breaks: true            # Zeile bleibt Zeile
+hard_breaks: false           # Umbrüche werden Leerzeichen
 ---
 ```
 
@@ -199,7 +200,7 @@ hard_breaks: true            # Zeile bleibt Zeile
 | `logo` | Datei `.svg`/`.png`/`.jpg`/`.jpeg` | kein Logo | Logo im Kopf, nur wenn gesetzt. Relativ: gesucht im Ordner der Notiz, dann im Benutzerordner, dann im Installordner; absolut (auch mit `~`, `$HOME`, `%USERPROFILE%`): genau diese Datei. Nicht gefunden: Hinweis, ohne Logo. |
 | `logo-height` | `15mm`, `1.5cm`, `40pt`, … | `13mm` | Maximale Logohöhe (höchstens 25 mm); das Logo bleibt proportional und höchstens 60 mm breit. |
 | `embed_source` | `true` / `false` | `true` | Markdown-Quelle als Anhang ins PDF einbetten. |
-| `hard_breaks` | `true` / `false` | `false` | Jeder Zeilenumbruch bleibt einer (wie im Editor getippt). |
+| `hard_breaks` | `true` / `false` | `true` | Jeder Zeilenumbruch bleibt einer (wie im Editor getippt), auch ohne Eintrag. Nur `false` setzt CommonMark: ein einzelner Umbruch wird zum Leerzeichen. |
 
 **Regeln:** Leere Werte (`subtitle: ""` oder nur `subtitle:`) werden ignoriert, nie ein Fehler.
 Ja/Nein-Schlüssel verstehen `true`/`false`, `yes`/`no`, `on`/`off` in jeder Schreibweise; ein
@@ -255,9 +256,10 @@ folgenden Abschnitte beschreiben, was darüber hinaus gilt.
 Code, Formeln und HTML bleiben von der Typografie unberührt. Im Fließtext stehen
 Mediävalziffern, in Tabellen Versalziffern gleicher Breite.
 
-**Zeilenumbrüche:** Standard ist CommonMark — ein einzelner Umbruch wird zum Leerzeichen,
-zwei Leerzeichen oder `\` am Zeilenende erzwingen einen Umbruch. Mit `hard_breaks: true`
-(oder `--hard-breaks`) bleibt jede Zeile eine Zeile.
+**Zeilenumbrüche:** Standard ist: Jede Zeile bleibt eine Zeile, wie im Editor getippt — auch
+ohne Eintrag im Frontmatter. Nur `hard_breaks: false` (oder `--soft-breaks`) schaltet auf
+CommonMark um: Ein einzelner Umbruch wird zum Leerzeichen, zwei Leerzeichen oder `\` am
+Zeilenende erzwingen einen Umbruch. Das passt für Text, der im Quelltext umbrochen ist.
 
 ### Titel, Überschriften und Struktur
 

@@ -138,9 +138,10 @@
 #let logo-height-raw = sys.inputs.at("logo_height", default: "")
 
 // Markdown vorverarbeiten (lib/markdown.typ).
-// hard_breaks: true -> jede Zeile bleibt eine Zeile (Frontmatter oder --hard-breaks).
+// hard_breaks (Standard true) -> jede Zeile bleibt eine Zeile; nur ein
+// ausdrückliches false (Frontmatter oder --soft-breaks) schaltet das ab.
 #let body-markdown = if source-path == none { "" } else {
-  preprocess(read(source-path), hard-breaks: sys.inputs.at("hard_breaks", default: "false") == "true",
+  preprocess(read(source-path), hard-breaks: sys.inputs.at("hard_breaks", default: "true") != "false",
     lang: sys.inputs.at("lang", default: "de"))
 }
 // Sichtbarer Dokumenttitel nur aus dem Frontmatter (title:): Titelblock oben +

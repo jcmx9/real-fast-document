@@ -132,6 +132,11 @@ foreach ($case in @(
 }
 $env:USERPROFILE = $savedProfile
 
+# 3c) Standard: harte Umbrueche; --soft-breaks wird angenommen.
+$r = Invoke-Convert @('--soft-breaks', $note, (Join-Path $outDir 'weich.pdf'))
+if ($r.Code -ne 0 -or -not (Test-PdfA (Join-Path $outDir 'weich.pdf'))) { Fail "--soft-breaks: Exit $($r.Code)`n$($r.Text)" }
+else { Ok '--soft-breaks' }
+
 # 4) Fehlende Quelle: Exit 1, verstaendliche Meldung.
 $r = Invoke-Convert @((Join-Path $inDir 'gibt es nicht.md'), (Join-Path $outDir 'x.pdf'))
 if ($r.Code -ne 1 -or $r.Text -notmatch 'Quelle nicht gefunden') { Fail "fehlende Quelle: Exit $($r.Code)`n$($r.Text)" }

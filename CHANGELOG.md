@@ -6,6 +6,20 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.20] - 2026-10-16
+
+### Changed
+- **Hard line breaks are the default:** every line stays a line, as typed in the editor — also
+  without a `hard_breaks:` entry. Only an explicit `hard_breaks: false` (or the new CLI option
+  `--soft-breaks`) switches to CommonMark, where a single line break becomes a space.
+  `--hard-breaks` is still accepted (now the default). `header.md` shows `hard_breaks: true`.
+- Documents wrapped in the source set `hard_breaks: false` (`example.md`, `demo.md`); the READMEs
+  have no frontmatter and are built with `--soft-breaks` (CI, release assets). Their layout is
+  unchanged (text positions identical to 26.10.19).
+
+### Tests
+- Default hard, `--hard-breaks`, `--soft-breaks` and `hard_breaks: false`; Windows: `--soft-breaks`.
+
 ## [26.10.19] - 2026-10-16
 
 ### Fixed

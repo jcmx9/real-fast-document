@@ -55,7 +55,9 @@ Arguments:
 
 Options:
   --hard-breaks         Jede Zeile bleibt eine Zeile, wie im Editor getippt
-                        (Frontmatter: hard_breaks: true)
+                        (Standard; Frontmatter: hard_breaks: true)
+  --soft-breaks         Einzelne Zeilenumbrueche werden zu Leerzeichen (CommonMark;
+                        Frontmatter: hard_breaks: false)
   --no-source           Markdown-Quelle NICHT ins PDF einbetten (Kunden-PDFs;
                         Frontmatter: embed_source: false)
   -Version, --version   rf-document- und Typst-Version ausgeben und beenden
@@ -76,7 +78,7 @@ Environment:
 # Argumente selbst auswerten (siehe Kopfkommentar): Optionen in POSIX- und
 # PowerShell-Schreibweise, alles andere sind Pfade. Eine unbekannte Option
 # endet wie in build.sh mit Exit 2.
-$Version = $false; $Help = $false; $NoSource = $false; $HardBreaks = $false
+$Version = $false; $Help = $false; $NoSource = $false; $HardBreaks = $false; $SoftBreaks = $false
 $Path = @()
 foreach ($a in $args) {
   $arg = [string]$a
@@ -85,6 +87,7 @@ foreach ($a in $args) {
     { $_ -in @('--help', '-h', '-Help', '-help', '-?') }    { $Help = $true; continue }
     '--no-source'   { $NoSource = $true; continue }
     '--hard-breaks' { $HardBreaks = $true; continue }
+    '--soft-breaks' { $SoftBreaks = $true; continue }
     default {
       if ($arg.StartsWith('-')) {
         [Console]::Error.WriteLine("Error: unbekannte Option $arg")
@@ -279,7 +282,7 @@ function Convert-One {
   # werden ignoriert, nie ein Fehler.
   $fmDate = ''; $fmIsodatePraefix = ''; $fmToc = 'auto'; $fmBreak = 'auto'; $fmShowname = 'true'; $fmLang = 'de'
   $fmHeader = ''; $fmWatermark = ''; $fmTitle = ''
-  $fmSubtitle = ''; $fmClient = ''; $fmAuthor = ''; $fmLogo = ''; $fmLogoHeight = ''; $fmEmbed = 'true'; $fmBreaks = 'false'
+  $fmSubtitle = ''; $fmClient = ''; $fmAuthor = ''; $fmLogo = ''; $fmLogoHeight = ''; $fmEmbed = 'true'; $fmBreaks = 'true'
   if ($lines.Count -gt 0 -and $lines[0].Trim() -eq '---') {
     for ($i = 1; $i -lt $lines.Count; $i++) {
       if ($lines[$i].Trim() -in @('---', '...')) { break }
@@ -309,6 +312,7 @@ function Convert-One {
 
   if ($NoSource) { $fmEmbed = 'false' }
   if ($HardBreaks) { $fmBreaks = 'true' }
+  if ($SoftBreaks) { $fmBreaks = 'false' }
 
   # Ausgabe: ausdruecklicher Pfad gewinnt (exakt, ohne Praefix). Sonst neben der
   # Quelle; bei erkennbarem Datum ISO-Praefix (sortierbar), ausser
