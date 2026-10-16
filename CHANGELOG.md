@@ -22,11 +22,6 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 - Tests: no logo without the key; lookup order note folder → home → install folder, `~/`, missing
   file and wrong extension.
 
-### Contract note (zettlr_rfdoc-Export)
-- Key `logo` — default: none (no logo); snippet comment: `# Logo: Datei, sonst keins`.
-  Behaviour change: the global install-folder logo is no longer applied automatically; notes that
-  relied on it need `logo: logo.svg` (or a file in the home folder).
-
 ## [26.10.17] - 2026-10-14
 
 ### Changed
