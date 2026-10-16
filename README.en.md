@@ -115,7 +115,7 @@ roasting formula, process and schedule diagrams, a task table and a glossary (in
 rf-document note.md                # PDF next to the note
 rf-document note.md target.pdf     # exactly this path
 rf-document --no-source note.md    # without source in PDF
-rf-document --hard-breaks note.md  # every line stays a line
+rf-document --soft-breaks note.md  # line breaks become spaces
 rf-document --help                 # all options
 ```
 
@@ -130,7 +130,8 @@ opens in the default viewer.
 | Option | Effect |
 |--------|--------|
 | `--no-source` | Do **not** embed the Markdown source (e.g. client PDFs); same as `embed_source: false` |
-| `--hard-breaks` | Every line stays a line, as typed in the editor; same as `hard_breaks: true` |
+| `--hard-breaks` | Every line stays a line, as typed in the editor (default); same as `hard_breaks: true` |
+| `--soft-breaks` | Single line breaks become spaces (CommonMark), for wrapped prose; same as `hard_breaks: false` |
 | `--version`, `-V` | Print rf-document and Typst version |
 | `--help`, `-h` | Print help |
 
@@ -164,7 +165,7 @@ After installation a right-click entry is available; the PDF lands next to the s
   PowerShell 5.1.
 
 ```bash
-RFD_NO_OPEN=1 RFD_BASE_DIR="/path/to/note" rf-document --no-source --hard-breaks "/path/note.md" "/path/target.pdf"
+RFD_NO_OPEN=1 RFD_BASE_DIR="/path/to/note" rf-document --no-source "/path/note.md" "/path/target.pdf"
 ```
 
 ## Frontmatter
@@ -183,7 +184,7 @@ lang: en                     # language; default de
 watermark: "DRAFT"           # watermark
 logo: company.svg            # logo in the header (without: no logo)
 embed_source: false          # do not embed the source
-hard_breaks: true            # every line stays a line
+hard_breaks: false           # line breaks become spaces
 ---
 ```
 
@@ -204,7 +205,7 @@ hard_breaks: true            # every line stays a line
 | `logo` | file `.svg`/`.png`/`.jpg`/`.jpeg` | no logo | Logo in the header, only when set. Relative: looked up in the note's folder, then the user's home folder, then the install folder; absolute (also with `~`, `$HOME`, `%USERPROFILE%`): exactly this file. Not found: note, no logo. |
 | `logo-height` | `15mm`, `1.5cm`, `40pt`, … | `13mm` | Maximum logo height (at most 25 mm); the logo keeps its proportions and is at most 60 mm wide. |
 | `embed_source` | `true` / `false` | `true` | Embed the Markdown source as an attachment. |
-| `hard_breaks` | `true` / `false` | `false` | Every line break stays one (as typed in the editor). |
+| `hard_breaks` | `true` / `false` | `true` | Every line break stays one (as typed in the editor), even without an entry. Only `false` switches to CommonMark: a single break becomes a space. |
 
 **Rules:** empty values (`subtitle: ""` or just `subtitle:`) are ignored, never an error.
 Yes/no keys accept `true`/`false`, `yes`/`no`, `on`/`off` in any case; an unrecognized value
@@ -259,9 +260,10 @@ describe what applies beyond that.
 Code, math and HTML are left alone by the typography. Running text uses old-style figures,
 tables use equal-width lining figures.
 
-**Line breaks:** the default is CommonMark — a single break becomes a space, two spaces or `\`
-at the line end force a break. With `hard_breaks: true` (or `--hard-breaks`) every line stays a
-line.
+**Line breaks:** by default every line stays a line, as typed in the editor — even without an
+entry in the frontmatter. Only `hard_breaks: false` (or `--soft-breaks`) switches to CommonMark:
+a single break becomes a space, two spaces or `\` at the line end force a break. That suits text
+that is wrapped in the source.
 
 ### Title, headings and structure
 

@@ -90,7 +90,7 @@ Einheiten mit geschützten Leerzeichen, Dezimalstellen, kleine Zahlen.
 | Schalter | Wert | Wirkung | Status |
 | -------- | ---- | ------- | :----: |
 | `toc` | `auto` | Inhaltsverzeichnis ab mehr als fünf Überschriften | ✓ |
-| `hard_breaks` | `false` | **Zeilenumbrüche** bleiben erhalten, wenn `true` | ✓ |
+| `hard_breaks` | `true` | **Zeilenumbrüche** bleiben erhalten; `false` für umbrochenen Text | ✓ |
 | `embed_source` | `true` | Quelle als *Anhang*; für Kunden-PDFs abschalten | ⚠ |
 | `watermark` | `"ENTWURF"` | diagonales Wasserzeichen | ✗ |
 | [Projektseite](https://github.com/jcmx9/real-fast-document) | Link | Verweise funktionieren auch in Zellen | 🔗 |

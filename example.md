@@ -9,6 +9,7 @@ toc: true
 h1_break: true
 watermark: "BEISPIEL"
 logo: logo.svg
+hard_breaks: false
 ---
 
 Dieses Dokument ist zugleich **Vorlage**, **Schaustück** und **Falltest**: Es ist mit genau der
@@ -69,11 +70,13 @@ Zwischen Abkürzungen wie z. B., d. h. oder u. a. und zwischen Zahl und Einheit 
 
 ## Zeilenumbrüche
 
-Ein einzelner Zeilenumbruch in der Quelle
-wird zum Leerzeichen (CommonMark). Zwei Leerzeichen am Zeilenende  
-oder ein Backslash\
-erzwingen einen Umbruch. Mit `hard_breaks: true` im Frontmatter (oder `--hard-breaks`) bleibt
-jede Zeile eine Zeile — praktisch für Mitschriften.
+Standard ist: Jede Zeile bleibt eine Zeile, wie im Editor getippt — praktisch für Mitschriften.
+Dieses Dokument ist im Quelltext umbrochen und setzt deshalb `hard_breaks: false`: Ein
+einzelner Zeilenumbruch in der Quelle wird dann zum Leerzeichen (CommonMark).
+
+Einen Umbruch erzwingen auch dann  
+zwei Leerzeichen am Zeilenende\
+oder ein Backslash.
 
 ## Datumszeilen
 

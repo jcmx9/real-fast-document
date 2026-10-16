@@ -58,7 +58,7 @@ logo-height: 13mm
 # (gleichwertig: rf-document --no-source).
 embed_source: true
 # Jeder Zeilenumbruch bleibt ein Zeilenumbruch, wie im Editor getippt
-# (gleichwertig: rf-document --hard-breaks). false: CommonMark, ein einzelner
-# Umbruch wird zum Leerzeichen.
-hard_breaks: false
+# (Standard, auch ohne Eintrag). false: CommonMark, ein einzelner Umbruch wird
+# zum Leerzeichen, z. B. für umbrochenen Fließtext (rf-document --soft-breaks).
+hard_breaks: true
 ---

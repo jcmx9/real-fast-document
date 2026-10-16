@@ -99,7 +99,8 @@ exercises structured mode. Building it prints one expected warning (`Bild nicht 
 bilder/fehlt.png`) and the remote-skip note. `README.md`/`README.en.md` are organized by feature
 (overview → install → usage → frontmatter → Markdown per feature → layout → PDF/A → fonts →
 customizing → development) and must keep identical structure; they have no frontmatter (GitHub
-would render it), so they build with `lang: de` — write English quotes in `README.en.md` prose as
+would render it), so they build with `lang: de` and need **`--soft-breaks`** (their prose is wrapped in
+the source; `hard_breaks` defaults to true since 26.10.20) — write English quotes in `README.en.md` prose as
 typed “…” or the typography step would set German „…“. Never write a bare `--` in README prose
 (it becomes –); options always in backticks. Use it to eyeball layout changes; its `*.pdf` is
 git-ignored.
@@ -301,7 +302,7 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
   blank line after `<dd>`, so inline markdown renders; inline `<dd>x `code` y</dd>` would show
   literal backticks) and folds indented continuation lines into the `<dd>`. Loose task lists need no
   workaround anymore — cmarker **0.1.10** fixed the `wasm unreachable` crash. Then **`keep-line-breaks`**
-  (only with `hard_breaks`: appends `\` to a line when the next line *continues the same
+  (**on by default since 26.10.20** — off only with an explicit `hard_breaks: false` or `--soft-breaks`; appends `\` to a line when the next line *continues the same
   paragraph* — never before a block start (`block-start-re`: list item, heading, `>`, table,
   fence, `$$`, HTML, setext underline, footnote/deflist), never after a heading/table/HTML line,
   and never inside code or `$$` math (`skip-mask`); a `\` before a new block would print a literal
@@ -347,7 +348,7 @@ bootstrap.ps1 runs `main`'s install.ps1, not the PR's. Work dirs in that test mu
     positional `[SOURCE] [OUTPUT]`; the surviving positionals are restored via
     `if ((${#positional[@]})) then set -- …`. `--version` prints `rf-document <VERSION>` + the
     typst version. `convert.ps1` has **no `param()` block** and parses `$args` itself (`--version`/
-    `-V`/`-Version`, `--help`/`-h`/`-Help`, `--no-source`, `--hard-breaks`; unknown `-x` → exit 2).
+    `-V`/`-Version`, `--help`/`-h`/`-Help`, `--no-source`, `--hard-breaks`, `--soft-breaks`; unknown `-x` → exit 2).
     **Windows trap:** with PowerShell parameter binding (`[CmdletBinding()]` + `param`) POSIX options
     such as `--no-source` coming through the `rf-document.cmd` shim (`powershell -File … %*`) are
     taken as unknown parameter names — calling programs pass exactly those. **Path trap:** turn
@@ -630,13 +631,13 @@ gh pr merge N --squash --delete-branch
 git checkout main && git pull origin main --ff-only          # tag the squash commit
 git tag -a "v${V}" -m "Release ${V}" && git push origin "v${V}"
 git checkout dev && git merge --ff-only main && git push origin dev && git checkout main
-RFD_NO_OPEN=1 bash scripts/build.sh README.md /tmp/README.pdf # dogfood release asset
+RFD_NO_OPEN=1 bash scripts/build.sh --soft-breaks README.md /tmp/README.pdf # dogfood release asset
 gh release create "v${V}" /tmp/README.pdf#README.pdf --title "v${V}" --notes "…CHANGELOG excerpt…"
 ```
 
-The README is dogfooded: `bash scripts/build.sh README.md README.pdf` renders it through
+The README is dogfooded: `bash scripts/build.sh --soft-breaks README.md README.pdf` renders it through
 the pipeline, and that PDF is attached to GitHub releases as an asset (it is not committed).
-The English README builds identically (`bash scripts/build.sh README.en.md README.en.pdf`) and can
+The English README builds identically (`bash scripts/build.sh --soft-breaks README.en.md README.en.pdf`) and can
 ride along as a parallel asset for parity; both `README.pdf` and `README.en.pdf` are `*.pdf`
 git-ignored local artifacts (never committed), so a stray `README.en.pdf` in the root is expected.
 `README.md` and `README.en.md` must stay in parity (same structure, sections, version) — a
