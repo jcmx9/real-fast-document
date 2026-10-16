@@ -25,7 +25,7 @@ resolve_from_pwd() {
   esac
 }
 
-# GUI-Start (Finder/Zettlr/.desktop) erbt nicht den Shell-PATH: den vom
+# GUI-Start (Finder/Editor/.desktop) erbt nicht den Shell-PATH: den vom
 # Installer gemerkten typst-Ordner (bin/rfd-tools.env) selbst voranstellen und
 # ein im Installpfad abgelegtes typst-Binary bevorzugen. So läuft build.sh auch
 # mit minimalem PATH (/usr/bin:/bin), nicht nur über den rf-document-Wrapper.
@@ -85,7 +85,7 @@ Exit-Code 0 nur bei Erfolg; Fehler und Warnungen gehen auf stderr.
 Environment:
   RFD_NO_OPEN=1         Das PDF nach dem Build nicht öffnen (Batch/Cron)
   RFD_BASE_DIR=ordner   Relative Bild-/Logopfade gelten relativ zu diesem Ordner
-                        statt zum Ordner der Quelle (Zettlr: temporäre Kopie)
+                        statt zum Ordner der Quelle (temporäre Kopie)
   TYPST=/pfad           Bestimmtes typst-Binary verwenden (>= 0.15 erforderlich)
 EOF
 }
@@ -308,7 +308,7 @@ src_dir="$(cd "$(dirname "${src}")" && pwd)"
 src_abs="${src_dir}/$(basename "${src}")"
 
 # Basisordner für relative Bild- und Logopfade: RFD_BASE_DIR, falls gesetzt
-# (Zettlr übergibt bei ungespeicherten Änderungen eine temporäre Kopie der
+# (Editoren übergeben bei ungespeicherten Änderungen eine temporäre Kopie der
 # Notiz, die Bilder liegen aber neben dem Original), sonst der Ordner der Quelle.
 # Ein relativer RFD_BASE_DIR gilt relativ zum Aufrufverzeichnis.
 base_dir="${src_dir}"

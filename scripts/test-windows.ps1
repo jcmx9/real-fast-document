@@ -3,7 +3,7 @@
 .SYNOPSIS
   Windows-Rauchtest fuer convert.ps1 und den rf-document.cmd-Shim (CI).
 .DESCRIPTION
-  Spielt den Zettlr-Export nach: absolute Ein- und Ausgabepfade mit
+  Spielt den Aufruf aus einem anderen Programm nach: absolute Ein- und Ausgabepfade mit
   Leerzeichen, Aufruf aus einem fremden Arbeitsverzeichnis, POSIX-Optionen
   (--no-source, --hard-breaks), temporaere Kopie mit RFD_BASE_DIR sowie die
   Exit-Codes. Voraussetzung: typst im PATH, Fonts + Packages im Projekt
@@ -48,7 +48,7 @@ Copy-Item -LiteralPath (Join-Path $Fixtures 'edge-cases.md') -Destination (Join-
 Copy-Item -LiteralPath (Join-Path $Fixtures 'bilder\screenshot.png') -Destination (Join-Path $inDir 'bilder')
 $note = Join-Path $inDir 'meine notiz.md'
 
-# Fremdes Arbeitsverzeichnis (Zettlr startet nicht im Notizordner).
+# Fremdes Arbeitsverzeichnis (andere Programme starten nicht im Notizordner).
 Set-Location ([IO.Path]::GetPathRoot($Root))
 
 # 1) Absolute Pfade mit Leerzeichen + POSIX-Optionen: PDF genau am Zielpfad,
@@ -60,7 +60,7 @@ elseif (-not (Test-PdfA $target)) { Fail "PDF fehlt am Zielpfad oder ist kein PD
 elseif (Get-ChildItem -LiteralPath $outDir -Filter '2026-*') { Fail 'ISO-Praefix trotz ausdruecklicher Ausgabe' }
 else { Ok 'convert.ps1: absolute Pfade mit Leerzeichen, --no-source, --hard-breaks' }
 
-# 2) Ueber den rf-document.cmd-Shim (so ruft der Zettlr-Bote auf).
+# 2) Ueber den rf-document.cmd-Shim (so rufen andere Programme auf).
 $target2 = Join-Path $outDir 'per shim.pdf'
 if (Test-Path -LiteralPath $Shim) {
   $out = & $Shim --no-source $note $target2 2>&1 | Out-String
@@ -107,6 +107,30 @@ if ($otherRoot -ne [IO.Path]::GetPathRoot($Root)) {
 } else {
   Write-Host "skip anderes Laufwerk (TEMP und Repo auf demselben Laufwerk)"
 }
+
+# 3b) Logo nur mit logo:; relativ gesucht im Notizordner, dann im Benutzerordner
+#     (%USERPROFILE%), dann im Installpfad. Nicht gefunden: Hinweis, Exit 0.
+$logoDir  = Join-Path $Work 'logo notiz'
+$logoHome = Join-Path $Work 'logo home'
+New-Item -ItemType Directory -Force -Path $logoDir, $logoHome | Out-Null
+Copy-Item -LiteralPath (Join-Path $Fixtures 'logo.png') -Destination (Join-Path $logoHome 'mein-logo.png')
+$logoPdf = Join-Path $outDir 'logo.pdf'
+$savedProfile = $env:USERPROFILE
+$env:USERPROFILE = $logoHome
+foreach ($case in @(
+    @{ Logo = 'mein-logo.png'; Hint = $false; Name = 'logo: aus dem Benutzerordner' },
+    @{ Logo = 'fehlt.png';     Hint = $true;  Name = 'logo: nicht gefunden -> ohne Logo' },
+    @{ Logo = 'mein-logo.txt'; Hint = $true;  Name = 'logo: falsche Endung -> ohne Logo' })) {
+  $noteText = "---`nlogo: $($case.Logo)`n---`n`nText.`n"
+  [IO.File]::WriteAllText((Join-Path $logoDir 'notiz.md'), $noteText, (New-Object Text.UTF8Encoding $false))
+  $r = Invoke-Convert @((Join-Path $logoDir 'notiz.md'), $logoPdf)
+  $hinted = $r.Text -match 'Hinweis: Logo'
+  if ($r.Code -ne 0) { Fail "$($case.Name): Exit $($r.Code)`n$($r.Text)" }
+  elseif (-not (Test-PdfA $logoPdf)) { Fail "$($case.Name): PDF fehlt`n$($r.Text)" }
+  elseif ($hinted -ne $case.Hint) { Fail "$($case.Name): Hinweis erwartet=$($case.Hint)`n$($r.Text)" }
+  else { Ok $case.Name }
+}
+$env:USERPROFILE = $savedProfile
 
 # 4) Fehlende Quelle: Exit 1, verstaendliche Meldung.
 $r = Invoke-Convert @((Join-Path $inDir 'gibt es nicht.md'), (Join-Path $outDir 'x.pdf'))

@@ -6,6 +6,30 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.19] - 2026-10-16
+
+### Fixed
+- **A table's intro no longer stays alone at the page foot:** a short plain paragraph (up to four
+  lines) directly before a pipe table moves to the next page with the table when the table does
+  not fit anymore. Spacing is unchanged (text positions in README, example and demo identical
+  before and after). New fixture `table-intro.md`.
+
+### Changed
+- **Default logo height 13 mm** (was 20 mm): a logo set with `logo:` and found is fitted into
+  13 × 60 mm unless `logo-height:` sets another height (still up to 25 mm). `header.md` shows
+  `logo-height: 13mm`.
+- References to Zettlr removed: README, scripts and CI now speak of “other programs” / “an
+  editor”; the CLAUDE.md section on the Zettlr project became a neutral “Callers: stable CLI
+  interface”. The interface itself is unchanged.
+
+### Tests
+- Windows CI (`scripts/test-windows-install.ps1`, new): `install.ps1 -SendTo` (shortcut target and
+  a simulated “Send to” call), `install.ps1 -Uninstall`, and `bootstrap.ps1` in a throwaway
+  `LOCALAPPDATA` — clone, install, build via the fresh shim, `-Uninstall`, a second `-Uninstall`,
+  and the guard that keeps a foreign git folder.
+- `scripts/test-windows.ps1`: logo lookup in the home folder (`%USERPROFILE%`), missing logo and
+  wrong extension build without a logo.
+
 ## [26.10.18] - 2026-10-16
 
 ### Changed

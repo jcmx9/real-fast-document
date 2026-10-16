@@ -26,7 +26,7 @@ Seitenzählung. Das Ergebnis ist **PDF/A-3b** mit eingebetteter Markdown-Quelle.
   im Text und Versalziffern in Tabellen.
 - **Archivfähig:** PDF/A-3b, Quelle als Anhang (abschaltbar), reproduzierbares PDF-Datum.
 - **Überall nutzbar:** Terminal-Befehl `rf-document`, Rechtsklick im Dateimanager und Aufruf
-  aus anderen Programmen (z. B. als Zettlr-Export) — auf macOS, Linux und Windows.
+  aus anderen Programmen (z. B. als Export aus einem Editor) — auf macOS, Linux und Windows.
 ## Installation & Update
 Einzige Vorbedingung ist **git**. **Ein Befehl installiert — derselbe Befehl aktualisiert.**
 **macOS / Linux:**
@@ -146,14 +146,14 @@ Nach der Installation steht ein Rechtsklick-Eintrag bereit; das PDF landet neben
 - **Linux:** `.md` rechtsklicken → **Öffnen mit → „Nach PDF-A (real-fast-document)“**
 - **Windows:** `.md` markieren → Rechtsklick → **Senden an → „Nach PDF-A (real-fast-document)“**
 
-### Aus anderen Programmen (z. B. Zettlr)
+### Aus anderen Programmen
 
 `rf-document` ist als Exportziel gebaut:
 
 - Der Exit-Code ist nur bei Erfolg 0; Fehler und Warnungen gehen kurz und auf Deutsch auf stderr.
 - Typst wird auch mit minimalem `PATH` gefunden (Start aus einer GUI-App).
 - Ein- und Ausgabe dürfen absolute Pfade mit Leerzeichen sein, das Arbeitsverzeichnis ist egal.
-- Bei einer temporären Kopie der Notiz (Zettlr mit ungespeicherten Änderungen) zeigt
+- Bei einer temporären Kopie der Notiz (etwa beim Export ungespeicherter Änderungen) zeigt
   `RFD_BASE_DIR` auf den echten Notizordner, damit Bilder und Logo gefunden werden.
 - Unter Windows läuft derselbe Aufruf über `rf-document.cmd`; die CI prüft das unter Windows
   PowerShell 5.1.
@@ -197,9 +197,9 @@ hard_breaks: true            # Zeile bleibt Zeile
 | `print_filename` | `true` / `false` | `true` | Angabe unten links (Dateiname bzw. „Kunde · Titel“) ein-/ausblenden. |
 | `watermark` | Text | — | Diagonales, hellgraues Wasserzeichen unter allem. |
 | `logo` | Datei `.svg`/`.png`/`.jpg`/`.jpeg` | kein Logo | Logo im Kopf, nur wenn gesetzt. Relativ: gesucht im Ordner der Notiz, dann im Benutzerordner, dann im Installordner; absolut (auch mit `~`, `$HOME`, `%USERPROFILE%`): genau diese Datei. Nicht gefunden: Hinweis, ohne Logo. |
-| `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximale Logohöhe (höchstens 25 mm); das Logo bleibt proportional und höchstens 60 mm breit. |
+| `logo-height` | `15mm`, `1.5cm`, `40pt`, … | `13mm` | Maximale Logohöhe (höchstens 25 mm); das Logo bleibt proportional und höchstens 60 mm breit. |
 | `embed_source` | `true` / `false` | `true` | Markdown-Quelle als Anhang ins PDF einbetten. |
-| `hard_breaks` | `true` / `false` | `false` | Jeder Zeilenumbruch bleibt einer (wie in Zettlr/Obsidian getippt). |
+| `hard_breaks` | `true` / `false` | `false` | Jeder Zeilenumbruch bleibt einer (wie im Editor getippt). |
 
 **Regeln:** Leere Werte (`subtitle: ""` oder nur `subtitle:`) werden ignoriert, nie ein Fehler.
 Ja/Nein-Schlüssel verstehen `true`/`false`, `yes`/`no`, `on`/`off` in jeder Schreibweise; ein
@@ -226,7 +226,7 @@ auskommentiert bleibt der Kopf ohne Logo — auch bei Notizen ganz ohne Frontmat
   etwa für ein Kundenlogo.
 - Der Installordner bringt das real·fast·document-Logo als `logo.svg` mit: `logo: logo.svg`
   findet es, solange keine eigene `logo.svg` neben der Notiz oder im Benutzerordner liegt.
-- Größe: das Logo wird proportional in höchstens 20 × 60 mm eingepasst; `logo-height` ändert
+- Größe: das Logo wird proportional in höchstens 13 × 60 mm eingepasst; `logo-height` ändert
   die Höhe (bis 25 mm).
 
 ## Markdown
@@ -314,7 +314,9 @@ Pipe-Tabellen in kompakter Tabellenschrift (9 pt Medium). Jede Spalte ist so bre
 Inhalt; kleine Tabellen bleiben schmal, bei Platzmangel brechen textreiche Spalten um. Spalten
 nur aus Zahlen oder Beträgen stehen rechtsbündig; die Ausrichtung aus der Trennzeile (`:--`,
 `--:`, `:-:`) hat Vorrang. Der Kopf wiederholt sich auf Folgeseiten; Wörter werden in Zellen
-nicht getrennt. Alle Tabellenformen zeigt
+nicht getrennt. Ein kurzer Absatz direkt vor der Tabelle (bis vier Zeilen, etwa „Die Übersicht:“)
+bleibt bei ihr: Passt die Tabelle nicht mehr auf die Seite, wandert er mit. Alle Tabellenformen
+zeigt
 [`tests/fixtures/tables-showcase.md`](tests/fixtures/tables-showcase.md).
 
 ### Bilder
@@ -366,7 +368,7 @@ Symbols 2** — einfarbig, PDF/A-tauglich: 🚀 ✓ ⚠ → ★ ½ €.
 |--------|------|
 | Format | DIN A4 Hochformat |
 | Ränder | links 35 mm · rechts 30 mm · oben 35 mm · unten 20 mm (Satzspiegel 145 mm, ~95 Zeichen je Zeile) |
-| Kopf | Kapitel bzw. `header:` links (Sans), Logo (nur mit `logo:`) rechts in höchstens 20 × 60 mm, Linie darunter |
+| Kopf | Kapitel bzw. `header:` links (Sans), Logo (nur mit `logo:`) rechts in höchstens 13 × 60 mm, Linie darunter |
 | Fuß | Linie; Name links · Seite · Datum rechts (ohne Datum: Name · Seite) |
 | Titelblock | zentriert: Kunde (gesperrt), Titel, Untertitel, „Datum · Autor“ |
 | Überschriften | Source Serif 4, linksbündig; nur H1 mit feiner Linie; bleiben nie allein am Seitenfuß |
@@ -432,6 +434,7 @@ scripts/fetch-fonts.sh      lädt die Schriften nach ./fonts
 scripts/fetch-typst-packages.sh  lädt cmarker, mitex, mmdr nach ./vendor
 scripts/test-pdf.sh         End-to-End-Tests (macOS/Linux)
 scripts/test-windows.ps1    Windows-Tests (CI, Windows PowerShell 5.1)
+scripts/test-windows-install.ps1  Windows: Senden an, Deinstallation, Bootstrap (CI)
 tests/fixtures/             Testnotizen, u. a. tables-showcase.md (alle Tabellenformen)
 example.md                  Rundgang durch alle Funktionen
 demo.md                     Beispieldokument: Kick-off-Protokoll einer Kaffeerösterei
@@ -441,8 +444,10 @@ fonts/, assets/, logo.svg   Schriften, Beispielgrafik, mitgeliefertes Logo
 
 **Tests:** `bash scripts/test-pdf.sh` baut alle Testnotizen und prüft den Text der PDFs, die
 Tabellengeometrie und die Schnittstelle (Ausgabepfad, Exit-Codes, eingebettete Quelle,
-minimaler `PATH`, Pfade mit Leerzeichen, `RFD_BASE_DIR`). Benötigt `pdftotext` (poppler) oder
-`mutool` (mupdf). Die CI führt sie auf Linux aus, dazu `scripts/test-windows.ps1` auf Windows.
+minimaler `PATH`, Pfade mit Leerzeichen, `RFD_BASE_DIR`, Logo-Suche). Benötigt `pdftotext` (poppler) oder
+`mutool` (mupdf). Die CI führt sie auf Linux aus; auf Windows laufen `scripts/test-windows.ps1` (Aufruf,
+Pfade, Logo-Suche) und `scripts/test-windows-install.ps1` („Senden an“, Deinstallation,
+Bootstrap).
 
 ## Versionierung
 

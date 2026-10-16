@@ -27,7 +27,7 @@ count. The result is **PDF/A-3b** with the Markdown source embedded. Everything 
   ellipses, non-breaking spaces, old-style figures in text and lining figures in tables.
 - **Archivable:** PDF/A-3b, source as an attachment (optional), reproducible PDF date.
 - **Usable everywhere:** terminal command `rf-document`, right-click in the file manager and
-  calls from other programs (e.g. as a Zettlr export) — on macOS, Linux and Windows.
+  calls from other programs (e.g. as an export from an editor) — on macOS, Linux and Windows.
 
 ## Installation & update
 
@@ -151,14 +151,14 @@ After installation a right-click entry is available; the PDF lands next to the s
 - **Linux:** right-click `.md` → **Open with → “Nach PDF-A (real-fast-document)”**
 - **Windows:** select `.md` → right-click → **Send to → “Nach PDF-A (real-fast-document)”**
 
-### From other programs (e.g. Zettlr)
+### From other programs
 
 `rf-document` is built as an export target:
 
 - The exit code is 0 only on success; errors and warnings go briefly (in German) to stderr.
 - Typst is found even with a minimal `PATH` (started from a GUI app).
 - Input and output may be absolute paths with spaces; the working directory does not matter.
-- For a temporary copy of the note (Zettlr with unsaved changes) `RFD_BASE_DIR` points to the
+- For a temporary copy of the note (e.g. when exporting unsaved changes) `RFD_BASE_DIR` points to the
   real note folder so images and logo are found.
 - On Windows the same call goes through `rf-document.cmd`; CI checks it under Windows
   PowerShell 5.1.
@@ -202,9 +202,9 @@ hard_breaks: true            # every line stays a line
 | `print_filename` | `true` / `false` | `true` | Show/hide the bottom-left entry (file name or “client · title”). |
 | `watermark` | text | — | Diagonal light-gray watermark beneath everything. |
 | `logo` | file `.svg`/`.png`/`.jpg`/`.jpeg` | no logo | Logo in the header, only when set. Relative: looked up in the note's folder, then the user's home folder, then the install folder; absolute (also with `~`, `$HOME`, `%USERPROFILE%`): exactly this file. Not found: note, no logo. |
-| `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximum logo height (at most 25 mm); the logo keeps its proportions and is at most 60 mm wide. |
+| `logo-height` | `15mm`, `1.5cm`, `40pt`, … | `13mm` | Maximum logo height (at most 25 mm); the logo keeps its proportions and is at most 60 mm wide. |
 | `embed_source` | `true` / `false` | `true` | Embed the Markdown source as an attachment. |
-| `hard_breaks` | `true` / `false` | `false` | Every line break stays one (as typed in Zettlr/Obsidian). |
+| `hard_breaks` | `true` / `false` | `false` | Every line break stays one (as typed in the editor). |
 
 **Rules:** empty values (`subtitle: ""` or just `subtitle:`) are ignored, never an error.
 Yes/no keys accept `true`/`false`, `yes`/`no`, `on`/`off` in any case; an unrecognized value
@@ -230,7 +230,7 @@ out, the header has no logo — also for notes without any frontmatter.
   e.g. for a client logo.
 - The install folder ships the real·fast·document logo as `logo.svg`: `logo: logo.svg` finds it
   as long as no custom `logo.svg` lies next to the note or in the home folder.
-- Size: the logo is fitted proportionally into at most 20 × 60 mm; `logo-height` changes the
+- Size: the logo is fitted proportionally into at most 13 × 60 mm; `logo-height` changes the
   height (up to 25 mm).
 
 ## Markdown
@@ -314,8 +314,9 @@ A box never splits across pages. A quote without a keyword stays an indented, it
 Pipe tables in a compact table type (9 pt Medium). Each column is as wide as its content; small
 tables stay narrow, when space runs out text-heavy columns wrap. Columns made only of numbers
 or amounts are right-aligned; the alignment from the separator row (`:--`, `--:`, `:-:`) wins.
-The header repeats on following pages; words are not hyphenated in cells. Every table form is
-shown in [`tests/fixtures/tables-showcase.md`](tests/fixtures/tables-showcase.md).
+The header repeats on following pages; words are not hyphenated in cells. A short paragraph right
+before the table (up to four lines, e.g. “The overview:”) stays with it: if the table no longer
+fits on the page, it moves along. Every table form is shown in [`tests/fixtures/tables-showcase.md`](tests/fixtures/tables-showcase.md).
 
 ### Images
 
@@ -366,7 +367,7 @@ Symbols 2** — monochrome, PDF/A-safe: 🚀 ✓ ⚠ → ★ ½ €.
 |--------|-------|
 | Format | A4 portrait |
 | Margins | left 35 mm · right 30 mm · top 35 mm · bottom 20 mm (text block 145 mm, ~95 characters per line) |
-| Header | chapter or `header:` on the left (sans), logo (only with `logo:`) on the right within at most 20 × 60 mm, line below |
+| Header | chapter or `header:` on the left (sans), logo (only with `logo:`) on the right within at most 13 × 60 mm, line below |
 | Footer | line; name left · page · date right (without date: name · page) |
 | Title block | centered: client (letter-spaced), title, subtitle, “date · author” |
 | Headings | Source Serif 4, left-aligned; only H1 with a fine line; never left alone at a page foot |
@@ -433,6 +434,7 @@ scripts/fetch-fonts.sh      downloads the fonts into ./fonts
 scripts/fetch-typst-packages.sh  downloads cmarker, mitex, mmdr into ./vendor
 scripts/test-pdf.sh         end-to-end tests (macOS/Linux)
 scripts/test-windows.ps1    Windows tests (CI, Windows PowerShell 5.1)
+scripts/test-windows-install.ps1  Windows: Send to, uninstall, bootstrap (CI)
 tests/fixtures/             test notes, incl. tables-showcase.md (every table form)
 example.md                  tour of every feature
 demo.md                     example document: kick-off minutes of a coffee roastery
@@ -442,8 +444,9 @@ fonts/, assets/, logo.svg   fonts, example graphic, bundled logo
 
 **Tests:** `bash scripts/test-pdf.sh` builds every test note and checks the PDF text, the table
 geometry and the interface (output path, exit codes, embedded source, minimal `PATH`, paths
-with spaces, `RFD_BASE_DIR`). Requires `pdftotext` (poppler) or `mutool` (mupdf). CI runs them
-on Linux, plus `scripts/test-windows.ps1` on Windows.
+with spaces, `RFD_BASE_DIR`, logo lookup). Requires `pdftotext` (poppler) or `mutool` (mupdf). CI runs them
+on Linux; on Windows `scripts/test-windows.ps1` (calls, paths, logo lookup) and
+`scripts/test-windows-install.ps1` (“Send to”, uninstall, bootstrap) run.
 
 ## Versioning
 

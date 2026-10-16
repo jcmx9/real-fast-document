@@ -235,13 +235,13 @@
 #let margin-right = 30mm
 
 // Logo: proportional in einen Rahmen aus maximaler Höhe und Breite eingepasst.
-// Standardhöhe 20 mm; logo-height: (nur absolute Längen wie 15mm, 1.2cm, 40pt,
+// Standardhöhe 13 mm; logo-height: (nur absolute Längen wie 15mm, 1.2cm, 40pt,
 // 0.8in) übersteuert, gedeckelt auf 25 mm, damit der Kopf im oberen Rand bleibt.
 // Ungültige Werte (z. B. 50%) werden ignoriert.
 #let logo-max-width = 60mm
 #let logo-max-height = {
   let m = logo-height-raw.trim().match(regex("^(\d+(?:\.\d+)?)\s*(mm|cm|pt|in)$"))
-  if m == none { 20mm } else {
+  if m == none { 13mm } else {
     let v = float(m.captures.at(0))
     let unit = (mm: 1mm, cm: 1cm, pt: 1pt, "in": 1in).at(m.captures.at(1))
     calc.min(v * unit, 25mm)
@@ -689,6 +689,16 @@
   warning: rgb("#b05a1a"),
   caution: rgb("#b5452b"),
 )
+// Einleitung einer Tabelle (<rfd-keep> aus lib/markdown.typ): bleibt mit der
+// folgenden Tabelle zusammen (sticky). Abstände wie beim Absatz ohne Hülle:
+// Typst setzt zwischen zwei Absätzen par.spacing, zwischen Block und Absatz
+// nur den Abstand des Blocks; benachbarte Blöcke nehmen das Maximum. Daher
+// above = Absatzabstand nur nach einem Absatz, sonst 0 (der Block davor
+// bestimmt); below = 0 (die Tabelle bringt ihren Abstand mit).
+#let rfd-keep(attrs, body) = block(sticky: true,
+  above: if attrs.at("after", default: "block") == "par" { 1.1em } else { 0pt },
+  below: 0pt, body)
+
 #let rfd-alert(attrs, body) = {
   let kind = attrs.at("kind", default: "note")
   let color = alert-colors.at(kind, default: alert-colors.note)
@@ -804,6 +814,6 @@
   // “…” auch in deutschen Text). Ebenso bleiben -- und ... wie getippt.
   smart-punctuation: false,
   task-list-marker: rfd-task-marker,
-  html: (rfd-alert: rfd-alert, rfd-tasks: rfd-tasks, rfd-task: rfd-task),
+  html: (rfd-alert: rfd-alert, rfd-tasks: rfd-tasks, rfd-task: rfd-task, rfd-keep: rfd-keep),
   scope: (image: safe-image, divider: () => horizontalrule, terms: rfd-terms),
 )
