@@ -291,6 +291,46 @@ test_fixtures() {
   reject absolute-paths.md "${text}" "real·fast"   # Notiz-Logo statt Standard-Logo
   ok absolute-paths.md
 
+  # Logo nur mit logo: im Frontmatter; ohne Schlüssel nie, auch wenn im
+  # Programmordner ein logo.svg liegt.
+  text="$(render tasks.md)"
+  reject tasks.md "${text}" "real·fast"
+  ok "ohne logo: kein Logo"
+
+  # Suchreihenfolge für einen relativen logo:-Wert: Ordner der Notiz, dann
+  # Benutzerordner, dann Programmordner. Nicht gefunden: ohne Logo, Exit 0.
+  local ldir="${out_dir}/logo-suche" lhome="${out_dir}/logo-home" lout
+  mkdir -p "${ldir}" "${lhome}"
+  svg_text() {
+    printf '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 60"><text x="5" y="40" font-family="SourceSans3VF" font-size="30">%s</text></svg>\n' "$1"
+  }
+  logo_build() {
+    printf -- '---\nlogo: %s\n---\n\nText.\n' "$1" >"${ldir}/n.md"
+    (cd "${ldir}" && HOME="${lhome}" bash "${build}" n.md "${out_dir}/logo.pdf" \
+      >/dev/null 2>"${out_dir}/logo.err") || die "logo: ${1}: Export fehlgeschlagen: $(cat "${out_dir}/logo.err")"
+    pdf_text "${out_dir}/logo.pdf"
+  }
+  svg_text NOTIZLOGO >"${ldir}/mein-logo.svg"
+  svg_text HOMELOGO >"${lhome}/mein-logo.svg"
+  lout="$(logo_build mein-logo.svg)"
+  expect "logo: Notizordner" "${lout}" "NOTIZLOGO"
+  reject "logo: Notizordner" "${lout}" "HOMELOGO"
+  rm "${ldir}/mein-logo.svg"
+  lout="$(logo_build mein-logo.svg)"
+  expect "logo: Benutzerordner" "${lout}" "HOMELOGO"
+  # shellcheck disable=SC2088  # ~ soll wörtlich ins Frontmatter
+  lout="$(logo_build '~/mein-logo.svg')"
+  expect "logo: ~/" "${lout}" "HOMELOGO"
+  lout="$(logo_build logo.svg)"
+  expect "logo: Programmordner" "${lout}" "real·fast"
+  lout="$(logo_build fehlt.svg)"
+  reject "logo: fehlt" "${lout}" "real·fast" "HOMELOGO"
+  grep -q "Logo nicht gefunden: fehlt.svg" "${out_dir}/logo.err" || die "logo: fehlt: kein Hinweis"
+  lout="$(logo_build mein-logo.txt)"
+  reject "logo: falsche Endung" "${lout}" "HOMELOGO"
+  grep -q "Logo muss .svg" "${out_dir}/logo.err" || die "logo: falsche Endung: kein Hinweis"
+  ok "logo: Suchreihenfolge Notiz → Benutzer → Programm"
+
   # Mermaid offline: Beschriftungen als Text im PDF, kein Quelltext.
   text="$(render mermaid.md)"
   expect mermaid.md "${text}" "Kick-off" "Konzept ok?" "Design" "Briefing" "Angebot" \

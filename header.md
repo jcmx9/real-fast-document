@@ -44,8 +44,10 @@ print_filename: true
 watermark: ""
 
 # ---- Logo -------------------------------------------------------------------
-# Logo nur für dieses Dokument (PNG/JPG/SVG), relativ zur Notiz oder absolut;
-# ~, $VAR, ${VAR} und %VAR% werden ersetzt. Leer: globales logo.svg/.png/.jpg.
+# Logo im Kopf (.svg, .png, .jpg, .jpeg); leer oder ohne Schlüssel: kein Logo.
+# Relativ: gesucht im Ordner der Notiz, dann im Benutzerordner, dann im
+# Installordner. Absolut geht auch; ~, $VAR, ${VAR} und %VAR% werden ersetzt.
+# Nicht gefunden: Hinweis, ohne Logo.
 logo: ""
 # Maximale Logohöhe, nur absolute Längen (mm, cm, pt, in); Standard 20mm,
 # höchstens 25mm. Das Logo bleibt proportional und höchstens 60 mm breit.

@@ -332,35 +332,40 @@ else
   out="${src_dir}/${base}.pdf"
 fi
 
-# Logo: Frontmatter logo: (pro Notiz, relativ zur Notiz oder absolut) vor dem
-# globalen logo.svg -> .png -> .jpg im Projekt. Ein fehlendes Notiz-Logo bricht
-# den Export nie ab: Warnung, dann globales Logo.
+# Logo nur mit logo: im Frontmatter (ohne Schlüssel oder leer: kein Logo). Der
+# Wert ist eine Datei .svg/.png/.jpg/.jpeg. Absolut (auch über ~ oder $HOME) ->
+# genau diese Datei; relativ -> zuerst im Ordner der Notiz (bzw. RFD_BASE_DIR),
+# dann im Benutzerordner, dann im Programmordner. Nichts gefunden -> ohne Logo,
+# nur ein Hinweis, nie ein Fehler.
 logo=""
 if [[ -n "${fm_logo}" ]]; then
+  ext="$(printf '%s' "${fm_logo##*.}" | tr '[:upper:]' '[:lower:]')"
   case "${fm_logo}" in
     http://*|https://*|//*|data:*)
-      echo "Warnung: Remote-Logo wird nicht geladen (kein Netzzugriff): ${fm_logo}" >&2 ;;
+      echo "Hinweis: Remote-Logo wird nicht geladen (kein Netzzugriff): ${fm_logo}" >&2 ;;
     *)
-      note_logo="$(expand_path "${fm_logo}")"
-      case "${note_logo}" in /*) ;; *) note_logo="${base_dir}/${note_logo}" ;; esac
-      if [[ -f "${note_logo}" ]]; then
-        logo="${note_logo}"
-      else
-        echo "Warnung: Logo nicht gefunden: ${fm_logo} – nutze das Standard-Logo." >&2
-      fi
+      case "${ext}" in
+        svg|png|jpg|jpeg)
+          note_logo="$(expand_path "${fm_logo}")"
+          case "${note_logo}" in
+            /*) [[ -f "${note_logo}" ]] && logo="${note_logo}" ;;
+            *)
+              for dir in "${base_dir}" "${HOME:-}" "${root_dir}"; do
+                if [[ -n "${dir}" && -f "${dir}/${note_logo}" ]]; then
+                  logo="${dir}/${note_logo}"
+                  break
+                fi
+              done
+              ;;
+          esac
+          [[ -n "${logo}" ]] ||
+            echo "Hinweis: Logo nicht gefunden: ${fm_logo} – baue ohne Logo." >&2
+          ;;
+        *)
+          echo "Hinweis: Logo muss .svg, .png, .jpg oder .jpeg sein: ${fm_logo} – baue ohne Logo." >&2 ;;
+      esac
       ;;
   esac
-fi
-if [[ -z "${logo}" ]]; then
-  for candidate in logo.svg logo.png logo.jpg; do
-    if [[ -f "${candidate}" ]]; then
-      logo="${candidate}"
-      break
-    fi
-  done
-fi
-if [[ -z "${logo}" ]]; then
-  echo "Hinweis: kein Logo gefunden (logo.svg | logo.png | logo.jpg) – baue ohne Logo." >&2
 fi
 
 font_arg=()

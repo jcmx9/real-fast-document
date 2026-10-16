@@ -6,6 +6,22 @@ versioning follows [CalVer](https://calver.org/) (`YY.M.MICRO`).
 
 ## [Unreleased]
 
+## [26.10.18] - 2026-10-16
+
+### Changed
+- **A logo only appears with `logo:` in the frontmatter.** Without the key (or with an empty
+  value) the header has no logo — before, the global `logo.svg`/`.png`/`.jpg` of the install
+  folder was used for every document, including private notes without any frontmatter.
+- **Lookup for a relative `logo:` value:** the note's folder (or `RFD_BASE_DIR`), then the user's
+  home folder (`$HOME`, Windows `%USERPROFILE%`), then the install folder (which ships `logo.svg`).
+  Absolute paths and `~`, `$VAR`, `${VAR}`, `%VAR%` work as before and use exactly that file.
+- The value must end in `.svg`, `.png`, `.jpg` or `.jpeg`. Not found, wrong extension or a remote
+  URL: a `Hinweis` on stderr and the PDF is built without a logo (exit 0, never an error; was a
+  `Warnung` plus fallback to the global logo).
+- `example.md` sets `logo: logo.svg`; `demo.md` now renders without a logo.
+- Tests: no logo without the key; lookup order note folder → home → install folder, `~/`, missing
+  file and wrong extension.
+
 ## [26.10.17] - 2026-10-14
 
 ### Changed

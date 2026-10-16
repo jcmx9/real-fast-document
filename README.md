@@ -8,13 +8,13 @@
 > ohne Textverarbeitung, ohne manuelles Layout.
 
 real·fast·document (Befehl `rf-document`) setzt Markdown mit **Typst** in ein festes
-Corporate-Layout: DIN A4, Titelblock, laufender Kopf mit Kapitel und Logo, Fußzeile mit
+Corporate-Layout: DIN A4, Titelblock, laufender Kopf mit Kapitel und optionalem Logo, Fußzeile mit
 Seitenzählung. Das Ergebnis ist **PDF/A-3b** mit eingebetteter Markdown-Quelle. Alles läuft
 **offline** — Schriften und Typst-Packages liegen im Projekt, Pandoc wird nicht gebraucht.
 ![Markdown → Typst → PDF/A-3b: vom reinen Text bis zum Archiv-PDF.](assets/pipeline.svg)
 ## Was es kann
 - **Dokumente mit festem Layout:** Titelblock mit Kunde, Titel, Untertitel, Datum und Autor;
-  Kopfzeile mit aktuellem Kapitel und Logo; Fußzeile mit Name, Seite und Datum;
+  Kopfzeile mit aktuellem Kapitel und optionalem Logo; Fußzeile mit Name, Seite und Datum;
   Inhaltsverzeichnis und Kapitel-Seitenumbruch automatisch ab längeren Dokumenten;
   optionales Wasserzeichen.
 - **Markdown wie gewohnt — und mehr:** CommonMark mit Tabellen, Fußnoten, Formeln, Code und
@@ -176,6 +176,7 @@ author: [Anna, Ben]          # Autor(en): Zeile "Datum · Autor"
 date: 13.10.2026             # Datum (ISO oder T.M.JJJJ)
 lang: de                     # Sprache; Standard de
 watermark: "ENTWURF"         # Wasserzeichen
+logo: firma.svg              # Logo im Kopf (ohne: kein Logo)
 embed_source: false          # Quelle nicht einbetten
 hard_breaks: true            # Zeile bleibt Zeile
 ---
@@ -195,7 +196,7 @@ hard_breaks: true            # Zeile bleibt Zeile
 | `header` | Text | — | Fester Kopfzeilentext ab Seite 1 statt des laufenden Kapitels. |
 | `print_filename` | `true` / `false` | `true` | Angabe unten links (Dateiname bzw. „Kunde · Titel“) ein-/ausblenden. |
 | `watermark` | Text | — | Diagonales, hellgraues Wasserzeichen unter allem. |
-| `logo` | Pfad | globales Logo | Logo nur für dieses Dokument (PNG/JPG/SVG), relativ zur Notiz oder absolut. Fehlt die Datei: Warnung, globales Logo. |
+| `logo` | Datei `.svg`/`.png`/`.jpg`/`.jpeg` | kein Logo | Logo im Kopf, nur wenn gesetzt. Relativ: gesucht im Ordner der Notiz, dann im Benutzerordner, dann im Installordner; absolut (auch mit `~`, `$HOME`, `%USERPROFILE%`): genau diese Datei. Nicht gefunden: Hinweis, ohne Logo. |
 | `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximale Logohöhe (höchstens 25 mm); das Logo bleibt proportional und höchstens 60 mm breit. |
 | `embed_source` | `true` / `false` | `true` | Markdown-Quelle als Anhang ins PDF einbetten. |
 | `hard_breaks` | `true` / `false` | `false` | Jeder Zeilenumbruch bleibt einer (wie in Zettlr/Obsidian getippt). |
@@ -205,6 +206,28 @@ Ja/Nein-Schlüssel verstehen `true`/`false`, `yes`/`no`, `on`/`off` in jeder Sch
 nicht erkannter Wert erzeugt eine Warnung, der Standard bleibt. Kommentare (`# …`) dürfen auf
 eigenen Zeilen und hinter Werten stehen. In Pfaden (`logo:`, Bilder) werden `~`, `$VAR`,
 `${VAR}` und `%VAR%` ersetzt.
+
+### Logo
+
+Ein Logo erscheint **nur**, wenn `logo:` gesetzt ist. Ohne den Schlüssel, mit leerem Wert oder
+auskommentiert bleibt der Kopf ohne Logo — auch bei Notizen ganz ohne Frontmatter.
+
+| Wert von `logo:` | Gesucht wird |
+|------------------|--------------|
+| `firma.svg`, `logos/firma.svg` | 1. im Ordner der Notiz (bzw. `RFD_BASE_DIR`), 2. im Benutzerordner (`~`, Windows `%USERPROFILE%`), 3. im Installordner — die erste vorhandene Datei gewinnt |
+| `/Pfad/firma.svg`, `C:\Logos\firma.png` | genau diese Datei |
+| `~/firma.svg`, `$HOME/firma.svg`, `%USERPROFILE%\firma.svg` | genau diese Datei, Variablen ersetzt |
+
+- Erlaubt sind `.svg`, `.png`, `.jpg` und `.jpeg`.
+- Wird nichts gefunden (oder ist die Endung falsch, oder ist es eine Web-Adresse), entsteht das
+  PDF **ohne Logo** — mit einem Hinweis im Terminal, nie mit einem Fehler.
+- **Eigenes Logo für alle Dokumente:** einmal im Benutzerordner ablegen (`~/firma.svg`) und in
+  jeder Notiz `logo: firma.svg` schreiben. Eine gleichnamige Datei neben der Notiz hat Vorrang,
+  etwa für ein Kundenlogo.
+- Der Installordner bringt das real·fast·document-Logo als `logo.svg` mit: `logo: logo.svg`
+  findet es, solange keine eigene `logo.svg` neben der Notiz oder im Benutzerordner liegt.
+- Größe: das Logo wird proportional in höchstens 20 × 60 mm eingepasst; `logo-height` ändert
+  die Höhe (bis 25 mm).
 
 ## Markdown
 
@@ -343,7 +366,7 @@ Symbols 2** — einfarbig, PDF/A-tauglich: 🚀 ✓ ⚠ → ★ ½ €.
 |--------|------|
 | Format | DIN A4 Hochformat |
 | Ränder | links 35 mm · rechts 30 mm · oben 35 mm · unten 20 mm (Satzspiegel 145 mm, ~95 Zeichen je Zeile) |
-| Kopf | Kapitel bzw. `header:` links (Sans), Logo rechts in höchstens 20 × 60 mm, Linie darunter |
+| Kopf | Kapitel bzw. `header:` links (Sans), Logo (nur mit `logo:`) rechts in höchstens 20 × 60 mm, Linie darunter |
 | Fuß | Linie; Name links · Seite · Datum rechts (ohne Datum: Name · Seite) |
 | Titelblock | zentriert: Kunde (gesperrt), Titel, Untertitel, „Datum · Autor“ |
 | Überschriften | Source Serif 4, linksbündig; nur H1 mit feiner Linie; bleiben nie allein am Seitenfuß |
@@ -386,10 +409,9 @@ Emoji** (variabel) und **Noto Sans Symbols 2** ein, beide einfarbig. Details:
 
 ## Anpassen
 
-- **Globales Logo:** `logo.svg`, `logo.png` oder `logo.jpg` im Installordner
-  (`~/.local/share/real-fast-document`, Windows `%LOCALAPPDATA%\real-fast-document`);
-  genommen wird die erste vorhandene Datei. Ohne Logo baut rf-document mit Hinweis weiter. Pro
-  Dokument: `logo:` im Frontmatter.
+- **Logo:** nur mit `logo:` im Frontmatter; ein eigenes Logo am besten im Benutzerordner ablegen
+  (`~/firma.svg`, Windows `%USERPROFILE%\firma.svg`). Suchreihenfolge und Regeln: siehe
+  [Logo](#logo).
 - **Ränder, Schriften, Farben, Schriftgrade:** gesammelt oben in `template.typ`.
 - **PDF/A-Grad:** `standard` in `scripts/build.sh` (`a-1b`, `a-2b`, `a-3b`); das Einbetten der
   Quelle setzt `a-3b` voraus.
@@ -414,7 +436,7 @@ tests/fixtures/             Testnotizen, u. a. tables-showcase.md (alle Tabellen
 example.md                  Rundgang durch alle Funktionen
 demo.md                     Beispieldokument: Kick-off-Protokoll einer Kaffeerösterei
 header.md                   Frontmatter-Vorlage mit allen Schlüsseln
-fonts/, assets/, logo.svg   Schriften, Beispielgrafik, Standard-Logo
+fonts/, assets/, logo.svg   Schriften, Beispielgrafik, mitgeliefertes Logo
 ```
 
 **Tests:** `bash scripts/test-pdf.sh` baut alle Testnotizen und prüft den Text der PDFs, die

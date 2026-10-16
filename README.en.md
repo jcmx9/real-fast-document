@@ -8,7 +8,7 @@
 > no word processor, no manual layout.
 
 real·fast·document (command `rf-document`) typesets Markdown with **Typst** into a fixed
-corporate layout: A4, title block, running header with chapter and logo, footer with page
+corporate layout: A4, title block, running header with chapter and optional logo, footer with page
 count. The result is **PDF/A-3b** with the Markdown source embedded. Everything runs
 **offline** — fonts and Typst packages live in the project, no Pandoc needed.
 
@@ -17,7 +17,7 @@ count. The result is **PDF/A-3b** with the Markdown source embedded. Everything 
 ## What it does
 
 - **Documents with a fixed layout:** title block with client, title, subtitle, date and author;
-  header with the current chapter and logo; footer with name, page and date; table of contents
+  header with the current chapter and optional logo; footer with name, page and date; table of contents
   and chapter page breaks automatically for longer documents; optional watermark.
 - **Markdown as usual — and more:** CommonMark with tables, footnotes, math, code and
   definition lists, plus callout boxes (`> [!NOTE]`, `> [!HINWEIS]`), task tables
@@ -181,6 +181,7 @@ author: [Anna, Ben]          # author(s): line "date · author"
 date: 2026-10-13             # date (ISO or D.M.YYYY)
 lang: en                     # language; default de
 watermark: "DRAFT"           # watermark
+logo: company.svg            # logo in the header (without: no logo)
 embed_source: false          # do not embed the source
 hard_breaks: true            # every line stays a line
 ---
@@ -200,7 +201,7 @@ hard_breaks: true            # every line stays a line
 | `header` | text | — | Fixed header text from page 1 instead of the running chapter. |
 | `print_filename` | `true` / `false` | `true` | Show/hide the bottom-left entry (file name or “client · title”). |
 | `watermark` | text | — | Diagonal light-gray watermark beneath everything. |
-| `logo` | path | global logo | Logo for this document only (PNG/JPG/SVG), relative to the note or absolute. Missing file: warning, global logo. |
+| `logo` | file `.svg`/`.png`/`.jpg`/`.jpeg` | no logo | Logo in the header, only when set. Relative: looked up in the note's folder, then the user's home folder, then the install folder; absolute (also with `~`, `$HOME`, `%USERPROFILE%`): exactly this file. Not found: note, no logo. |
 | `logo-height` | `20mm`, `1.5cm`, `40pt`, … | `20mm` | Maximum logo height (at most 25 mm); the logo keeps its proportions and is at most 60 mm wide. |
 | `embed_source` | `true` / `false` | `true` | Embed the Markdown source as an attachment. |
 | `hard_breaks` | `true` / `false` | `false` | Every line break stays one (as typed in Zettlr/Obsidian). |
@@ -209,6 +210,28 @@ hard_breaks: true            # every line stays a line
 Yes/no keys accept `true`/`false`, `yes`/`no`, `on`/`off` in any case; an unrecognized value
 produces a warning and the default applies. Comments (`# …`) may stand on their own lines and
 after values. In paths (`logo:`, images) `~`, `$VAR`, `${VAR}` and `%VAR%` are expanded.
+
+### Logo
+
+A logo appears **only** when `logo:` is set. Without the key, with an empty value or commented
+out, the header has no logo — also for notes without any frontmatter.
+
+| Value of `logo:` | Looked up |
+|------------------|-----------|
+| `company.svg`, `logos/company.svg` | 1. in the note's folder (or `RFD_BASE_DIR`), 2. in the home folder (`~`, Windows `%USERPROFILE%`), 3. in the install folder — the first existing file wins |
+| `/path/company.svg`, `C:\Logos\company.png` | exactly this file |
+| `~/company.svg`, `$HOME/company.svg`, `%USERPROFILE%\company.svg` | exactly this file, variables expanded |
+
+- Allowed are `.svg`, `.png`, `.jpg` and `.jpeg`.
+- If nothing is found (or the extension is wrong, or it is a web address), the PDF is built
+  **without a logo** — with a note in the terminal, never with an error.
+- **Your own logo for all documents:** put it in the home folder once (`~/company.svg`) and write
+  `logo: company.svg` in each note. A file of the same name next to the note takes precedence,
+  e.g. for a client logo.
+- The install folder ships the real·fast·document logo as `logo.svg`: `logo: logo.svg` finds it
+  as long as no custom `logo.svg` lies next to the note or in the home folder.
+- Size: the logo is fitted proportionally into at most 20 × 60 mm; `logo-height` changes the
+  height (up to 25 mm).
 
 ## Markdown
 
@@ -343,7 +366,7 @@ Symbols 2** — monochrome, PDF/A-safe: 🚀 ✓ ⚠ → ★ ½ €.
 |--------|-------|
 | Format | A4 portrait |
 | Margins | left 35 mm · right 30 mm · top 35 mm · bottom 20 mm (text block 145 mm, ~95 characters per line) |
-| Header | chapter or `header:` on the left (sans), logo on the right within at most 20 × 60 mm, line below |
+| Header | chapter or `header:` on the left (sans), logo (only with `logo:`) on the right within at most 20 × 60 mm, line below |
 | Footer | line; name left · page · date right (without date: name · page) |
 | Title block | centered: client (letter-spaced), title, subtitle, “date · author” |
 | Headings | Source Serif 4, left-aligned; only H1 with a fine line; never left alone at a page foot |
@@ -387,10 +410,9 @@ and **Noto Sans Symbols 2** step in individually, both monochrome. Details:
 
 ## Customizing
 
-- **Global logo:** `logo.svg`, `logo.png` or `logo.jpg` in the install folder
-  (`~/.local/share/real-fast-document`, Windows `%LOCALAPPDATA%\real-fast-document`); the first
-  existing file is used. Without a logo rf-document continues with a note. Per document:
-  `logo:` in the frontmatter.
+- **Logo:** only with `logo:` in the frontmatter; a custom logo is best kept in the home folder
+  (`~/company.svg`, Windows `%USERPROFILE%\company.svg`). Lookup order and rules: see
+  [Logo](#logo).
 - **Margins, fonts, colors, font sizes:** collected at the top of `template.typ`.
 - **PDF/A level:** `standard` in `scripts/build.sh` (`a-1b`, `a-2b`, `a-3b`); embedding the
   source requires `a-3b`.
@@ -415,7 +437,7 @@ tests/fixtures/             test notes, incl. tables-showcase.md (every table fo
 example.md                  tour of every feature
 demo.md                     example document: kick-off minutes of a coffee roastery
 header.md                   frontmatter template with every key
-fonts/, assets/, logo.svg   fonts, example graphic, default logo
+fonts/, assets/, logo.svg   fonts, example graphic, bundled logo
 ```
 
 **Tests:** `bash scripts/test-pdf.sh` builds every test note and checks the PDF text, the table

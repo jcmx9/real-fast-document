@@ -8,6 +8,7 @@ lang: de
 toc: true
 h1_break: true
 watermark: "BEISPIEL"
+logo: logo.svg
 ---
 
 Dieses Dokument ist zugleich **Vorlage**, **Schaustück** und **Falltest**: Es ist mit genau der
@@ -22,7 +23,7 @@ Die Markdown-Quelle liegt als Anhang im PDF und lässt sich jederzeit wieder her
 
 Der **Titelblock** oben entsteht aus dem Frontmatter: `client` (klein, gesperrt), `title`,
 `subtitle` und die Zeile „Datum · Autor“ aus `date` und `author`. Die **Kopfzeile** zeigt ab
-Seite 1 das aktuelle Kapitel, rechts das Logo (höchstens 20 × 60 mm). Die **Fußzeile** zeigt
+Seite 1 das aktuelle Kapitel, rechts das Logo aus `logo:` (höchstens 20 × 60 mm). Die **Fußzeile** zeigt
 links „Kunde · Titel“ (weil `client` gesetzt ist), in der Mitte die Seitenzahl und rechts das
 Datum. Das **Wasserzeichen** „BEISPIEL“ liegt unter allem.
 
@@ -32,7 +33,8 @@ Varianten, die dieses Dokument nicht zeigt:
 - Ohne `client` und `subtitle` steht links unten der Dateiname; `print_filename: false` blendet
   ihn aus.
 - `lang: en` stellt Datum, Beschriftungen und Anführungszeichen auf Englisch um.
-- `logo: kunde.png` setzt ein Logo nur für dieses Dokument.
+- Ohne `logo:` bleibt der Kopf ohne Logo. `logo: kunde.png` sucht die Datei neben der Notiz,
+  dann im Benutzerordner, dann im Installordner.
 
 Alle Schlüssel mit ==Standardwerten== stehen in `header.md`.
 
